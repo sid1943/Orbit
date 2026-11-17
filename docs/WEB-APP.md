@@ -84,6 +84,7 @@ Fonts load from Google Fonts only when chosen. Settings are saved through `PUT /
 
 ## Design rules
 
+- Kind tiles are always square, the same size, wrapping onto more rows; new kinds get the same tile.
 - Text is generous: every size is `calc(N px * var(--fz))`, so the text-size setting scales everything.
 - Links never show raw addresses; `readableLink()` names them.
 - No "saved" messages; saving is silent, and errors are shown.

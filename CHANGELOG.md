@@ -55,6 +55,8 @@ All notable changes to Orbit are listed here. The format follows
 - Core: Today rules (`today.ts`): dates from "Preferable Time" (`timeInfo`, `nextDate`, `monthsOf`, `inSeason`),
   list order, daily picks, closest to finished, topic counts, distances in miles, `parseTodo`, `nextStatus`.
 - Web API client: `createItem` and `updateItem`, with `useCreateItem` / `useUpdateItem` updating the sync list at once.
+- Kind tiles (Today, Everything, kind pages) are square, keep one size that follows the text-size setting, and wrap
+  onto more rows as kinds are added; three across on phones.
 - Today's Near you uses the places on your lists (`usePlaces()`, `placesByDistance()`): checklist rows as well as
   cards, "on <list>" under each row, "+ N things to do in <city>" for city-list places with no exact spot, and the
   closest place when nothing is within 100 miles. Shared `NearbyRow` and `lib/near-you.ts` for Near me.

@@ -1,23 +1,33 @@
-/* Today: kinds as big tiles, each in its own hue */
+/*
+ * Kinds as big square tiles, each in its own hue (Sid: every kind tile is square, new kinds too).
+ * Tiles keep one size that follows the text-size setting and wrap onto more rows as kinds are added.
+ */
 .kind-tiles {
+  --tile: calc(120px * var(--fz));
+
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, var(--tile));
+  justify-content: start;
+  gap: 12px;
 }
 
 .kind-tile {
   --kc: hsl(var(--kh) var(--kind-s) var(--kind-l));
 
+  aspect-ratio: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 14px 16px;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-top: 3px solid var(--kc);
   border-radius: 10px;
   color: var(--ink);
   text-decoration: none;
+  overflow: hidden;
 }
 
 .kind-tile:hover {
@@ -29,13 +39,42 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
   font-weight: 600;
   font-size: calc(15px * var(--fz));
+  line-height: 1.2;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .kind-tile .value {
-  font: 700 calc(28px * var(--fz)) / 1 var(--display);
+  font: 700 calc(30px * var(--fz)) / 1 var(--display);
   font-variant-numeric: tabular-nums;
+}
+
+/* Phones: three square tiles across, filling the width */
+@media (max-width: 720px) {
+  .kind-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .kind-tile {
+    padding: 10px;
+  }
+
+  /* The top border already carries the hue; the dot would squeeze long names. */
+  .kind-tile .dot {
+    display: none;
+  }
+
+  .kind-tile .label {
+    font-size: calc(13.5px * var(--fz));
+  }
+
+  .kind-tile .value {
+    font-size: calc(26px * var(--fz));
+  }
 }
 
 .kind-tile.on {
