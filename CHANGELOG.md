@@ -44,6 +44,13 @@ All notable changes to Orbit are listed here. The format follows
   `upsertSyncItem()`, `FullItem`; confidence `rejected`.
 - Web: `useSync()`, `useFullItem()` and `useReview()`; the card counts now come from the sync list.
 - API tests run the real SQL and migrations on Node's built-in SQLite (`apps/api/test/helpers/d1.ts`).
+- Web app (build step 2): Today with every section from Orbit today (kind tiles, Near you, Coming up, In season
+  now, In progress, To-do with add and tick off grouped by quest, Closest to finished, Pick one today, Recently
+  changed, Topics); Everything and kind pages with status filter and grouping kept in the address; search results
+  ranked title-first; the search palette on the search bar (arrows, Enter, "Search everything for …").
+- Core: Today rules (`today.ts`): dates from "Preferable Time" (`timeInfo`, `nextDate`, `monthsOf`, `inSeason`),
+  list order, daily picks, closest to finished, topic counts, distances in miles, `parseTodo`, `nextStatus`.
+- Web API client: `createItem` and `updateItem`, with `useCreateItem` / `useUpdateItem` updating the sync list at once.
 
 ### Fixed
 

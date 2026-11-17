@@ -51,6 +51,10 @@ covers and review answers, with no limit on list size. Review links and Fix link
 `GET /api/entities?confidence=review&pending=1` and `useReview()`. After editing a card, put it into the list
 with `upsertSyncItem()` from core rather than refetching everything.
 
+Today's sections are worked out in `apps/web/src/lib/today-sections.ts` with the rules in `packages/core/src/today.ts`
+(the same as Orbit today). Near you uses the coordinates of each card's own linked thing; places that only appear as
+checklist rows come with Near me (build step 6). Coming up and In season read the card's "Preferable Time" detail.
+
 ## Panels and dialogs
 
 | Panel          | Opens from                                   | What's in it                                                                                                                                                                                                                                                                                                                                           |

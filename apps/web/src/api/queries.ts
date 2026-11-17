@@ -1,7 +1,16 @@
-import { mergeSync, type PrefKey, type Prefs, type ReviewDecision, type SyncItem, type SyncState } from "@orbit/core";
+import {
+  mergeSync,
+  upsertSyncItem,
+  type Item,
+  type PrefKey,
+  type Prefs,
+  type ReviewDecision,
+  type SyncItem,
+  type SyncState,
+} from "@orbit/core";
 import { QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext } from "react";
-import { ApiError, type ApiClient } from "./client.js";
+import { ApiError, type ApiClient, type NewItemFields } from "./client.js";
 
 export const ApiContext = createContext<ApiClient | null>(null);
 
@@ -77,6 +86,48 @@ export function useReview() {
     },
     onSuccess: () =>
       Promise.all([qc.invalidateQueries({ queryKey: ["item"] }), qc.invalidateQueries({ queryKey: keys.sync })]),
+  });
+}
+
+/** Puts a saved card into the cached list right away (no refetch of everything). */
+function useUpsertCard() {
+  const qc = useQueryClient();
+  return (item: Item) => {
+    qc.setQueryData<SyncState>(keys.sync, (s) => (s ? upsertSyncItem(s, item) : s));
+    void qc.invalidateQueries({ queryKey: keys.item(item.id) });
+  };
+}
+
+/** Add a card (the to-do box on Today, later the New item dialog). Silent on success. */
+export function useCreateItem() {
+  const api = useApi();
+  const upsert = useUpsertCard();
+  return useMutation({ mutationFn: (fields: NewItemFields) => api.createItem(fields), onSuccess: upsert });
+}
+
+/**
+ * Change a card's fields (tick a to-do, change status). The list shows the change at once and
+ * goes back if saving fails.
+ */
+export function useUpdateItem() {
+  const api = useApi();
+  const qc = useQueryClient();
+  const upsert = useUpsertCard();
+  return useMutation({
+    mutationFn: ({ id, fields }: { id: string; fields: Partial<NewItemFields> }) => api.updateItem(id, fields),
+    onMutate: ({ id, fields }) => {
+      const prev = qc.getQueryData<SyncState>(keys.sync);
+      if (prev)
+        qc.setQueryData<SyncState>(keys.sync, {
+          ...prev,
+          items: prev.items.map((i) => (i.id === id ? { ...i, ...fields, updatedAt: Date.now() } : i)),
+        });
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) qc.setQueryData(keys.sync, ctx.prev);
+    },
+    onSuccess: upsert,
   });
 }
 

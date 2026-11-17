@@ -1,36 +1,163 @@
-import { kindHue } from "@orbit/core";
-import type { CSSProperties } from "react";
+import { relativeDays } from "@orbit/core";
+import { useMemo } from "react";
 import { Link } from "react-router";
-import { useItemSummaries } from "../api/queries.js";
-import { countByKind, kindSlug } from "../lib/kinds.js";
+import { useItemSummaries, usePrefs } from "../api/queries.js";
+import { ItemCard } from "../components/item-card.js";
+import { ItemRow } from "../components/item-row.js";
+import { KindTiles } from "../components/kind-tiles.js";
+import { ProgressBar } from "../components/progress-bar.js";
+import { Section } from "../components/section.js";
+import { TodoSection } from "../components/todo-section.js";
+import { TopicCloud } from "../components/topic-cloud.js";
+import { shortDate } from "../lib/dates.js";
+import { todaySections } from "../lib/today-sections.js";
 
-/** Home. Step 1 shows the kind tiles; the rest of Today (Near you, Coming up, In progress…) comes in step 2. */
+const MONTH = () => new Date().toLocaleDateString(undefined, { month: "long" });
+
+/** Home, and where Back always goes: kind tiles, then what matters today. */
 export function Today() {
   const items = useItemSummaries();
-  const kinds = items.data ? countByKind(items.data) : [];
+  const prefs = usePrefs();
+  const loc = prefs.data?.location;
+  const here = useMemo(
+    () => (loc?.lat !== undefined && loc.lng !== undefined ? { lat: loc.lat, lng: loc.lng } : null),
+    [loc],
+  );
+  const s = useMemo(() => (items.data ? todaySections(items.data, here) : null), [items.data, here]);
+
+  if (!items.data || !s) {
+    return (
+      <div className="pad">{items.isPending && !items.isError && <p className="muted">Loading your cards…</p>}</div>
+    );
+  }
 
   return (
-    <div className="pad">
-      <section aria-label="Kinds">
-        {items.isPending && !items.isError && <p className="muted">Loading your cards…</p>}
-        <div className="kind-tiles">
-          {kinds.map(({ kind, count }) => (
-            <Link
-              key={kind}
-              to={`/kind/${kindSlug(kind)}`}
-              className="kind-tile"
-              style={{ "--kh": kindHue(kind) } as CSSProperties}
-            >
-              <span className="label">
-                <i className="dot" aria-hidden="true" />
-                {kind}
-              </span>
-              <span className="value">{count.toLocaleString()}</span>
+    <div className="pad today">
+      <KindTiles items={items.data} />
+
+      <Section
+        title="Near you"
+        note={
+          here
+            ? s.near.length
+              ? "closest things you haven't done"
+              : "nothing within 100 mi"
+            : "distances need your location"
+        }
+        action={
+          here && (
+            <Link className="btn small" to="/near">
+              All nearby →
             </Link>
-          ))}
-        </div>
-      </section>
-      {items.isSuccess && <p className="muted later">More of Today arrives in build step 2.</p>}
+          )
+        }
+      >
+        {here ? (
+          s.near.length > 0 && (
+            <div className="list">
+              {s.near.map((n) => (
+                <ItemRow key={n.item.id} item={n.item} miles={n.miles} />
+              ))}
+            </div>
+          )
+        ) : (
+          <div className="prompt">
+            Orbit can sort {s.placeCount.toLocaleString()} places on your lists by how far they are from you.
+            <Link className="btn primary" to="/settings/location">
+              Set my location
+            </Link>
+          </div>
+        )}
+      </Section>
+
+      {s.comingUp.length > 0 && (
+        <Section title="Coming up" note="dated events in the next 4 months">
+          <div className="list">
+            {s.comingUp.map(({ item, when, days }) => (
+              <ItemRow
+                key={item.id}
+                item={item}
+                note={when.text}
+                right={
+                  <>
+                    <b className="when-d">{relativeDays(days!)}</b> {when.next && shortDate(when.next)}
+                  </>
+                }
+              />
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {s.inSeason.length > 0 && (
+        <Section title="In season now" note={`${MONTH()} is a good time for these`}>
+          <div className="list">
+            {s.inSeason.map(({ item }) => (
+              <ItemRow key={item.id} item={item} />
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {s.inProgress.length > 0 && (
+        <Section title="In progress" note={`${s.doingCount.toLocaleString()} running`}>
+          <div className="list">
+            {s.inProgress.map((i) => (
+              <ItemRow key={i.id} item={i} />
+            ))}
+          </div>
+        </Section>
+      )}
+
+      <TodoSection groups={s.todos} count={s.todoCount} />
+
+      {s.closest.length > 0 && (
+        <Section title="Closest to finished" note="checklists with the most ticked off">
+          <div className="cards">
+            {s.closest.map((i) => (
+              <ItemCard key={i.id} item={i}>
+                <ProgressBar done={i.done} total={i.total} wide />
+                <span className="small">
+                  {i.done} of {i.total} · {Math.round((i.done / i.total) * 100)}%
+                </span>
+              </ItemCard>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {s.picks.length > 0 && (
+        <Section title="Pick one today" note="a different six each day">
+          <div className="cards">
+            {s.picks.map((i) => (
+              <ItemCard key={i.id} item={i}>
+                <span className="small">
+                  {i.tags
+                    .slice(0, 3)
+                    .map((t) => `#${t}`)
+                    .join("  ")}
+                </span>
+              </ItemCard>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {s.recent.length > 0 && (
+        <Section title="Recently changed">
+          <div className="list">
+            {s.recent.map((i) => (
+              <ItemRow key={i.id} item={i} />
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {s.topics.length > 0 && (
+        <Section title="Topics" note="click one to see everything that shares it, across every kind">
+          <TopicCloud topics={s.topics} />
+        </Section>
+      )}
     </div>
   );
 }
