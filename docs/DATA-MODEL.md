@@ -52,6 +52,25 @@ alongside with `add`). The result carries `reviewed` with the answer. Deleting t
 - `covers`: a cover image address per linked thing.
 - `enrich_queue`: cards waiting to be linked (`mode` new or backfill, retries with back-off).
 - `removed`: ids of cards deleted for good, so `GET /api/sync` can tell other devices to drop them.
+- `works`, `relations`, `connect_state`: connections between things (see below).
+
+## Connections
+
+Series, sequels, adaptations and franchises come from Wikidata, for linked movies, shows, books and games with a
+sure link (`high` or `user`). Connected things don't have to be in Orbit: the card shows the whole series ("3 of 6,
+next: Children of Dune") and Sid adds the ones he wants (Sid, 2026-11-17: show on the card, add on tap; nothing is
+added by itself).
+
+- `works`: a real-world thing by Wikidata id (`qid`), as JSON (`Work` in `packages/core/src/connections.ts`):
+  `label`, `type` (`movie`, `show`, `book`, `game`, `series`, `franchise`, `other`), `year`, `imdb`, `igdb`,
+  `openLibrary`, `author`.
+- `relations`: one connection, always stored one way: `series` (part of `to_qid`, at position `ord`), `follows`
+  (comes after `to_qid`), `based_on` (made from `to_qid`), `franchise`. Read both ways for a card: what follows this,
+  what was made from it.
+- `connect_state`: when each linked thing was last connected and is next due (`connected`, `no-qid`, `failed`).
+- Books linked to Open Library get their Wikidata id from Open Library's id (Wikidata `P648`); movies and shows from
+  IMDb (`P345`). Only ids that match exactly one Wikidata item are kept, and nothing else about the linked thing
+  changes. Cards are found by their linked thing's `qid` (indexed).
 
 ## The sync list
 

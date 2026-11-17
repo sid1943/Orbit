@@ -10,7 +10,7 @@
          |          - links new cards (Wikidata -> IMDb / IGDB, Open Library, map)
          |          - refreshes TV status (TVmaze)
          |
-       D1 database (items, entities, reviews, prefs, live, covers, enrich_queue)
+       D1 database (items, entities, reviews, prefs, live, covers, enrich_queue, works, relations)
 
  packages/core is shared by all of the above: the data model, search, link building,
  the import of Orbit export files, the enricher's matching rules, review answers and the sync list.
@@ -52,3 +52,12 @@ a year (or books without an author) are skipped, because old lists hold many hea
 For shows with a confirmed IMDb id, TVmaze gives status (Running, Ended...), the number of seasons
 aired, and the last and next episode. Shows with an episode coming are checked daily, running shows
 every 3 days, ended shows monthly.
+
+## Connections
+
+The cron also gathers connections from the Wikidata Query Service (free, no key; `jobs/connect-works.ts`):
+missing Wikidata ids for books (from Open Library ids) and movies (from IMDb ids), then for 50 linked things per
+run their series and its other members, sequels, what they're based on and what was made from them, and franchises,
+plus the names and years of everything connected. Each is read again after 30 days. `npm run connect -w @orbit/api`
+runs it all in one go against the local API. The card reads it with `GET /api/connections/:itemId`
+(`useConnections()` in the web app).

@@ -11,7 +11,7 @@ import { normalize } from "./text.js";
 
 export type Fetch = (
   url: string,
-  init?: { headers?: Record<string, string> },
+  init?: { method?: string; headers?: Record<string, string>; body?: string },
 ) => Promise<{ ok: boolean; status: number; json(): Promise<unknown> }>;
 
 export interface EnrichResult {

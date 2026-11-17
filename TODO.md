@@ -6,6 +6,7 @@
 - [x] `packages/core`: data model, search rules, link building, export import
 - [x] Enricher rules: Wikidata (IMDb, IGDB), Open Library, map links, links already in notes
 - [x] TV status from TVmaze
+- [x] Connections from Wikidata: series (with order), sequels, based on / adaptations, franchise; Wikidata ids for books from Open Library
 - [x] `apps/api`: Worker + D1 schema, items / entities / reviews / prefs routes, token auth
 - [x] Cron every 10 minutes: link new cards, back-fill old ones, refresh shows
 - [x] Export file → SQL loader
@@ -36,6 +37,8 @@
 - [x] Settings (appearance, fonts, sizes, location, lists, data, guide, about) and the app map
 - [x] Settings travel in the export (`ui`, `here`) and load into `prefs` (`appearance`, `profile`, `location`)
 - [ ] Location panel: type a city, paste a map link, pick a city (build step 6)
+- [ ] Card panel: show connections from `useConnections()` ("Part of Dune · 1 of 6 · next: Dune Messiah", tap to add) (Card chat)
+- [ ] Watch connections for news (new book in a series, sequel announced) (Live chat, job LV)
 - [ ] Covers on cards; TV status ("Season 3 out", "next episode Fri")
 - [ ] Works offline for reading; installable on the phone home screen
 
