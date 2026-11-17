@@ -18,6 +18,7 @@
 
 - [x] Vite + React app in `apps/web` with the layout (rail, top bar, search) and the API client; local token for now
 - [x] Run in the background on Sid's Mac until it goes online (`scripts/mac-background.sh`)
+- [x] The Mac picks up merged changes by itself (updater pulls `main` and restarts what changed)
 - [ ] Decide how the hosted app signs in (API token in the browser, or Cloudflare Access)
 - [x] Home: greeting, date, location, kind tiles
 - [ ] Home: search palette and the rest of Today (build step 2)

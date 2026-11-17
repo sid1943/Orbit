@@ -31,3 +31,5 @@ All notable changes to Orbit are listed here. The format follows
 - Loader: `export-to-sql` writes the export's settings into `prefs` (`appearance`, `profile`, `location`);
   `--no-prefs` skips them.
 - API: `GET /api/entities` pages through every linked thing (`limit`, `offset`, `next`).
+- `scripts/mac-background.sh`: the 10-minute updater also pulls new commits on `main` (fast-forward only, never
+  over local edits), runs `npm install` and migrations when needed, and restarts the API when its code changed.

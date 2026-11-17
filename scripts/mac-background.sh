@@ -3,9 +3,13 @@
 # Terminal closes and starts again at login:
 #   - the API on http://localhost:8787 (local database in apps/api/.wrangler)
 #   - the web app on http://localhost:5173
-#   - the updater: runs the API's 10-minute job (linking, TV status), which local mode doesn't do on its own
+#   - the updater, every 10 minutes:
+#       1. keeps the code current: when origin/main has new commits it pulls them (fast-forward only, and only
+#          when this copy is on main with no edits of yours), runs npm install and the database migrations when
+#          they changed, and restarts the API when its code changed. The web app reloads by itself.
+#       2. runs the API's 10-minute job (linking, TV status), which local mode doesn't do on its own
 #
-# Usage: scripts/mac-background.sh install | uninstall | restart | status | logs
+# Usage: scripts/mac-background.sh install | uninstall | restart | status | logs | update
 # Nothing runs while the Mac sleeps; it picks up again when it wakes.
 set -euo pipefail
 
@@ -18,11 +22,16 @@ SERVICES=(api web updater)
 die() { echo "orbit: $*" >&2; exit 1; }
 plist() { echo "$AGENTS/$LABEL.$1.plist"; }
 
-# launchd starts programs without your shell setup (nvm, etc.), so record where node is now.
+# launchd starts programs without your shell setup (nvm, etc.), so record where node and git are now.
 node_dir() {
   local node
   node="$(command -v node)" || die "node not found. Open a Terminal where 'node -v' works and run this again."
   dirname "$node"
+}
+git_dir() {
+  local git
+  git="$(command -v git)" || die "git not found."
+  dirname "$git"
 }
 
 write_plist() { # name, workdir, command..., ends with StartInterval or KeepAlive block
@@ -41,7 +50,7 @@ write_plist() { # name, workdir, command..., ends with StartInterval or KeepAliv
 $args  </array>
   <key>EnvironmentVariables</key>
   <dict>
-    <key>PATH</key><string>$NODE_DIR:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>PATH</key><string>$NODE_DIR:$GIT_DIR:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
     <key>WRANGLER_SEND_METRICS</key><string>false</string>
     <key>CI</key><string>1</string>
   </dict>
@@ -73,13 +82,14 @@ install() {
   done
 
   NODE_DIR="$(node_dir)"
+  GIT_DIR="$(git_dir)"
   mkdir -p "$AGENTS" "$LOGS"
   local keep="  <key>KeepAlive</key><true/>
   <key>ThrottleInterval</key><integer>10</integer>"
   write_plist api "$REPO/apps/api" "$keep" "$REPO/node_modules/.bin/wrangler" dev --port 8787 --ip 127.0.0.1
   write_plist web "$REPO/apps/web" "$keep" "$REPO/node_modules/.bin/vite" --port 5173 --strictPort --host 127.0.0.1
   write_plist updater "$REPO" "  <key>StartInterval</key><integer>600</integer>" \
-    /usr/bin/curl -fsS --max-time 300 http://127.0.0.1:8787/cdn-cgi/local/scheduled
+    /bin/bash "$REPO/scripts/mac-background.sh" update
   for s in "${SERVICES[@]}"; do load "$s"; done
 
   echo "Orbit is starting in the background. Open http://localhost:5173 in a few seconds."
@@ -103,11 +113,68 @@ status() {
   if curl -fsS --max-time 3 http://127.0.0.1:5173/ >/dev/null 2>&1; then echo "Web app  answering"; else echo "Web app  not answering yet"; fi
 }
 
+say() { echo "$(date '+%Y-%m-%d %H:%M:%S') $*"; }
+
+# Restarts one background service, if it is installed.
+kick() {
+  launchctl kickstart -k "gui/$(id -u)/$LABEL.$1" >/dev/null 2>&1 && say "restarted $1" || say "couldn't restart $1"
+}
+
+# Pulls new commits from origin/main and does whatever they need. Never touches a copy that is on another
+# branch, has edits of yours, or has commits of its own: it says why in the log and leaves it alone.
+pull_main() {
+  cd "$REPO"
+  local branch
+  branch="$(git rev-parse --abbrev-ref HEAD)"
+  if [ "$branch" != main ]; then say "code update skipped: on branch '$branch', not main"; return 0; fi
+  if ! git diff --quiet || ! git diff --cached --quiet; then say "code update skipped: there are edits not committed"; return 0; fi
+  git fetch --quiet origin main || { say "code update skipped: GitHub can't be reached"; return 0; }
+  local old new
+  old="$(git rev-parse HEAD)"
+  new="$(git rev-parse origin/main)"
+  [ "$old" = "$new" ] && return 0
+  if ! git merge-base --is-ancestor "$old" "$new"; then say "code update skipped: main has commits that aren't on GitHub"; return 0; fi
+  git merge --quiet --ff-only "$new" || { say "code update failed: couldn't fast-forward"; return 0; }
+  local changed
+  changed="$(git diff --name-only "$old" "$new")"
+  say "updated main ${old:0:7} -> ${new:0:7} ($(wc -l <<<"$changed" | tr -d ' ') files)"
+
+  if grep -qE '(^|/)package(-lock)?\.json$' <<<"$changed"; then
+    say "installing packages"
+    npm install --no-audit --no-fund >/dev/null || say "npm install failed; see above"
+  fi
+  if grep -q '^apps/api/migrations/' <<<"$changed"; then
+    say "updating the local database"
+    (cd apps/api && "$REPO/node_modules/.bin/wrangler" d1 migrations apply orbit --local) >/dev/null || say "migrations failed"
+  fi
+  # The web app (Vite) reloads by itself; the API restarts when anything it runs on changed.
+  if grep -qE '^(apps/api/|packages/|package(-lock)?\.json$)' <<<"$changed"; then kick api; fi
+  if grep -qE '(^|/)package(-lock)?\.json$|^apps/web/vite\.config\.ts$' <<<"$changed"; then kick web; fi
+  if grep -q '^scripts/mac-background\.sh$' <<<"$changed"; then
+    say "note: this script changed; the next run uses the new version"
+  fi
+}
+
+update() {
+  local lock="${TMPDIR:-/tmp}/orbit-update.lock"
+  mkdir "$lock" 2>/dev/null || { say "an update is still running; skipping"; return 0; }
+  trap "rmdir '$lock'" EXIT
+  pull_main || say "code update failed; see above"
+  # The API may be restarting: give it a minute before the 10-minute job.
+  local i
+  for i in $(seq 1 12); do
+    curl -fsS --max-time 3 http://127.0.0.1:8787/api/health >/dev/null 2>&1 && break
+    sleep 5
+  done
+  curl -fsS --max-time 300 http://127.0.0.1:8787/cdn-cgi/local/scheduled >/dev/null || say "the 10-minute job didn't answer"
+}
+
 case "${1:-}" in
   install) install ;;
   uninstall) uninstall ;;
   restart) uninstall >/dev/null; install ;;
   status) status ;;
   logs) tail -n 40 -f "$LOGS"/*.log ;;
-  *) echo "Usage: $0 install | uninstall | restart | status | logs"; exit 1 ;;
+  update) update ;;
+  *) echo "Usage: $0 install | uninstall | restart | status | logs | update"; exit 1 ;;
 esac
