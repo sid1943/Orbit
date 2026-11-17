@@ -10,3 +10,7 @@ data/
 *.export.json
 orbit-export-*.json
 seed*.sql
+
+# Local web settings (API token)
+.env.local
+.env.*.local

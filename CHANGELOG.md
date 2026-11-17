@@ -17,3 +17,9 @@ All notable changes to Orbit are listed here. The format follows
 - Loader from an export file to D1 SQL, splitting very large cards to fit D1's statement limit.
 - Tooling: ESLint, Prettier, EditorConfig, Vitest in each workspace, GitHub Actions CI, Dependabot, PR template.
 - Docs: architecture, data model, setup, conventions, web app plan.
+- Web app (`apps/web`, build step 1): Vite, React, React Router and TanStack Query; the layout from Orbit today
+  (rail, greeting with date and location, search bar, Back to Today); kind tiles with counts on Today; a typed API
+  client that follows pages and explains when the API is down or refuses the token; placeholder pages for later steps.
+- `scripts/mac-background.sh`: runs the API, the web app and the 10-minute update job in the background on a Mac
+  (LaunchAgents), surviving closed Terminals and restarting at login.
+- Core: shared settings (`parsePrefs`), the greeting rule and each kind's colour.

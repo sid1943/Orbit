@@ -1,0 +1,43 @@
+/* Today: kinds as big tiles, each in its own hue */
+.kind-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.kind-tile {
+  --kc: hsl(var(--kh) var(--kind-s) var(--kind-l));
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--kc);
+  border-radius: 10px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.kind-tile:hover {
+  border-color: var(--kc);
+  background: color-mix(in srgb, var(--kc) 10%, var(--panel));
+}
+
+.kind-tile .label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: calc(15px * var(--fz));
+}
+
+.kind-tile .value {
+  font: 700 calc(28px * var(--fz)) / 1 var(--display);
+  font-variant-numeric: tabular-nums;
+}
+
+.later {
+  margin-top: 26px;
+}

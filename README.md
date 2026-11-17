@@ -33,7 +33,15 @@ orbit/
 │   │   │   ├── middleware/   Token auth
 │   │   │   └── routes/       items, entities, live, reviews, prefs, enrich
 │   │   └── test/
-│   └── web/                  Web app (planned)
+│   └── web/                  Web app (Vite + React)
+│       ├── src/
+│       │   ├── api/          API client and data hooks
+│       │   ├── components/   Layout: rail, top bar, search
+│       │   ├── pages/        One file per page
+│       │   ├── lib/          Small helpers (kinds, dates, config)
+│       │   ├── styles/       Design tokens and CSS
+│       │   └── routes.tsx    Every page in one list
+│       └── test/
 ├── packages/
 │   └── core/                 Shared model and rules, no platform code
 │       ├── src/              types, text, links, enrich, live, import-export
@@ -60,6 +68,15 @@ npm run db:migrate:local
 npm run dev            # http://localhost:8787/api/health
 ```
 
+Run the web app next to it (in a second terminal):
+
+```bash
+cp apps/web/.env.example apps/web/.env.local   # set VITE_API_TOKEN to the same password
+npm run dev -w @orbit/web                      # http://localhost:5173
+```
+
+The web app's `/api` calls are forwarded to the local API, so both run on your computer with no Cloudflare account.
+
 To put it online on Cloudflare and load your data, follow [docs/SETUP.md](docs/SETUP.md).
 
 ## Scripts
@@ -72,6 +89,9 @@ To put it online on Cloudflare and load your data, follow [docs/SETUP.md](docs/S
 | `npm run lint`              | ESLint (`lint:fix` to fix)                         |
 | `npm run format`            | Prettier, writes changes (`format:check` to check) |
 | `npm run dev -w @orbit/api` | API on localhost with a local database             |
+| `npm run dev -w @orbit/web` | Web app on localhost, talking to the local API     |
+| `npm run build`             | Builds the web app into `apps/web/dist`            |
+| `scripts/mac-background.sh` | Keeps the API and web app running on a Mac         |
 
 ## Documentation
 

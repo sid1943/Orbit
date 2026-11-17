@@ -80,6 +80,37 @@ npx wrangler dev --test-scheduled
 curl -X POST -H "Authorization: Bearer local-password" http://localhost:8787/api/enrich/run
 ```
 
+### The web app on your computer
+
+With the API running as above, in a second terminal:
+
+```bash
+cp apps/web/.env.example apps/web/.env.local   # VITE_API_TOKEN=local-password
+npm run dev -w @orbit/web
+```
+
+Open http://localhost:5173. Vite forwards `/api` to the API on port 8787. If the page says the API isn't running
+or refused the token, it tells you which of the two to fix. To load your real data locally, run the
+`import:sql` step from section 5 and then `npx wrangler d1 execute orbit --local --file data/seed.sql`.
+
+### Keep it running on a Mac
+
+To keep the API and the web app running after Terminal closes, starting again at login, and to run the
+10-minute update job (linking new cards, TV status) that local mode doesn't run by itself:
+
+```bash
+scripts/mac-background.sh install     # stop any servers running in Terminal first
+scripts/mac-background.sh status
+scripts/mac-background.sh logs        # Ctrl+C to stop following
+scripts/mac-background.sh uninstall   # stop and remove; your local data is kept
+```
+
+It adds three LaunchAgents (`com.orbit.api`, `com.orbit.web`, `com.orbit.updater`) to `~/Library/LaunchAgents`,
+with logs in `~/Library/Logs/orbit`. They pause while the Mac sleeps. If you change Node versions, run
+`scripts/mac-background.sh restart`.
+
+How the hosted web app signs in (the API token, or Cloudflare Access) is decided before it goes online.
+
 ## The API
 
 All routes except `/api/health` need `Authorization: Bearer <API_TOKEN>`.
