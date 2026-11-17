@@ -91,6 +91,7 @@ To put it online on Cloudflare and load your data, follow [docs/SETUP.md](docs/S
 | `npm run dev -w @orbit/api` | API on localhost with a local database             |
 | `npm run dev -w @orbit/web` | Web app on localhost, talking to the local API     |
 | `npm run build`             | Builds the web app into `apps/web/dist`            |
+| `scripts/mac-background.sh` | Keeps the API and web app running on a Mac         |
 
 ## Documentation
 
