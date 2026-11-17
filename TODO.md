@@ -10,14 +10,16 @@
 - [x] Cron every 10 minutes: link new cards, back-fill old ones, refresh shows
 - [x] Export file → SQL loader
 - [x] Repository conventions: ESLint, Prettier, EditorConfig, CI, Dependabot, PR template, docs/CONVENTIONS.md
-- [ ] Sid: rename the GitHub repository to `orbit` (Settings → General)
+- [x] Sid: rename the GitHub repository to `orbit` (Settings → General)
 - [ ] Sid: Cloudflare account, `wrangler d1 create`, secret, deploy (docs/SETUP.md)
 - [ ] Sid: load the export
 
 ## Step 2: Web app (spec: docs/WEB-APP.md)
 
-- [ ] Vite + React app in `apps/web`, signed in with the API token
-- [ ] Home with greeting, location, search palette, kind tiles
+- [x] Vite + React app in `apps/web` with the layout (rail, top bar, search) and the API client; local token for now
+- [ ] Decide how the hosted app signs in (API token in the browser, or Cloudflare Access)
+- [x] Home: greeting, date, location, kind tiles
+- [ ] Home: search palette and the rest of Today (build step 2)
 - [ ] Card modal (links, notes, checklists with search, comments, due date)
 - [ ] Map view with big topics, Near you
 - [ ] Review queue

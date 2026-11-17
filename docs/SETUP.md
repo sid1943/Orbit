@@ -80,6 +80,21 @@ npx wrangler dev --test-scheduled
 curl -X POST -H "Authorization: Bearer local-password" http://localhost:8787/api/enrich/run
 ```
 
+### The web app on your computer
+
+With the API running as above, in a second terminal:
+
+```bash
+cp apps/web/.env.example apps/web/.env.local   # VITE_API_TOKEN=local-password
+npm run dev -w @orbit/web
+```
+
+Open http://localhost:5173. Vite forwards `/api` to the API on port 8787. If the page says the API isn't running
+or refused the token, it tells you which of the two to fix. To load your real data locally, run the
+`import:sql` step from section 5 and then `npx wrangler d1 execute orbit --local --file data/seed.sql`.
+
+How the hosted web app signs in (the API token, or Cloudflare Access) is decided before it goes online.
+
 ## The API
 
 All routes except `/api/health` need `Authorization: Bearer <API_TOKEN>`.
