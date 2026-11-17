@@ -178,6 +178,9 @@ export interface LiveStatus {
   seasons?: number;
   nextEpisode?: { date: string; name?: string; season?: number; number?: number } | null;
   lastEpisode?: { date: string; season?: number; number?: number } | null;
+  /** Release or first publication date (YYYY-MM-DD, or YYYY when only the year is known). */
   releaseDate?: string;
+  /** When a place closed for good (YYYY-MM-DD or YYYY), from Wikidata. */
+  closed?: string;
   checkedAt: number;
 }

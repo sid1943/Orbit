@@ -1,9 +1,10 @@
 import { enrichItem, type Entity, type Item } from "@orbit/core";
 import { UPSERT_COVER, UPSERT_ENTITY, UPSERT_ITEM, entityRow, itemRow, parse } from "../db/statements.js";
 import type { Env } from "../env.js";
-import { HOUR, workerFetch } from "./shared.js";
+import { Budget, ENRICH_CAP, HOUR } from "./shared.js";
 
-/** Up to 3 outside requests and 4 queries per card (see jobs/shared.ts for the per-run budget). */
+/** A card costs up to 3 outside requests and 1 database call (2 when it fails); see jobs/shared.ts. */
+const PER_ITEM = 5;
 const ITEMS_PER_RUN = 8;
 
 /** Queue a card for linking. Re-queuing resets its retries. */
@@ -17,7 +18,16 @@ export async function enqueue(env: Env, itemId: string, now = Date.now()): Promi
 }
 
 /** Link newly added items to their real-world thing. */
-export async function runEnrichQueue(env: Env, now = Date.now()): Promise<{ done: number; failed: number }> {
+export async function runEnrichQueue(
+  env: Env,
+  now = Date.now(),
+  budget = new Budget(),
+): Promise<{ done: number; failed: number }> {
+  // At most ENRICH_CAP of the run's budget, and never so little that a card would fail half-way.
+  const floor = budget.left - ENRICH_CAP;
+  const fits = () => budget.left - PER_ITEM >= Math.max(floor, 0);
+  if (!budget.has(1 + PER_ITEM) || !fits()) return { done: 0, failed: 0 };
+  budget.db();
   // Cards Sid just added go first; the back-fill of old cards fills the remaining slots.
   const { results } = await env.DB.prepare(
     `SELECT q.item_id, q.attempts, q.mode, i.data FROM enrich_queue q JOIN items i ON i.id = q.item_id
@@ -28,13 +38,15 @@ export async function runEnrichQueue(env: Env, now = Date.now()): Promise<{ done
   let done = 0,
     failed = 0;
   for (const row of results) {
+    if (!fits()) break;
     const item = parse<Item>(row)!;
     try {
       if (item.entityId || item.deleted) {
+        budget.db();
         await env.DB.prepare(`DELETE FROM enrich_queue WHERE item_id = ?`).bind(item.id).run();
         continue;
       }
-      const r = await enrichItem(workerFetch, item, { strict: row.mode === "backfill" });
+      const r = await enrichItem(budget.fetch, item, { strict: row.mode === "backfill" });
       const stmts: D1PreparedStatement[] = [env.DB.prepare(`DELETE FROM enrich_queue WHERE item_id = ?`).bind(item.id)];
       if (r.entity) {
         const entity: Entity = {
@@ -51,6 +63,7 @@ export async function runEnrichQueue(env: Env, now = Date.now()): Promise<{ done
         if (r.coverUrl)
           stmts.push(env.DB.prepare(UPSERT_COVER).bind(entity.id, r.coverUrl, new URL(r.coverUrl).hostname, now));
       }
+      budget.db();
       await env.DB.batch(stmts);
       done++;
     } catch (err) {
@@ -63,6 +76,7 @@ export async function runEnrichQueue(env: Env, now = Date.now()): Promise<{ done
           : env.DB.prepare(
               `UPDATE enrich_queue SET attempts = ?, not_before = ?, last_error = ? WHERE item_id = ?`,
             ).bind(attempts, now + HOUR * 2 ** (attempts - 1), String(err).slice(0, 500), item.id);
+      budget.db();
       await stmt.run();
     }
   }

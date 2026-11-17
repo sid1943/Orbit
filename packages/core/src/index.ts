@@ -14,3 +14,5 @@ export * from "./location.js";
 export * from "./kinds.js";
 export * from "./card.js";
 export * from "./connections.js";
+export * from "./watch.js";
+export * from "./link-check.js";

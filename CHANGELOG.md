@@ -21,6 +21,14 @@ All notable changes to Orbit are listed here. The format follows
   they're in Orbit. Books get Wikidata ids from their Open Library ids. The cron gathers 50 per run;
   `npm run connect -w @orbit/api` does everything at once. `GET /api/connections/:itemId` and `useConnections()`
   give a card its connections; core `connections.ts`, migration `0003_connections`.
+- Live watch (job LV): the app decides what each linked thing needs (core `watch.ts`: what to watch, how
+  often, when to stop) and one scheduler (`jobs/live-watch.ts`) checks shows on TVmaze, release and closing
+  dates on Wikidata (50 per request) and publication dates on Open Library. Things that can't change stop
+  at once with no request. Replaces `jobs/refresh-shows.ts`; TVmaze ids are kept, so a show costs 1 request.
+- Dead-link check for pasted links (Useful links, attachments, "Fix links"): dead only after three gone
+  answers a week apart; sites that refuse robots are "blocked", never dead.
+- `GET /api/watch` (what is watched, stopped and due) and `GET /api/watch/links` (a card's pasted links, or
+  every link in one state). Migration `0003_watch` (`watch`, `link_checks`, `job_state`).
 - Monorepo with npm workspaces: `packages/core` and `apps/api`.
 - Core: data model, search rule, standard links per kind, import of Orbit export files.
 - Linking: IMDb via Wikidata, Open Library, IGDB and map links; links already in a card's notes are used first; list cards are skipped; strict back-fill for old cards.
@@ -108,6 +116,9 @@ All notable changes to Orbit are listed here. The format follows
 
 ### Fixed
 
+- The cron counted outside requests and database calls as two budgets of 50, but the free plan allows
+  50 subrequests in all. All jobs now share one budget of 48, and the enrich queue stops before a card
+  that wouldn't fit instead of failing it half-way.
 - `useAddKind()` refused every new name ("there is already a kind called …"): it checked the name after
   adding it to the list. It now checks first, then shows the new kind.
 

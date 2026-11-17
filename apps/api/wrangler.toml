@@ -9,7 +9,7 @@ database_name = "orbit"
 database_id = "REPLACE_WITH_YOUR_D1_ID"
 migrations_dir = "migrations"
 
-# Every 10 minutes: link a few newly added items, then refresh a few TV shows.
+# Every 10 minutes: link a few new cards, live watch (TV, releases, closings), dead-link check.
 [triggers]
 crons = ["*/10 * * * *"]
 
