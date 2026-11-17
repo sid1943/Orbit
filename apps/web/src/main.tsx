@@ -12,6 +12,7 @@ import "./styles/base.css";
 import "./styles/layout.css";
 import "./styles/pages.css";
 import "./styles/settings.css";
+import "./styles/card.css";
 
 // Theme, fonts and size from last time, before the first paint; the saved setting takes over once it loads.
 applyAppearance(rememberedAppearance(globalThis.localStorage));

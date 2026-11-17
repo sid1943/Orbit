@@ -5,6 +5,7 @@ import {
   suggestHue,
   mergeSync,
   upsertSyncItem,
+  type FullItem,
   type Item,
   type PlacesState,
   type PrefKey,
@@ -15,7 +16,7 @@ import {
 } from "@orbit/core";
 import { QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext } from "react";
-import { ApiError, type ApiClient, type KindEntry, type NewItemFields } from "./client.js";
+import { ApiError, type ApiClient, type ItemEditFields, type KindEntry, type NewItemFields } from "./client.js";
 
 export const ApiContext = createContext<ApiClient | null>(null);
 
@@ -211,6 +212,59 @@ export function useUpdateItem() {
       if (ctx?.prev) qc.setQueryData(keys.sync, ctx.prev);
     },
     onSuccess: upsert,
+  });
+}
+
+/**
+ * Save changes from the card panel. The card and the lists show the change at once and go back if
+ * saving fails. Each save sends whole fields (a whole checklist list), worked out from the card as
+ * it shows now, so quick edits in a row build on each other.
+ */
+export function useEditCard(id: string) {
+  const api = useApi();
+  const qc = useQueryClient();
+  const mutationKey = ["edit", id];
+  return useMutation({
+    mutationKey,
+    mutationFn: (fields: ItemEditFields) => api.updateItem(id, fields),
+    onMutate: async (fields) => {
+      await qc.cancelQueries({ queryKey: keys.item(id) });
+      const prevFull = qc.getQueryData<FullItem>(keys.item(id));
+      const prevSync = qc.getQueryData<SyncState>(keys.sync);
+      if (prevFull) {
+        const item: Item = { ...prevFull.item, ...fields, updatedAt: Date.now() };
+        qc.setQueryData<FullItem>(keys.item(id), { ...prevFull, item });
+        if (prevSync) qc.setQueryData<SyncState>(keys.sync, upsertSyncItem(prevSync, item));
+      }
+      return { prevFull, prevSync };
+    },
+    onError: (_err, _fields, ctx) => {
+      if (ctx?.prevFull) qc.setQueryData(keys.item(id), ctx.prevFull);
+      if (ctx?.prevSync) qc.setQueryData(keys.sync, ctx.prevSync);
+    },
+    onSuccess: (item) => {
+      qc.setQueryData<SyncState>(keys.sync, (s) => (s ? upsertSyncItem(s, item) : s));
+      // Take the saved card, unless another edit is already on its way (it holds this one too).
+      if (qc.isMutating({ mutationKey }) <= 1)
+        qc.setQueryData<FullItem>(keys.item(id), (f) => (f ? { ...f, item } : f));
+      void qc.invalidateQueries({ queryKey: keys.places });
+    },
+  });
+}
+
+/** Move a card to deleted. It leaves the lists at once. */
+export function useDeleteItem() {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.deleteItem(id),
+    onSuccess: (_r, id) => {
+      qc.setQueryData<SyncState>(keys.sync, (s) =>
+        s ? { ...s, items: s.items.map((i) => (i.id === id ? { ...i, deleted: true, updatedAt: Date.now() } : i)) } : s,
+      );
+      qc.removeQueries({ queryKey: keys.item(id) });
+      void qc.invalidateQueries({ queryKey: keys.places });
+    },
   });
 }
 
