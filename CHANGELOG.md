@@ -77,6 +77,10 @@ All notable changes to Orbit are listed here. The format follows
   card, edit in place), Checklists (search across rows and their linked things, progress, tick, add, edit, move up and
   down or to another checklist, delete, rename or delete a checklist, first 40 rows then Show all) and Comments; side
   column with topics, due date, details, When (months and season) and connected cards. One column on phones.
+- Web app: a card opens over the page you were on, as in Orbit today: `/item/:id` stays its address (links,
+  reloads and Back work), the page behind keeps its place, and the card closes with ×, Escape or a click on the
+  backdrop, back to that page. Opened straight from its address, the card sits over Today. The page behind can't be
+  tabbed into while the card is open. On phones the card fills the screen.
 - Web app: New item (the New button or N) with title and #topics, kind and status; it opens the new card.
 - Core: `card.ts` with the card panel's rules (`usefulLinks`, `thingLinks`, `hiddenFor`, `textParts`, `splitTopics`,
   checklist, comment and topic edits, `checklistMatches`, `linkedCardIds`, `relatedByTopics`).

@@ -1,6 +1,5 @@
 import { createBrowserRouter, type RouteObject } from "react-router";
 import { Layout } from "./components/layout.js";
-import { CardPage } from "./pages/card.js";
 import { Everything } from "./pages/everything.js";
 import { NotFound } from "./pages/not-found.js";
 import { Planned } from "./pages/planned.js";
@@ -24,7 +23,8 @@ export const PAGES = [
   },
   { path: "/kind/:kind", title: "Kind", what: "The Everything list for one kind", element: <Everything /> },
   { path: "/search", title: "Search", what: "Ranked search results", element: <Search /> },
-  { path: "/item/:id", title: "Card", what: "One card, opened", element: <CardPage /> },
+  // A card opens over the page behind it (Layout draws it), so the route has no page of its own.
+  { path: "/item/:id", title: "Card", what: "One card, opened over the page you were on", element: null },
   {
     path: "/settings/:section?",
     title: "Settings",
@@ -56,14 +56,12 @@ export const PANELS = [
   { title: "Location", opens: "the location in the greeting", what: "Use my location, type a city, pick a city" },
 ] as const;
 
-const routes: RouteObject[] = [
-  {
-    element: <Layout />,
-    children: [
-      ...PAGES.map(({ path, element }) => (path === "/" ? { index: true, element } : { path, element })),
-      { path: "*", element: <NotFound /> },
-    ],
-  },
+/** The pages Layout draws (a card's address draws the page behind it, with the card on top). */
+const pageRoutes: RouteObject[] = [
+  ...PAGES.map(({ path, element }) => ({ path, element })),
+  { path: "*", element: <NotFound /> },
 ];
+
+const routes: RouteObject[] = [{ path: "*", element: <Layout pages={pageRoutes} /> }];
 
 export const router = createBrowserRouter(routes);
