@@ -113,6 +113,13 @@ It adds three LaunchAgents (`com.orbit.api`, `com.orbit.web`, `com.orbit.updater
 with logs in `~/Library/Logs/orbit`. They pause while the Mac sleeps. If you change Node versions, run
 `scripts/mac-background.sh restart`.
 
+The updater also keeps the code current. Every 10 minutes it checks GitHub, and when `main` has new commits it
+pulls them, runs `npm install` and the local database migrations if those changed, and restarts the API if its
+code changed (the web app reloads by itself). So after a pull request is merged, the Mac has it within about
+10 minutes, with nothing to type. It only does this when your copy is on `main` with no uncommitted edits and
+no commits of its own; otherwise it leaves the copy alone and says why in `~/Library/Logs/orbit/updater.log`.
+Run it by hand with `scripts/mac-background.sh update`.
+
 How the hosted web app signs in (the API token, or Cloudflare Access) is decided before it goes online.
 
 ## The API
