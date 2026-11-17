@@ -24,7 +24,9 @@
 - [ ] Card modal (links, notes, checklists with search, comments, due date)
 - [ ] Map view with big topics, Near you
 - [ ] Review queue
-- [ ] Settings (appearance, fonts, sizes, location, lists, data, guide, about) and the app map
+- [x] Settings (appearance, fonts, sizes, location, lists, data, guide, about) and the app map
+- [x] Settings travel in the export (`ui`, `here`) and load into `prefs` (`appearance`, `profile`, `location`)
+- [ ] Location panel: type a city, paste a map link, pick a city (build step 6)
 - [ ] Covers on cards; TV status ("Season 3 out", "next episode Fri")
 - [ ] Works offline for reading; installable on the phone home screen
 

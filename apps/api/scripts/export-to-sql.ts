@@ -8,6 +8,9 @@
  * Unlinked movies, shows and games with a year, and books with an author, are queued for the
  * enricher in back-fill mode, which keeps only sure links (pass --no-enqueue to skip that).
  *
+ * Settings in the file go into the `prefs` table under `appearance`, `profile` and `location`
+ * (docs/DATA-MODEL.md). Only keys the file has are written; pass --no-prefs to keep the database's settings.
+ *
  * The output holds personal data: keep it out of git (data/ and seed*.sql are ignored).
  * Running it again is safe: rows are replaced, not duplicated.
  */
@@ -18,6 +21,7 @@ import { entityRow, itemRow, reviewRow } from "../src/db/statements.js";
 
 const args = process.argv.slice(2);
 const noEnqueue = args.includes("--no-enqueue");
+const noPrefs = args.includes("--no-prefs");
 const [input, output = "data/seed.sql"] = args.filter((a) => !a.startsWith("--"));
 if (!input) {
   console.error("Usage: export-to-sql <orbit-export.json> [out.sql]");
@@ -48,7 +52,9 @@ function insert(table: string, cols: string[], rows: unknown[][]): string[] {
   return out;
 }
 
-const { items, entities, reviews } = importOrbitExport(JSON.parse(readFileSync(input, "utf8")));
+const { items, entities, reviews, prefs } = importOrbitExport(JSON.parse(readFileSync(input, "utf8")));
+const now = Date.now();
+const prefRows = noPrefs ? [] : Object.entries(prefs).map(([key, value]) => [key, JSON.stringify(value), now]);
 const lines = [
   "-- Orbit import. Generated " + new Date().toISOString(),
   ...insert(
@@ -62,10 +68,10 @@ const lines = [
     entities.map(entityRow),
   ),
   ...insert("reviews", ["entity_id", "decision", "at"], reviews.map(reviewRow)),
+  ...insert("prefs", ["key", "value", "updated_at"], prefRows),
 ];
 // Queue unlinked movies, shows, games (with a year) and books (with an author) so the enricher
 // links them over the next days. Back-fill mode keeps only sure matches.
-const now = Date.now();
 const queued = noEnqueue ? [] : items.filter((i) => !i.entityId && !i.deleted && backfillable(i));
 lines.push(
   ...queued.map(
@@ -78,5 +84,6 @@ if (biggest > 100_000) throw new Error(`A statement is ${biggest} bytes; D1 allo
 mkdirSync(dirname(output), { recursive: true });
 writeFileSync(output, lines.join("\n") + "\n");
 console.log(
-  `Wrote ${output}: ${items.length} items, ${entities.length} linked things, ${reviews.length} reviews, ${queued.length} queued for linking.`,
+  `Wrote ${output}: ${items.length} items, ${entities.length} linked things, ${reviews.length} reviews, ` +
+    `${queued.length} queued for linking, settings: ${prefRows.map((r) => r[0]).join(", ") || "none"}.`,
 );

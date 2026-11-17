@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { usePrefs, useSetPref } from "../api/queries.js";
 import { longDate } from "../lib/dates.js";
+import { locateDevice } from "../lib/locate.js";
 
 /** Greeting, date, location and New: the same on every page. Back is absolute: it always goes to Today. */
 export function TopBar({ isHome, onMenu }: { isHome: boolean; onMenu: () => void }) {
@@ -16,17 +17,9 @@ export function TopBar({ isHome, onMenu }: { isHome: boolean; onMenu: () => void
 
   const useMyLocation = () => {
     setLocError("");
-    if (!("geolocation" in navigator)) return setLocError("This browser can't share its location.");
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) =>
-        setLocation.mutate({
-          label: "Current location",
-          lat: Math.round(coords.latitude * 1e4) / 1e4,
-          lng: Math.round(coords.longitude * 1e4) / 1e4,
-        }),
-      () => setLocError("Location permission was refused."),
-      { timeout: 10_000 },
-    );
+    locateDevice()
+      .then((loc) => setLocation.mutate(loc))
+      .catch((e: unknown) => setLocError(e instanceof Error ? e.message : String(e)));
   };
 
   return (

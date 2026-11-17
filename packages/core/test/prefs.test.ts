@@ -28,7 +28,9 @@ describe("parsePrefs", () => {
   });
 
   it("reads profile and location", () => {
-    expect(parsePrefs({ profile: { name: " Alex " }, location: { label: "Springfield", lat: 1, lng: 2 } })).toEqual({
+    expect(
+      parsePrefs({ profile: { name: " Alex " }, location: { label: "Springfield", lat: 1, lng: 2 } }),
+    ).toMatchObject({
       profile: { name: "Alex" },
       location: { label: "Springfield", lat: 1, lng: 2 },
     });
@@ -36,6 +38,21 @@ describe("parsePrefs", () => {
 
   it("drops half-set coordinates", () => {
     expect(parsePrefs({ location: { label: "Springfield", lat: 1 } }).location).toEqual({ label: "Springfield" });
+  });
+
+  it("drops Orbit today's 'near' prefix from the location", () => {
+    expect(parsePrefs({ location: { label: "near Springfield" } }).location).toEqual({ label: "Springfield" });
+  });
+
+  it("reads appearance field by field", () => {
+    expect(
+      parsePrefs({ appearance: { theme: "dark", size: 1.3, font: "inter", heads: "nope", detail: "text" } }),
+    ).toMatchObject({ appearance: { theme: "dark", size: 1.3, font: "inter", heads: "display", detail: "text" } });
+  });
+
+  it("reads the lists setting", () => {
+    expect(parsePrefs({ lists: { showArchived: true } }).lists).toEqual({ showArchived: true });
+    expect(parsePrefs({ lists: { showArchived: "yes" } }).lists).toEqual({ showArchived: false });
   });
 });
 

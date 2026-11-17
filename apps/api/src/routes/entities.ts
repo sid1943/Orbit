@@ -6,18 +6,28 @@ import { idList } from "../lib/validation.js";
 
 export const entities = new Hono<AppEnv>();
 
-/** By ids (`?ids=a,b`), by confidence (`?confidence=review`), or the latest 500. */
+/** By ids (`?ids=a,b`), by confidence (`?confidence=review`), or all of them, newest first, in pages (`?limit=&offset=`, default 500, at most 2000). */
 entities.get("/", async (c) => {
   const ids = idList(c.req.query("ids"));
   const conf = c.req.query("confidence");
   const db = c.env.DB;
-  const stmt = ids.length
-    ? db.prepare(`SELECT data FROM entities WHERE id IN (${ids.map(() => "?").join(",")})`).bind(...ids)
-    : conf
-      ? db.prepare("SELECT data FROM entities WHERE confidence = ? LIMIT 500").bind(conf)
-      : db.prepare("SELECT data FROM entities ORDER BY updated_at DESC LIMIT 500");
-  const { results } = await stmt.all<{ data: string }>();
-  return c.json({ entities: results.map((r) => JSON.parse(r.data) as Entity) });
+  if (ids.length || conf) {
+    const stmt = ids.length
+      ? db.prepare(`SELECT data FROM entities WHERE id IN (${ids.map(() => "?").join(",")})`).bind(...ids)
+      : db.prepare("SELECT data FROM entities WHERE confidence = ? LIMIT 500").bind(conf);
+    const { results } = await stmt.all<{ data: string }>();
+    return c.json({ entities: results.map((r) => JSON.parse(r.data) as Entity) });
+  }
+  const limit = Math.min(Number(c.req.query("limit") ?? 500) || 500, 2000);
+  const offset = Number(c.req.query("offset") ?? 0) || 0;
+  const { results } = await db
+    .prepare("SELECT data FROM entities ORDER BY updated_at DESC, id LIMIT ? OFFSET ?")
+    .bind(limit, offset)
+    .all<{ data: string }>();
+  return c.json({
+    entities: results.map((r) => JSON.parse(r.data) as Entity),
+    next: results.length === limit ? offset + limit : null,
+  });
 });
 
 /** One linked thing with its TV status and cover. */

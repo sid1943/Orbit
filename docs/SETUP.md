@@ -48,7 +48,7 @@ curl https://orbit-api.<your-name>.workers.dev/api/health
 
 ## 5. Load your Orbit data
 
-1. In the current Orbit page: **Settings → Data → Download everything**. You get `orbit-export-YYYY-MM-DD.json`.
+1. In the current Orbit page: **Settings → Your data → Download everything**. You get `orbit-export-YYYY-MM-DD.json`.
 2. Make the SQL and load it (keep both files outside the repository, or in `apps/api/data/`, which git ignores):
 
 ```bash
@@ -61,6 +61,10 @@ writes a day, and one full load uses roughly half of that, so load at most once 
 
 The load also queues your unlinked cards (movies, shows and games with a year, books with an author)
 so the enricher links them over the next day or two. Add `--no-enqueue` to skip that.
+
+Settings in the file (appearance, the greeting name and your location) are loaded too, into the `prefs`
+table. Files from before settings were added to the export simply have none. Add `--no-prefs` to keep
+the settings already in the database, for example after changing them in the web app.
 
 3. Check the counts:
 
@@ -123,10 +127,10 @@ All routes except `/api/health` need `Authorization: Bearer <API_TOKEN>`.
 | `POST /api/items`                                           | Add a card (`kind`, `title` required); it is queued for linking         |
 | `PATCH /api/items/:id`                                      | Change fields                                                           |
 | `DELETE /api/items/:id`                                     | Move to deleted (`?hard=1` removes it for good)                         |
-| `GET /api/entities?ids=a,b` / `?confidence=review`          | Linked things                                                           |
+| `GET /api/entities?ids=a,b` / `?confidence=review`          | Linked things (or all, in pages: `?limit=&offset=`, see `next`)         |
 | `GET /api/entities/:id`                                     | One linked thing with its TV status and cover                           |
 | `PATCH /api/entities/:id`                                   | Fix a link by hand (marked as set by you; the enricher leaves it alone) |
 | `GET /api/live?ids=a,b`                                     | TV status and covers for several linked things                          |
 | `GET /api/reviews`, `PUT /api/reviews/:entityId`            | Your answers to link guesses                                            |
-| `GET /api/prefs`, `PUT /api/prefs/:key`                     | Settings (font, theme, home location)                                   |
+| `GET /api/prefs`, `PUT /api/prefs/:key`                     | Settings by key: `appearance`, `profile`, `location`, `lists`           |
 | `POST /api/enrich/run`                                      | Run the enricher now instead of waiting for the next 10 minutes         |

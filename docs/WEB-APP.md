@@ -54,15 +54,15 @@ can put a sign-in (Google, email code) in front of both the app and the API (fre
 
 ## Settings sections
 
-| Section    | Settings                                                                                                                          |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Appearance | Theme (light, dark, system); text size (Small 1, Medium 1.15, Large 1.3, Extra large 1.45); heading font; detail lines; text font |
-| Profile    | Name used in the greeting                                                                                                         |
-| Location   | Home location                                                                                                                     |
-| Lists      | Show archived                                                                                                                     |
-| Your data  | Download everything (backup)                                                                                                      |
-| Guide      | How lists are kept                                                                                                                |
-| About      | Version and the app map                                                                                                           |
+| Section    | Settings                                                                                                                                |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Appearance | Theme (match device, light, dark); text size (Small 1, Medium 1.15, Large 1.3, Extra large 1.45); heading font; detail lines; text font |
+| Profile    | Name used in the greeting                                                                                                               |
+| Location   | Home location                                                                                                                           |
+| Lists      | Show archived                                                                                                                           |
+| Your data  | Download everything (backup)                                                                                                            |
+| Guide      | How lists are kept                                                                                                                      |
+| About      | Version and the app map                                                                                                                 |
 
 Text fonts offered: IBM Plex Sans, System default, Inter, Atkinson Hyperlegible, Lexend, Source Sans 3,
 Roboto, Open Sans, Lato, Work Sans, DM Sans, Manrope, Plus Jakarta Sans, Figtree, Outfit, Nunito Sans,

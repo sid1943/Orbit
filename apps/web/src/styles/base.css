@@ -103,3 +103,57 @@ code {
     transition: none !important;
   }
 }
+
+.error {
+  color: var(--bad);
+}
+
+.mono {
+  font-family: var(--mono);
+  font-size: calc(12.5px * var(--fz));
+}
+
+.input {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 7px;
+  padding: 7px 10px;
+  min-width: 0;
+}
+
+.input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+/* A row of buttons where one is chosen */
+.seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--panel);
+}
+
+.seg button {
+  border: 0;
+  border-right: 1px solid var(--line);
+  background: none;
+  padding: 7px 12px;
+  font-size: calc(13px * var(--fz));
+}
+
+.seg button:last-child {
+  border-right: 0;
+}
+
+.seg button:hover {
+  background: var(--accent-soft);
+}
+
+.seg button.on {
+  background: var(--accent);
+  color: var(--panel);
+  font-weight: 600;
+}

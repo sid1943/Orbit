@@ -3,9 +3,11 @@
  * plus the small display rules every app shares: the greeting and the kind colours.
  */
 
+import { type AppearancePref, DEFAULT_APPEARANCE, parseAppearance } from "./appearance.js";
 import type { Kind } from "./types.js";
 
-export const PREF_KEYS = ["profile", "location"] as const;
+/** Keys in the `prefs` table (see docs/DATA-MODEL.md). */
+export const PREF_KEYS = ["appearance", "profile", "location", "lists"] as const;
 export type PrefKey = (typeof PREF_KEYS)[number];
 
 export interface ProfilePref {
@@ -20,29 +22,54 @@ export interface LocationPref {
   lng?: number;
 }
 
-export interface Prefs {
-  profile: ProfilePref;
-  location: LocationPref | null;
+export interface ListsPref {
+  /** Show archived cards in lists. */
+  showArchived: boolean;
 }
 
-export const DEFAULT_PREFS: Prefs = { profile: { name: "" }, location: null };
+export interface Prefs {
+  appearance: AppearancePref;
+  profile: ProfilePref;
+  location: LocationPref | null;
+  lists: ListsPref;
+}
+
+export const DEFAULT_PREFS: Prefs = {
+  appearance: DEFAULT_APPEARANCE,
+  profile: { name: "" },
+  location: null,
+  lists: { showArchived: false },
+};
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 const finite = (v: unknown): number | undefined => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
 
 /** Reads the raw `GET /api/prefs` answer, ignoring anything malformed so a bad value never breaks the app. */
 export function parsePrefs(raw: unknown): Prefs {
-  const prefs: Prefs = { profile: { ...DEFAULT_PREFS.profile }, location: null };
+  const prefs: Prefs = {
+    appearance: { ...DEFAULT_APPEARANCE },
+    profile: { ...DEFAULT_PREFS.profile },
+    location: null,
+    lists: { ...DEFAULT_PREFS.lists },
+  };
   if (!isRecord(raw)) return prefs;
+  prefs.appearance = parseAppearance(raw.appearance);
   const profile = raw.profile;
   if (isRecord(profile) && typeof profile.name === "string") prefs.profile.name = profile.name.trim();
-  const loc = raw.location;
-  if (isRecord(loc) && typeof loc.label === "string" && loc.label.trim()) {
-    const lat = finite(loc.lat);
-    const lng = finite(loc.lng);
-    prefs.location = { label: loc.label.trim(), ...(lat !== undefined && lng !== undefined ? { lat, lng } : {}) };
-  }
+  prefs.location = parseLocation(raw.location);
+  const lists = raw.lists;
+  if (isRecord(lists) && typeof lists.showArchived === "boolean") prefs.lists.showArchived = lists.showArchived;
   return prefs;
+}
+
+/** A location with a label (Orbit today's "near …" prefix dropped), and coordinates only when both are numbers. */
+export function parseLocation(raw: unknown): LocationPref | null {
+  if (!isRecord(raw) || typeof raw.label !== "string") return null;
+  const label = raw.label.replace(/^near /i, "").trim();
+  if (!label) return null;
+  const lat = finite(raw.lat);
+  const lng = finite(raw.lng);
+  return { label, ...(lat !== undefined && lng !== undefined ? { lat, lng } : {}) };
 }
 
 export type PartOfDay = "morning" | "afternoon" | "evening";

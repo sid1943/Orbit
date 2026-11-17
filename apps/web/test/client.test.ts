@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_PREFS } from "@orbit/core";
 import { ApiError, createApiClient } from "../src/api/client.js";
 
 type Call = { url: string; init: RequestInit | undefined };
@@ -62,10 +63,35 @@ describe("createApiClient", () => {
   it("parses prefs and saves one as JSON", async () => {
     const f = fakeFetch([{ body: { profile: { name: "Alex" } } }, { body: { ok: true } }]);
     const api = createApiClient({ baseUrl: "", token: "t", fetch: f.fetch });
-    expect(await api.getPrefs()).toEqual({ profile: { name: "Alex" }, location: null });
+    expect(await api.getPrefs()).toEqual({ ...DEFAULT_PREFS, profile: { name: "Alex" } });
     await api.putPref("location", { label: "Springfield" });
     expect(f.calls[1]?.url).toBe("/api/prefs/location");
     expect(f.calls[1]?.init?.method).toBe("PUT");
     expect(f.calls[1]?.init?.body).toBe(JSON.stringify({ label: "Springfield" }));
+  });
+
+  it("pages through all full cards (deleted too) and all linked things", async () => {
+    const f = fakeFetch([
+      { body: { items: [{ id: "a" }], next: 2000 } },
+      { body: { items: [{ id: "b" }], next: null } },
+      { body: { entities: [{ id: "e1" }], next: null } },
+      { body: { reviews: [{ entityId: "e1", decision: { d: "yes" }, at: 1 }] } },
+    ]);
+    const api = createApiClient({ baseUrl: "", token: "t", fetch: f.fetch });
+    expect((await api.allFullItems()).map((i) => i.id)).toEqual(["a", "b"]);
+    expect((await api.allEntities()).map((e) => e.id)).toEqual(["e1"]);
+    expect(await api.listReviews()).toHaveLength(1);
+    expect(f.calls.map((c) => c.url)).toEqual([
+      "/api/items?full=1&deleted=1&limit=2000&offset=0",
+      "/api/items?full=1&deleted=1&limit=2000&offset=2000",
+      "/api/entities?limit=2000&offset=0",
+      "/api/reviews",
+    ]);
+  });
+
+  it("stops paging linked things when an older API sends no next", async () => {
+    const f = fakeFetch([{ body: { entities: [{ id: "e1" }] } }]);
+    const api = createApiClient({ baseUrl: "", token: "t", fetch: f.fetch });
+    expect(await api.allEntities()).toHaveLength(1);
   });
 });
