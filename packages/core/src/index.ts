@@ -9,3 +9,4 @@ export * from "./prefs.js";
 export * from "./review.js";
 export * from "./sync.js";
 export * from "./today.js";
+export * from "./places.js";

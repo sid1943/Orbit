@@ -133,6 +133,7 @@ All routes except `/api/health` need `Authorization: Bearer <API_TOKEN>`.
 | `GET /api/items?kind=&status=&since=&limit=&offset=&full=1` | List cards (light fields unless `full=1`)                               |
 | `GET /api/items/:id`                                        | One card, complete                                                      |
 | `GET /api/items/:id/full`                                   | One card with its linked things, TV status, covers and review answers   |
+| `GET /api/places?since=`                                    | Every card and checklist row linked to a place (Near you, Near me)      |
 | `POST /api/items`                                           | Add a card (`kind`, `title` required); it is queued for linking         |
 | `PATCH /api/items/:id`                                      | Change fields                                                           |
 | `DELETE /api/items/:id`                                     | Move to deleted (`?hard=1` removes it for good)                         |
@@ -152,6 +153,12 @@ Notes:
   ordered by id; pass `next` as `after` for the next one. Pass the first page's `at` as `since` next time to get
   only what changed, plus `removed`: cards deleted for good. Changes up to 5 seconds before `since` are sent again,
   so nothing written during a sync is missed. The shape is `SyncItem` in `packages/core/src/sync.ts`.
+- **Places** (`GET /api/places`) returns `{ places, items, at }`: every card and checklist row linked to a place
+  that has a spot (its own coordinates, or a city-based list place whose location starts with a known city).
+  Each `PlaceRow` has the card id, checklist and row index (null for the card itself), the row's text, whether
+  it's ticked, and the place's category, confidence, `lat`, `lng` and `location`, with review answers applied.
+  With `since`, only the places of cards that changed are sent, and `items` lists those cards so the app
+  replaces their places. Sort with `placesByDistance()` from core.
 - **Lists of ids** (`?ids=`) take up to 2000 ids. More is refused with 400, never cut short.
 - **Review answers** stay apart from the guesses so they can be undone. Every route that returns a linked thing
   applies them (`applyReview` in `packages/core/src/review.ts`, the same rule as Orbit today). Keys are an entity

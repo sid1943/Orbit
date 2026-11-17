@@ -93,3 +93,11 @@ reads it (`importOrbitExport()`) and writes it (`exportOrbit()`).
 `ui` and `here` were added on 2026-11-17 without a version change: files without them still load, with no
 settings. When loading, Goal and Health cards become To-do cards, and `export-to-sql` writes the settings it
 finds into `prefs` as `appearance`, `profile` and `location` (`--no-prefs` skips them).
+
+## Places on lists
+
+Most places are checklist rows on list cards ("National parks"), not cards. `GET /api/places` lists every
+card and row linked to a place with a spot, as a `PlaceRow` (`packages/core/src/places.ts`). The distance rules
+are Orbit today's: exact coordinates first; otherwise a place on a city-based list (`CITY_CATEGORIES`) whose
+location starts with a known city stands at that city's center (`approx`); head offices, studios and the like
+(`NO_DISTANCE`) never count. `CITIES` is also the city list for setting a location.

@@ -2,6 +2,7 @@ import {
   type Entity,
   type FullItem,
   type Item,
+  type PlacesPage,
   type Prefs,
   type PrefKey,
   type Review,
@@ -125,6 +126,8 @@ export function createApiClient(config: ApiConfig) {
       }),
     /** One card with its linked things, TV status, covers and review answers (the card panel). */
     getFullItem: (id: string) => request<FullItem>(`/items/${encodeURIComponent(id)}/full`),
+    /** Every card and checklist row linked to a place; with `since`, only the places of cards that changed. */
+    getPlaces: (since = 0) => request<PlacesPage>(`/places${since ? `?since=${since}` : ""}`),
     syncPage,
     /** Every card changed since `since` (0 for all), following the pages. `at` is the next `since`. */
     async syncAll(since = 0): Promise<Pick<SyncPage, "items" | "removed" | "at">> {

@@ -1,7 +1,9 @@
 import {
+  mergePlaces,
   mergeSync,
   upsertSyncItem,
   type Item,
+  type PlacesState,
   type PrefKey,
   type Prefs,
   type ReviewDecision,
@@ -37,6 +39,7 @@ export const keys = {
   health: ["health"] as const,
   sync: ["sync"] as const,
   item: (id: string) => ["item", id] as const,
+  places: ["places"] as const,
   prefs: ["prefs"] as const,
 };
 
@@ -69,6 +72,24 @@ const liveCards = (s: SyncState): SyncItem[] => s.items.filter((i) => !i.deleted
 /** Every card that isn't deleted, for counts, lists and search. */
 export const useItemSummaries = () => useSync(liveCards);
 
+/**
+ * Every card and checklist row linked to a place, for Near you and Near me. Sort them with
+ * `placesByDistance()` from core and join `itemId` to `useSync()` for the card. Refreshes fetch only
+ * the places of cards that changed.
+ */
+export function usePlaces() {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useQuery({
+    queryKey: keys.places,
+    queryFn: async () => {
+      const prev = qc.getQueryData<PlacesState>(keys.places);
+      return mergePlaces(prev, await api.getPlaces(prev?.at ?? 0));
+    },
+    staleTime: 30_000,
+  });
+}
+
 /** One card with its linked things, TV status, covers and review answers, for the card panel. */
 export const useFullItem = (id: string | undefined) => {
   const api = useApi();
@@ -85,7 +106,11 @@ export function useReview() {
       else await api.deleteReview(key);
     },
     onSuccess: () =>
-      Promise.all([qc.invalidateQueries({ queryKey: ["item"] }), qc.invalidateQueries({ queryKey: keys.sync })]),
+      Promise.all([
+        qc.invalidateQueries({ queryKey: ["item"] }),
+        qc.invalidateQueries({ queryKey: keys.sync }),
+        qc.invalidateQueries({ queryKey: keys.places }),
+      ]),
   });
 }
 
@@ -95,6 +120,8 @@ function useUpsertCard() {
   return (item: Item) => {
     qc.setQueryData<SyncState>(keys.sync, (s) => (s ? upsertSyncItem(s, item) : s));
     void qc.invalidateQueries({ queryKey: keys.item(item.id) });
+    // Ticked or renamed rows change Near you; the refresh only fetches this card's places.
+    void qc.invalidateQueries({ queryKey: keys.places });
   };
 }
 

@@ -1,4 +1,4 @@
-import { toSyncItem, type Entity, type Item, type SyncItem, type SyncPage } from "@orbit/core";
+import { toSyncItem, type Entity, type Item, type PlacesPage, type SyncItem, type SyncPage } from "@orbit/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { app } from "../src/app.js";
 import { UPSERT_COVER, UPSERT_ENTITY, UPSERT_ITEM, UPSERT_REVIEW, entityRow, itemRow } from "../src/db/statements.js";
@@ -175,6 +175,69 @@ describe("GET /api/items/:id/full", () => {
 
   it("answers 404 for an unknown card", async () => {
     expect((await get("/api/items/nope/full")).status).toBe(404);
+  });
+});
+
+describe("GET /api/places", () => {
+  const parks = () =>
+    card({
+      id: "parks",
+      kind: "Place",
+      title: "Parks",
+      entityId: "pk",
+      status: "done",
+      checklists: [
+        {
+          name: "West",
+          rows: [
+            { text: "1. **North Falls**", done: true, entityId: "p1" },
+            { text: "Plain note", done: false },
+            { text: "Studio tour", done: false, entityId: "tv" },
+          ],
+        },
+        { name: "Town", rows: [{ text: "Taco stand", done: false, entityId: "p2" }] },
+      ],
+    });
+  const places = () => [
+    thing({ id: "pk", category: "us_park", confidence: "high", lat: 1, lng: 1 }),
+    thing({ id: "p1", category: "natural_place", confidence: "map", lat: 2, lng: 2 }),
+    thing({ id: "tv", category: "show_taping", confidence: "map", lat: 3, lng: 3 }),
+    thing({ id: "p2", category: "eatery", confidence: "map", location: "San Jose, CA" }),
+    thing({ id: "m1", category: "movie" }),
+  ];
+
+  it("lists the card and its checklist rows that are places, with where they sit", async () => {
+    await seed([parks(), card({ id: "film", entityId: "m1" })], places());
+    const { body } = await get<PlacesPage>("/api/places");
+    expect(body.items).toBeNull();
+    expect(body.places.map((p) => [p.itemId, p.checklist, p.row, p.entityId, p.done])).toEqual([
+      ["parks", null, null, "pk", true],
+      ["parks", 0, 0, "p1", true],
+      ["parks", 1, 0, "p2", false],
+    ]);
+    expect(body.places[1]).toMatchObject({ text: "1. **North Falls**", lat: 2, lng: 2, category: "natural_place" });
+    expect(body.places[2]).toMatchObject({ lat: null, location: "San Jose, CA" });
+  });
+
+  it("drops a rejected guess's spot, and sends only changed cards after since", async () => {
+    const old = Date.now() - 60_000;
+    await seed(
+      [{ ...parks(), updatedAt: old }, card({ id: "other", entityId: "o1", updatedAt: old })],
+      [
+        ...places().map((e) => ({ ...e, updatedAt: old })),
+        thing({ id: "o1", category: "museum", lat: 5, lng: 5, updatedAt: old }),
+      ],
+    );
+    const since = old + 10_000;
+    expect((await get<PlacesPage>(`/api/places?since=${since}`)).body).toMatchObject({ places: [], items: [] });
+
+    await send("PUT", "/api/reviews/p1", { d: "no" });
+    const after = (await get<PlacesPage>(`/api/places?since=${since}`)).body;
+    expect(after.items).toEqual(["parks"]);
+    expect(after.places.map((p) => p.entityId)).toEqual(["pk", "p2"]);
+
+    await send("DELETE", "/api/items/other?hard=1");
+    expect((await get<PlacesPage>(`/api/places?since=${since}`)).body.items?.sort()).toEqual(["other", "parks"]);
   });
 });
 
