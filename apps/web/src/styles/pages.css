@@ -457,3 +457,105 @@ a.chip:hover {
   gap: 6px;
   margin-top: 8px;
 }
+
+/* The "+" tile that adds a kind: same square, dashed */
+.kind-tile.add {
+  --kc: var(--accent);
+
+  border: 1px dashed var(--line);
+  border-top: 3px dashed var(--line);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+
+.kind-tile.add:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.kind-tile.add .plus {
+  font: 300 calc(40px * var(--fz)) / 1 var(--display);
+}
+
+/* Dialogs (New kind) */
+.dialog {
+  width: min(420px, calc(100vw - 32px));
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--ink);
+}
+
+.dialog::backdrop {
+  background: rgb(0 0 0 / 45%);
+}
+
+.dialog h2 {
+  font: 700 calc(18px * var(--fz)) / 1.2 var(--display);
+  margin: 0 0 14px;
+}
+
+.dialog .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  font-weight: 600;
+  font-size: calc(13px * var(--fz));
+}
+
+.dialog .field .input {
+  font-weight: 400;
+  font-size: calc(15px * var(--fz));
+}
+
+.hue-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.swatch {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 6px;
+  background: hsl(var(--kh) var(--kind-s) var(--kind-l));
+}
+
+.hue-slider {
+  flex: 1;
+  accent-color: var(--accent);
+}
+
+.hue-slider::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: 5px;
+  background: linear-gradient(
+    90deg,
+    hsl(0 70% 55%),
+    hsl(60 70% 55%),
+    hsl(120 70% 55%),
+    hsl(180 70% 55%),
+    hsl(240 70% 55%),
+    hsl(300 70% 55%),
+    hsl(360 70% 55%)
+  );
+}
+
+.dialog .error {
+  min-height: 1.4em;
+  margin: 0 0 10px;
+  font-size: calc(13px * var(--fz));
+}
+
+.dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

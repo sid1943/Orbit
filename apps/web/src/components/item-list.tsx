@@ -1,5 +1,6 @@
 import type { SyncItem } from "@orbit/core";
 import { useState, type ReactNode } from "react";
+import { useKinds } from "../api/queries.js";
 import { groupItems, type GroupBy, type ListGroup } from "../lib/list.js";
 import { ItemRow } from "./item-row.js";
 import { kindStyle } from "./kind-chip.js";
@@ -9,6 +10,7 @@ const PAGE = 200;
 /** A long list of cards, flat or grouped, shown 200 at a time. */
 export function ItemList({ items, group, empty }: { items: readonly SyncItem[]; group: GroupBy; empty: ReactNode }) {
   const [limit, setLimit] = useState(PAGE);
+  const kinds = useKinds().data;
   if (!items.length) return <div className="empty">{empty}</div>;
 
   const groups: (ListGroup & { shown: SyncItem[] })[] = [];
@@ -23,7 +25,7 @@ export function ItemList({ items, group, empty }: { items: readonly SyncItem[]; 
       {groups.map((g) => (
         <div key={g.label || "all"}>
           {g.label && (
-            <div className="group-head sticky" style={g.kind ? kindStyle(g.kind) : undefined}>
+            <div className="group-head sticky" style={g.kind ? kindStyle(g.kind, kinds) : undefined}>
               {g.kind && <i className="dot" aria-hidden="true" />}
               {g.label} · {g.items.length.toLocaleString()}
             </div>

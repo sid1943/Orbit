@@ -27,7 +27,7 @@ export function Today() {
 
   return (
     <div className="pad today">
-      <KindTiles items={items.data} />
+      <KindTiles items={items.data} canAdd />
 
       <NearYouSection />
 

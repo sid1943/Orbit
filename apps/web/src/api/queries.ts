@@ -119,29 +119,29 @@ export function useAddKind() {
   const api = useApi();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (kind: { name: string; hue?: number }) => {
-      const current = qc.getQueryData<KindEntry[]>(keys.kinds) ?? kindList().map((k) => ({ ...k, count: 0 }));
-      const problem = kindNameProblem(kind.name, current);
-      if (problem) throw new ApiError(400, problem);
-      return api.addKind(kind);
-    },
+    mutationFn: (kind: { name: string; hue?: number }) => api.addKind(kind),
+    // Runs before mutationFn: check the name against the list as it is, then show the new kind at once.
+    // (Checking after adding it would always find the name taken.) A bad name throws here, so nothing is sent.
     onMutate: (kind) => {
       const prev = qc.getQueryData<KindEntry[]>(keys.kinds);
-      if (prev && !kindNameProblem(kind.name, prev))
-        qc.setQueryData<KindEntry[]>(keys.kinds, [
-          ...prev,
-          {
-            name: kind.name.trim(),
-            hue: kind.hue ?? suggestHue(prev),
-            order: prev.length,
-            standard: false,
-            count: 0,
-          },
-        ]);
+      const current = prev ?? kindList().map((k) => ({ ...k, count: 0 }));
+      const problem = kindNameProblem(kind.name, current);
+      if (problem) throw new ApiError(400, problem);
+      qc.setQueryData<KindEntry[]>(keys.kinds, [
+        ...current,
+        {
+          name: kind.name.trim(),
+          hue: kind.hue ?? suggestHue(current),
+          order: current.length,
+          standard: false,
+          count: 0,
+        },
+      ]);
       return { prev };
     },
     onError: (_err, _kind, ctx) => {
       if (ctx?.prev) qc.setQueryData(keys.kinds, ctx.prev);
+      else void qc.invalidateQueries({ queryKey: keys.kinds });
     },
     onSuccess: (res) => qc.setQueryData(keys.kinds, res.kinds),
   });

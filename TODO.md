@@ -22,7 +22,7 @@
 - [x] API for the pages: one sync list for every page, a full card for the panel, review answers applied
 - [x] API: places on lists (checklist rows linked to places) for Near you and Near me
 - [x] API: custom kinds (add, rename, recolour, reorder, delete; in the export)
-- [ ] Today: a "+" tile to add a kind (Today chat)
+- [x] Today: a "+" tile to add a kind (Today chat)
 - [ ] Settings: rename, recolour, reorder and delete custom kinds (Settings chat)
 - [ ] Decide how the hosted app signs in (API token in the browser, or Cloudflare Access)
 - [x] Home: greeting, date, location, kind tiles
