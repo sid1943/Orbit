@@ -10,8 +10,19 @@ export const STATUSES = ["todo", "doing", "done", "dropped"] as const;
 export type Status = (typeof STATUSES)[number];
 
 export const KINDS = [
-  "To-do", "Experience", "Place", "Movie", "Show", "Book", "Game",
-  "Podcast", "Recipe", "Learning", "Thing", "Money", "Note",
+  "To-do",
+  "Experience",
+  "Place",
+  "Movie",
+  "Show",
+  "Book",
+  "Game",
+  "Podcast",
+  "Recipe",
+  "Learning",
+  "Thing",
+  "Money",
+  "Note",
 ] as const;
 export type Kind = (typeof KINDS)[number];
 
@@ -70,18 +81,39 @@ export interface Item {
 
 /** How sure the matcher is that an Entity is the right real-world thing. */
 export type Confidence =
-  | "high"     // confirmed
-  | "review"   // plausible guess, waiting for Sid
-  | "none"     // nothing found
-  | "map"      // a place known only by name and location: map link only
-  | "nolink"   // not a real-world thing (a header, a note)
-  | "user";    // Sid set the link himself
+  | "high" // confirmed
+  | "review" // plausible guess, waiting for Sid
+  | "none" // nothing found
+  | "map" // a place known only by name and location: map link only
+  | "nolink" // not a real-world thing (a header, a note)
+  | "user"; // Sid set the link himself
 
 export type EntityCategory =
-  | "movie" | "show" | "book" | "game"
-  | "natural_place" | "building" | "us_park" | "ballpark" | "museum" | "pagoda" | "district"
-  | "nyc" | "nyc_building" | "city_todo" | "eatery" | "burger" | "chain" | "done_place"
-  | "trip" | "festival" | "sport_event" | "show_taping" | "phenomenon" | "fed_bank" | "card"
+  | "movie"
+  | "show"
+  | "book"
+  | "game"
+  | "natural_place"
+  | "building"
+  | "us_park"
+  | "ballpark"
+  | "museum"
+  | "pagoda"
+  | "district"
+  | "nyc"
+  | "nyc_building"
+  | "city_todo"
+  | "eatery"
+  | "burger"
+  | "chain"
+  | "done_place"
+  | "trip"
+  | "festival"
+  | "sport_event"
+  | "show_taping"
+  | "phenomenon"
+  | "fed_bank"
+  | "card"
   | string;
 
 /** A real-world thing an Item or checklist row is about. */
@@ -137,7 +169,7 @@ export interface Review {
 export interface LiveStatus {
   entityId: string;
   source: "tvmaze" | "wikidata" | "openlibrary" | "igdb" | "tmdb";
-  status?: string;          // e.g. "Running", "Ended", "To Be Determined"
+  status?: string; // e.g. "Running", "Ended", "To Be Determined"
   seasons?: number;
   nextEpisode?: { date: string; name?: string; season?: number; number?: number } | null;
   lastEpisode?: { date: string; season?: number; number?: number } | null;

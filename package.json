@@ -2,7 +2,12 @@
   "name": "orbit",
   "private": true,
   "version": "0.1.0",
-  "description": "Orbit: one place for everything Sid wants to watch, read, play, visit and do.",
+  "description": "Orbit: one place for everything to watch, read, play, visit and do.",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sid1943/orbit.git"
+  },
   "workspaces": [
     "packages/*",
     "apps/*"
@@ -10,13 +15,23 @@
   "scripts": {
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "build": "npm run build --workspaces --if-present"
+    "build": "npm run build --workspaces --if-present",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm test"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@types/node": "^22.10.2",
-    "typescript": "^5.6.3"
+    "eslint": "^9.39.5",
+    "globals": "^15.15.0",
+    "prettier": "^3.10.1",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.73.0"
   }
 }

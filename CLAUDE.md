@@ -11,13 +11,18 @@
 - **Free plans only.** Don't add paid services (Supabase, R2 needing a card, etc.) without asking.
 - **This repository is public.** Never commit personal data: exports, seed SQL, `.dev.vars`, notes from Sid's cards.
 
+## Conventions
+
+Follow [docs/CONVENTIONS.md](docs/CONVENTIONS.md): strict TypeScript, ES modules with `.js` import
+paths, kebab-case files, named exports, Prettier + ESLint, Vitest tests per module, no platform code
+in `packages/core`.
+
 ## After any change
 
-1. `npm run typecheck`
-2. `npm test`
-3. `npm run build` once apps have a build step
-4. Update `TODO.md` (mark done with `[x]`) and `CHANGELOG.md` (under the current version; bug fixes under "Fixed").
-5. Update `docs/` when the data model, API or setup changes.
+1. `npm run check` (format check, lint, typecheck, tests; the same as CI)
+2. `npm run format` / `npm run lint:fix` if it fails on style
+3. Update `TODO.md` (mark done with `[x]`) and `CHANGELOG.md` (under **Unreleased**; bug fixes under "Fixed").
+4. Update `docs/` when the data model, API or setup changes.
 
 ## Rules for the data
 
@@ -37,7 +42,8 @@ git push -u origin type/short-description
 gh pr create --title "type(scope): description" --body "What changed and why"
 ```
 
-Branch and commit types: `feat`, `fix`, `refactor`, `docs`, `style`, `test`, `chore`.
+Branch and commit types: `feat`, `fix`, `refactor`, `docs`, `style`, `test`, `chore`, `ci`.
+Scopes: `core`, `api`, `web`, `docs`, `repo`.
 
 Notes for this environment: the GitHub GraphQL API may be unavailable, so use `gh api` (REST)
 if `gh pr create` fails; if a push stalls, retry with `git -c push.negotiate=true push`.

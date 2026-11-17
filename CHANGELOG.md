@@ -1,17 +1,19 @@
 # Changelog
 
-## 0.1.0 (2026-11-17)
+All notable changes to Orbit are listed here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
+[Semantic Versioning](https://semver.org/).
 
-Orbit replaces Smart Kanban in this repository.
+## [Unreleased]
 
 ### Added
-- Monorepo with `packages/core` and `apps/api`.
-- Core: data model, Orbit's search rule, standard links per kind, import of Orbit export files.
-- Enricher: links new cards to IMDb (via Wikidata), Open Library, IGDB or a map; uses links already in a card's notes first; skips list cards; strict back-fill for old cards.
-- TV status from TVmaze (status, seasons aired, last and next episode).
-- API on Cloudflare Workers + D1 with token auth, and a job every 10 minutes.
-- Loader that turns an export file into SQL for D1, splitting very large cards to fit D1's statement limit.
-- Docs: architecture, data model, setup.
 
-### Removed
-- The old Smart Kanban React app.
+- Monorepo with npm workspaces: `packages/core` and `apps/api`.
+- Core: data model, search rule, standard links per kind, import of Orbit export files.
+- Linking: IMDb via Wikidata, Open Library, IGDB and map links; links already in a card's notes are used first; list cards are skipped; strict back-fill for old cards.
+- Live TV status from TVmaze (status, seasons aired, last and next episode).
+- API on Cloudflare Workers and D1 with token auth, split into routes, middleware, jobs and validation.
+- Cron every 10 minutes for linking and TV status.
+- Loader from an export file to D1 SQL, splitting very large cards to fit D1's statement limit.
+- Tooling: ESLint, Prettier, EditorConfig, Vitest in each workspace, GitHub Actions CI, Dependabot, PR template.
+- Docs: architecture, data model, setup, conventions.

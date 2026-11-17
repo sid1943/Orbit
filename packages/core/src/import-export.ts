@@ -8,11 +8,25 @@ import { STATUSES } from "./types.js";
 
 type RawRow = [string, number | boolean, (string | null)?, (string | null)?];
 interface RawItem {
-  id: string; t: string; k: string; s: string; tg?: string[]; src?: string;
-  p?: Record<string, string>; d?: string; due?: string; start?: string;
-  a?: number | boolean; del?: number | boolean; ent?: string; lk?: string[];
-  lnk?: [string, string, string?][]; at?: [string, string][]; cm?: [string, string][];
-  cl?: { n: string; i: RawRow[] }[]; _at?: number;
+  id: string;
+  t: string;
+  k: string;
+  s: string;
+  tg?: string[];
+  src?: string;
+  p?: Record<string, string>;
+  d?: string;
+  due?: string;
+  start?: string;
+  a?: number | boolean;
+  del?: number | boolean;
+  ent?: string;
+  lk?: string[];
+  lnk?: [string, string, string?][];
+  at?: [string, string][];
+  cm?: [string, string][];
+  cl?: { n: string; i: RawRow[] }[];
+  _at?: number;
 }
 type RawEntity = Record<string, unknown> & { id?: string; n?: string; cat?: string; conf?: string };
 type RawDecision = string | { d: string; [k: string]: unknown };
@@ -44,7 +58,9 @@ export function mapEntity(id: string, r: RawEntity, now: number): Entity {
     confidence: (str(r.conf) ?? "none") as Confidence,
     updatedAt: num(r.updatedAt) ?? now,
   };
-  const put = <K extends keyof Entity>(k: K, v: Entity[K] | undefined) => { if (v !== undefined) e[k] = v; };
+  const put = <K extends keyof Entity>(k: K, v: Entity[K] | undefined) => {
+    if (v !== undefined) e[k] = v;
+  };
   put("qid", str(r.q));
   put("label", str(r.label));
   put("description", str(r.d));
@@ -103,25 +119,42 @@ export function mapDecision(raw: RawDecision): ReviewDecision | null {
   const o = (typeof raw === "object" && raw ? raw : {}) as Record<string, unknown>;
   const s = (k: string) => (typeof o[k] === "string" && o[k] ? (o[k] as string) : undefined);
   switch (d) {
-    case "yes": case "no": case "none": return { d };
-    case "alt": { const qid = s("q"); return qid ? { d: "alt", qid, ...(s("label") ? { label: s("label")! } : {}) } : null; }
-    case "fix": return { d: "fix", ...(s("url") ? { url: s("url")! } : {}), ...(s("text") ? { text: s("text")! } : {}), add: !!o.add };
-    case "hide": return Array.isArray(o.urls) ? { d: "hide", urls: o.urls.filter((u): u is string => typeof u === "string") } : null;
-    default: return null;
+    case "yes":
+    case "no":
+    case "none":
+      return { d };
+    case "alt": {
+      const qid = s("q");
+      return qid ? { d: "alt", qid, ...(s("label") ? { label: s("label")! } : {}) } : null;
+    }
+    case "fix":
+      return {
+        d: "fix",
+        ...(s("url") ? { url: s("url")! } : {}),
+        ...(s("text") ? { text: s("text")! } : {}),
+        add: !!o.add,
+      };
+    case "hide":
+      return Array.isArray(o.urls)
+        ? { d: "hide", urls: o.urls.filter((u): u is string => typeof u === "string") }
+        : null;
+    default:
+      return null;
   }
 }
 
 export function importOrbitExport(data: unknown, now = Date.now()): ImportResult {
   const x = data as Partial<OrbitExportV1>;
   if (!x || x.format !== "orbit-export" || x.version !== 1 || !Array.isArray(x.items) || typeof x.ent !== "object") {
-    throw new Error("Not an Orbit export file (expected format \"orbit-export\", version 1)");
+    throw new Error('Not an Orbit export file (expected format "orbit-export", version 1)');
   }
   const items = x.items.map((r) => mapItem(r, now));
   const entities = Object.entries(x.ent ?? {}).map(([id, r]) => mapEntity(id, r, now));
   const reviews: Review[] = [];
   for (const [entityId, raw] of Object.entries(x.reviews ?? {})) {
     const decision = mapDecision(raw);
-    if (decision) reviews.push({ entityId, decision, at: typeof raw === "object" && typeof raw.at === "number" ? raw.at : now });
+    if (decision)
+      reviews.push({ entityId, decision, at: typeof raw === "object" && typeof raw.at === "number" ? raw.at : now });
   }
   return { items, entities, reviews };
 }

@@ -1,43 +1,86 @@
 # Orbit
 
-One place for everything Sid wants to watch, read, play, visit and do.
-Orbit replaced Trello: movies, shows, books, games, places, to-dos and notes live here,
-and each one links to its standard page (IMDb, Open Library, IGDB, a map).
+[![CI](https://github.com/sid1943/orbit/actions/workflows/ci.yml/badge.svg)](https://github.com/sid1943/orbit/actions/workflows/ci.yml)
 
-This repository is the app version of Orbit. It is being built in steps; the first Orbit
-(a single page on claude.ai) stays in use until this app does everything it does.
+One place for everything to watch, read, play, visit and do.
 
-## What's here
+Orbit keeps movies, shows, books, games, places, to-dos and notes as cards. Each card links to its
+standard page (IMDb, Open Library, IGDB or a map), new cards are linked automatically, and TV shows
+carry live status: seasons aired, the last episode, and the next one.
 
-| Folder | What it is |
-| --- | --- |
-| `packages/core` | Shared TypeScript: the data model, search rules, link building, the import of Orbit export files, and the enricher (finds the IMDb / Open Library / IGDB link for a new card, and TV status from TVmaze). Used by the API now and the web and phone apps later. |
-| `apps/api` | The backend: a Cloudflare Worker with a D1 database. A small JSON API, plus a job every 10 minutes that links newly added cards and refreshes TV shows. |
-| `apps/web` | The web app (next step). |
-| `docs/` | How it fits together, the data model, and setup steps. |
+## Features
 
-## Quick start (on your computer)
+- **Cards for everything**: one model for movies, shows, books, games, places, to-dos, recipes, notes and more.
+- **Standard links**: IMDb for movies and shows (ids from Wikidata), Open Library for books, IGDB for games, a map for places.
+- **Automatic linking**: new cards are matched every 10 minutes. Sure matches are kept; unsure ones wait for review.
+- **Live TV status** from TVmaze, and cover images from Open Library, TVmaze and Wikimedia.
+- **Free to run**: Cloudflare Workers and D1 free plans, and free public data sources with no keys.
+
+## Repository layout
+
+```
+orbit/
+├── apps/
+│   ├── api/                  Cloudflare Worker + D1 (Hono)
+│   │   ├── migrations/       Database schema
+│   │   ├── scripts/          Export file → SQL loader
+│   │   ├── src/
+│   │   │   ├── app.ts        Routes and middleware
+│   │   │   ├── index.ts      Worker entry (fetch + cron)
+│   │   │   ├── db/           SQL statements and row mapping
+│   │   │   ├── jobs/         Linking queue and TV status refresh
+│   │   │   ├── lib/          Request validation
+│   │   │   ├── middleware/   Token auth
+│   │   │   └── routes/       items, entities, live, reviews, prefs, enrich
+│   │   └── test/
+│   └── web/                  Web app (planned)
+├── packages/
+│   └── core/                 Shared model and rules, no platform code
+│       ├── src/              types, text, links, enrich, live, import-export
+│       └── test/
+├── docs/                     Architecture, data model, setup, conventions
+└── .github/                  CI, Dependabot, PR template
+```
+
+## Getting started
+
+Requires Node 22 (see `.nvmrc`).
 
 ```bash
 npm install
-npm test              # core rules
-npm run typecheck
-
-cd apps/api
-echo "API_TOKEN=pick-any-local-password" > .dev.vars
-npx wrangler d1 migrations apply orbit --local
-npx wrangler dev      # http://localhost:8787/api/health
+npm run check          # format, lint, typecheck, tests
 ```
 
-Putting it online on Cloudflare (free plan) and loading your data: see [docs/SETUP.md](docs/SETUP.md).
+Run the API locally:
 
-## Your data stays out of this repository
+```bash
+cd apps/api
+echo "API_TOKEN=pick-a-local-password" > .dev.vars
+npm run db:migrate:local
+npm run dev            # http://localhost:8787/api/health
+```
 
-This repository is public. Personal data (the export file, the SQL made from it, `.dev.vars`)
-is listed in `.gitignore` and must never be committed.
+To put it online on Cloudflare and load your data, follow [docs/SETUP.md](docs/SETUP.md).
 
-## Costs
+## Scripts
 
-Everything runs on free plans: Cloudflare Workers and D1 free tiers, and free public sources
-(Wikidata, Open Library, TVmaze). No keys are needed for those. IGDB and TMDB need free
-keys and are optional.
+| Command                     | What it does                                       |
+| --------------------------- | -------------------------------------------------- |
+| `npm run check`             | Everything CI runs: format, lint, typecheck, tests |
+| `npm test`                  | Unit tests (Vitest) in every workspace             |
+| `npm run typecheck`         | TypeScript, no output                              |
+| `npm run lint`              | ESLint (`lint:fix` to fix)                         |
+| `npm run format`            | Prettier, writes changes (`format:check` to check) |
+| `npm run dev -w @orbit/api` | API on localhost with a local database             |
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md): how the pieces fit, the linking rules, TV status
+- [Data model](docs/DATA-MODEL.md): cards, linked things, confidence, tables
+- [Setup](docs/SETUP.md): Cloudflare deploy, loading data, API reference
+- [Conventions](docs/CONVENTIONS.md): code style, structure, commits and branches
+
+## Privacy
+
+This repository is public; personal data never goes in it. Exports, generated SQL and `.dev.vars`
+are ignored by git.

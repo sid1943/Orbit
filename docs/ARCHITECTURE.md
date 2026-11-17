@@ -25,18 +25,18 @@
 
 ## The enricher
 
-When a card is added (`POST /api/items`) it is queued. Every 10 minutes the Worker takes up to 8
+When a card is added (`POST /api/items`) it is queued (`apps/api/src/jobs/enrich-queue.ts`). Every 10 minutes the Worker takes up to 8
 queued cards and 4 TV shows (the free plan allows 50 outside requests per run).
 
 Matching, per kind:
 
-| Kind | Source | Sure ("high") when |
-| --- | --- | --- |
-| Movie, Show | Wikidata search, then the IMDb id on the match | one exact title match of the right type (year decides between remakes) |
-| Game | Wikidata, IGDB id on the match | same |
-| Book | Open Library search | exact title, and the author matches if given |
-| Place | none | always a map link built from the name and location |
-| Any | an IMDb / Open Library / IGDB address already in the card's notes or links | always (Sid put it there) |
+| Kind        | Source                                                                     | Sure ("high") when                                                     |
+| ----------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Movie, Show | Wikidata search, then the IMDb id on the match                             | one exact title match of the right type (year decides between remakes) |
+| Game        | Wikidata, IGDB id on the match                                             | same                                                                   |
+| Book        | Open Library search                                                        | exact title, and the author matches if given                           |
+| Place       | none                                                                       | always a map link built from the name and location                     |
+| Any         | an IMDb / Open Library / IGDB address already in the card's notes or links | always (Sid put it there)                                              |
 
 Cards that are lists of things (a "1001 Movies" card with a long checklist) get no link of their own.
 

@@ -52,7 +52,7 @@ curl https://orbit-api.<your-name>.workers.dev/api/health
 2. Make the SQL and load it (keep both files outside the repository, or in `apps/api/data/`, which git ignores):
 
 ```bash
-npm run import:sql -- ~/Downloads/orbit-export-YYYY-MM-DD.json data/seed.sql
+npm run import:sql -w @orbit/api -- ~/Downloads/orbit-export-YYYY-MM-DD.json data/seed.sql
 npx wrangler d1 execute orbit --remote --file data/seed.sql
 ```
 
@@ -84,18 +84,18 @@ curl -X POST -H "Authorization: Bearer local-password" http://localhost:8787/api
 
 All routes except `/api/health` need `Authorization: Bearer <API_TOKEN>`.
 
-| Route | What it does |
-| --- | --- |
-| `GET /api/health` | Is it up |
-| `GET /api/items?kind=&status=&since=&limit=&offset=&full=1` | List cards (light fields unless `full=1`) |
-| `GET /api/items/:id` | One card, complete |
-| `POST /api/items` | Add a card (`kind`, `title` required); it is queued for linking |
-| `PATCH /api/items/:id` | Change fields |
-| `DELETE /api/items/:id` | Move to deleted (`?hard=1` removes it for good) |
-| `GET /api/entities?ids=a,b` / `?confidence=review` | Linked things |
-| `GET /api/entities/:id` | One linked thing with its TV status and cover |
-| `PATCH /api/entities/:id` | Fix a link by hand (marked as set by you; the enricher leaves it alone) |
-| `GET /api/live?ids=a,b` | TV status and covers for several linked things |
-| `GET /api/reviews`, `PUT /api/reviews/:entityId` | Your answers to link guesses |
-| `GET /api/prefs`, `PUT /api/prefs/:key` | Settings (font, theme, home location) |
-| `POST /api/enrich/run` | Run the enricher now instead of waiting for the next 10 minutes |
+| Route                                                       | What it does                                                            |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `GET /api/health`                                           | Is it up                                                                |
+| `GET /api/items?kind=&status=&since=&limit=&offset=&full=1` | List cards (light fields unless `full=1`)                               |
+| `GET /api/items/:id`                                        | One card, complete                                                      |
+| `POST /api/items`                                           | Add a card (`kind`, `title` required); it is queued for linking         |
+| `PATCH /api/items/:id`                                      | Change fields                                                           |
+| `DELETE /api/items/:id`                                     | Move to deleted (`?hard=1` removes it for good)                         |
+| `GET /api/entities?ids=a,b` / `?confidence=review`          | Linked things                                                           |
+| `GET /api/entities/:id`                                     | One linked thing with its TV status and cover                           |
+| `PATCH /api/entities/:id`                                   | Fix a link by hand (marked as set by you; the enricher leaves it alone) |
+| `GET /api/live?ids=a,b`                                     | TV status and covers for several linked things                          |
+| `GET /api/reviews`, `PUT /api/reviews/:entityId`            | Your answers to link guesses                                            |
+| `GET /api/prefs`, `PUT /api/prefs/:key`                     | Settings (font, theme, home location)                                   |
+| `POST /api/enrich/run`                                      | Run the enricher now instead of waiting for the next 10 minutes         |
