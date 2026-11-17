@@ -2,6 +2,7 @@ import {
   type Entity,
   type FullItem,
   type Item,
+  type KindInfo,
   type PlacesPage,
   type Prefs,
   type PrefKey,
@@ -38,6 +39,9 @@ export interface ItemQuery {
   limit?: number;
   offset?: number;
 }
+
+/** A kind as `GET /api/kinds` gives it: name, hue, place in the order, and how many cards it has. */
+export type KindEntry = KindInfo & { count: number };
 
 export interface ApiConfig {
   /** Origin of the API, or "" to call `/api` on the page's own origin (the dev proxy). */
@@ -168,6 +172,23 @@ export function createApiClient(config: ApiConfig) {
       return out;
     },
     listReviews: async (): Promise<Review[]> => (await request<{ reviews: Review[] }>("/reviews")).reviews,
+    /** Every kind in order: the standard ones, then Sid's own, each with its card count. */
+    listKinds: async (): Promise<KindEntry[]> => (await request<{ kinds: KindEntry[] }>("/kinds")).kinds,
+    /** Add a kind after the others (no hue: one far from the others is picked). Refused if the name is taken. */
+    addKind: (kind: { name: string; hue?: number }) =>
+      request<{ kind: KindEntry; kinds: KindEntry[] }>("/kinds", { method: "POST", body: JSON.stringify(kind) }),
+    /** Rename and/or recolour a custom kind; a rename moves its cards (`moved`). */
+    updateKind: (name: string, change: { name?: string; hue?: number }) =>
+      request<{ kinds: KindEntry[]; moved: number }>(`/kinds/${encodeURIComponent(name)}`, {
+        method: "PATCH",
+        body: JSON.stringify(change),
+      }),
+    /** Put the custom kinds in this order (each once). */
+    reorderKinds: (names: string[]) =>
+      request<{ kinds: KindEntry[] }>("/kinds/order", { method: "PUT", body: JSON.stringify({ names }) }),
+    /** Delete a custom kind with no cards. Fails with status 409 when it has some. */
+    deleteKind: (name: string) =>
+      request<{ kinds: KindEntry[] }>(`/kinds/${encodeURIComponent(name)}`, { method: "DELETE" }),
     /** Answer a link guess (or hide links: key `x:<id>`). */
     putReview: (key: string, decision: ReviewDecision) =>
       request<Review>(`/reviews/${encodeURIComponent(key)}`, { method: "PUT", body: JSON.stringify(decision) }),

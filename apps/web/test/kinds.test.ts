@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { kindList } from "@orbit/core";
 import { countByKind, kindFromSlug, kindSlug } from "../src/lib/kinds.js";
 
 const it_ = (kind: string, extra: Partial<{ archived: boolean; deleted: boolean }> = {}) => ({
@@ -34,5 +35,14 @@ describe("kind slugs", () => {
     expect(kindFromSlug("to-do")).toBe("To-do");
     expect(kindFromSlug("movie")).toBe("Movie");
     expect(kindFromSlug("nope")).toBeUndefined();
+  });
+});
+
+describe("custom kinds", () => {
+  const kinds = kindList([{ name: "Zine", hue: 40 }]);
+  it("open from their slug and keep their place in the order", () => {
+    expect(kindFromSlug("zine", kinds)).toBe("Zine");
+    expect(kindFromSlug("zine")).toBeUndefined();
+    expect(countByKind([it_("Zine"), it_("Movie")], kinds).map((c) => c.kind)).toEqual(["Movie", "Zine"]);
   });
 });

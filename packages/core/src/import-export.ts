@@ -1,4 +1,5 @@
 import { type AppearancePref, parseAppearance } from "./appearance.js";
+import { type CustomKind, parseCustomKinds } from "./kinds.js";
 import { type LocationPref, type Prefs, parseLocation } from "./prefs.js";
 import type { Checklist, Confidence, Entity, Item, Review, ReviewDecision, Status } from "./types.js";
 import { STATUSES } from "./types.js";
@@ -63,10 +64,16 @@ export interface OrbitExportV1 {
   ui?: RawUi;
   /** Location. Optional, and null when it was never set. */
   here?: RawHere | null;
+  /** Kinds Sid added, in order. Optional: files from before custom kinds don't have it. */
+  kinds?: CustomKind[];
 }
 
 /** Settings found in an export; a key is present only when the file had it. */
-export type ImportedPrefs = Partial<Pick<Prefs, "appearance" | "profile">> & { location?: LocationPref };
+export type ImportedPrefs = Partial<Pick<Prefs, "appearance" | "profile">> & {
+  location?: LocationPref;
+  /** Custom kinds, stored as the `kinds` prefs row. */
+  kinds?: CustomKind[];
+};
 
 export interface ImportResult {
   items: Item[];
@@ -179,7 +186,7 @@ export function mapDecision(raw: RawDecision): ReviewDecision | null {
 }
 
 /** Settings in an export: `ui` becomes `appearance` and `profile`, `here` becomes `location`. */
-export function prefsFromExport(x: { ui?: unknown; here?: unknown }): ImportedPrefs {
+export function prefsFromExport(x: { ui?: unknown; here?: unknown; kinds?: unknown }): ImportedPrefs {
   const prefs: ImportedPrefs = {};
   const ui = x.ui;
   if (ui && typeof ui === "object" && !Array.isArray(ui)) {
@@ -189,6 +196,7 @@ export function prefsFromExport(x: { ui?: unknown; here?: unknown }): ImportedPr
   }
   const location = parseLocation(x.here);
   if (location) prefs.location = location;
+  if (x.kinds !== undefined) prefs.kinds = parseCustomKinds(x.kinds);
   return prefs;
 }
 
@@ -216,6 +224,8 @@ export interface ExportInput {
   reviews: Review[];
   /** Settings to include; omit to leave `ui` and `here` out. */
   prefs?: Pick<Prefs, "appearance" | "profile" | "location">;
+  /** Custom kinds, in order; omit to leave `kinds` out. */
+  kinds?: readonly CustomKind[];
 }
 
 export function unmapItem(it: Item): RawItem {
@@ -283,6 +293,7 @@ export function exportOrbit(input: ExportInput, exported = new Date()): OrbitExp
     const loc = input.prefs.location;
     file.here = loc ? { label: loc.label, ...(loc.lat !== undefined ? { lat: loc.lat, lng: loc.lng } : {}) } : null;
   }
+  if (input.kinds) file.kinds = input.kinds.map((k) => ({ name: k.name, hue: k.hue }));
   return file;
 }
 

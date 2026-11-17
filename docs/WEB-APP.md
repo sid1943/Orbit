@@ -52,6 +52,12 @@ covers and review answers, with no limit on list size. Review links and Fix link
 `GET /api/entities?confidence=review&pending=1` and `useReview()`. After editing a card, put it into the list
 with `upsertSyncItem()` from core rather than refetching everything.
 
+Kinds come from `useKinds()` (`GET /api/kinds`): the standard kinds, then Sid's own, each with hue, order and
+card count, shown even with no cards. Pass that list to `countByKind()`, `kindFromSlug()` and `kindHue()` from
+core. `useAddKind()` adds one and updates the list at once; it refuses an empty or taken name before sending.
+Client calls `updateKind`, `reorderKinds` and `deleteKind` are there for renaming, recolouring, reordering and
+deleting (a Settings section later).
+
 Today's sections are worked out in `apps/web/src/lib/today-sections.ts` with the rules in `packages/core/src/today.ts`
 (the same as Orbit today). Near you uses the places list (`usePlaces()`, rows and cards) through `apps/web/src/lib/near-you.ts`. Coming up and In season read the card's "Preferable Time" detail.
 

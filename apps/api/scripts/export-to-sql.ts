@@ -8,8 +8,9 @@
  * Unlinked movies, shows and games with a year, and books with an author, are queued for the
  * enricher in back-fill mode, which keeps only sure links (pass --no-enqueue to skip that).
  *
- * Settings in the file go into the `prefs` table under `appearance`, `profile` and `location`
- * (docs/DATA-MODEL.md). Only keys the file has are written; pass --no-prefs to keep the database's settings.
+ * Settings in the file go into the `prefs` table under `appearance`, `profile` and `location`, and custom
+ * kinds under `kinds` (docs/DATA-MODEL.md). Only keys the file has are written; pass --no-prefs to keep the
+ * database's settings and kinds.
  *
  * The output holds personal data: keep it out of git (data/ and seed*.sql are ignored).
  * Running it again is safe: rows are replaced, not duplicated.

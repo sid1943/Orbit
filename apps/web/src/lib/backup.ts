@@ -9,15 +9,21 @@ export interface Backup {
 
 /**
  * The "Download everything" file: every card (deleted ones too), linked thing and review answer,
- * plus appearance, name and location. The same format Orbit today writes, so either Orbit can load it.
+ * plus appearance, name, location and the kinds Sid added. The same format Orbit today writes, so either Orbit can load it.
  */
 export async function buildBackup(
-  api: Pick<ApiClient, "allFullItems" | "allEntities" | "listReviews">,
+  api: Pick<ApiClient, "allFullItems" | "allEntities" | "listReviews" | "listKinds">,
   prefs: Prefs,
   now = new Date(),
 ): Promise<Backup> {
-  const [items, entities, reviews] = await Promise.all([api.allFullItems(), api.allEntities(), api.listReviews()]);
-  const file = exportOrbit({ items, entities, reviews, prefs }, now);
+  const [items, entities, reviews, kinds] = await Promise.all([
+    api.allFullItems(),
+    api.allEntities(),
+    api.listReviews(),
+    api.listKinds(),
+  ]);
+  const custom = kinds.filter((k) => !k.standard).map((k) => ({ name: k.name, hue: k.hue }));
+  const file = exportOrbit({ items, entities, reviews, prefs, kinds: custom }, now);
   return {
     name: exportFileName(now),
     json: JSON.stringify(file),
