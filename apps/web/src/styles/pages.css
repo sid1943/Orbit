@@ -400,3 +400,21 @@ a.chip:hover {
     padding: 9px 14px;
   }
 }
+
+/* Near you: places on your lists */
+.place-row {
+  grid-template-columns: 64px minmax(0, 1fr);
+}
+
+.place-row .dist {
+  font: 600 calc(12px * var(--fz)) var(--mono);
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.towns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}

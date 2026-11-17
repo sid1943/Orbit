@@ -1,10 +1,10 @@
 import { relativeDays } from "@orbit/core";
 import { useMemo } from "react";
-import { Link } from "react-router";
-import { useItemSummaries, usePrefs } from "../api/queries.js";
+import { useItemSummaries } from "../api/queries.js";
 import { ItemCard } from "../components/item-card.js";
 import { ItemRow } from "../components/item-row.js";
 import { KindTiles } from "../components/kind-tiles.js";
+import { NearYouSection } from "../components/near-you-section.js";
 import { ProgressBar } from "../components/progress-bar.js";
 import { Section } from "../components/section.js";
 import { TodoSection } from "../components/todo-section.js";
@@ -17,13 +17,7 @@ const MONTH = () => new Date().toLocaleDateString(undefined, { month: "long" });
 /** Home, and where Back always goes: kind tiles, then what matters today. */
 export function Today() {
   const items = useItemSummaries();
-  const prefs = usePrefs();
-  const loc = prefs.data?.location;
-  const here = useMemo(
-    () => (loc?.lat !== undefined && loc.lng !== undefined ? { lat: loc.lat, lng: loc.lng } : null),
-    [loc],
-  );
-  const s = useMemo(() => (items.data ? todaySections(items.data, here) : null), [items.data, here]);
+  const s = useMemo(() => (items.data ? todaySections(items.data) : null), [items.data]);
 
   if (!items.data || !s) {
     return (
@@ -35,40 +29,7 @@ export function Today() {
     <div className="pad today">
       <KindTiles items={items.data} />
 
-      <Section
-        title="Near you"
-        note={
-          here
-            ? s.near.length
-              ? "closest things you haven't done"
-              : "nothing within 100 mi"
-            : "distances need your location"
-        }
-        action={
-          here && (
-            <Link className="btn small" to="/near">
-              All nearby →
-            </Link>
-          )
-        }
-      >
-        {here ? (
-          s.near.length > 0 && (
-            <div className="list">
-              {s.near.map((n) => (
-                <ItemRow key={n.item.id} item={n.item} miles={n.miles} />
-              ))}
-            </div>
-          )
-        ) : (
-          <div className="prompt">
-            Orbit can sort {s.placeCount.toLocaleString()} places on your lists by how far they are from you.
-            <Link className="btn primary" to="/settings/location">
-              Set my location
-            </Link>
-          </div>
-        )}
-      </Section>
+      <NearYouSection />
 
       {s.comingUp.length > 0 && (
         <Section title="Coming up" note="dated events in the next 4 months">
