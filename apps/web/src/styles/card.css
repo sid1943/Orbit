@@ -444,8 +444,8 @@
   grid-column: 2;
 }
 
-/* New item dialog */
-.dialog-scrim {
+/* New item dialog (own class names, apart from the shared `<dialog>` style in pages.css) */
+.new-item-scrim {
   position: fixed;
   inset: 0;
   z-index: 50;
@@ -455,7 +455,7 @@
   background: rgb(0 0 0 / 35%);
 }
 
-.dialog {
+.new-item {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -467,18 +467,18 @@
   box-shadow: 0 20px 60px rgb(0 0 0 / 25%);
 }
 
-.dialog h2 {
+.new-item h2 {
   margin: 0;
   font: 700 calc(18px * var(--fz)) / 1.2 var(--display);
 }
 
-.dialog-row {
+.new-item-row {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.dialog-actions {
+.new-item-actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;

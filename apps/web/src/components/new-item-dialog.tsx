@@ -32,8 +32,8 @@ export function NewItemDialog({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="dialog-scrim" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="dialog" role="dialog" aria-modal="true" aria-labelledby="new-item-h">
+    <div className="new-item-scrim" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="new-item" role="dialog" aria-modal="true" aria-labelledby="new-item-h">
         <h2 id="new-item-h">New item</h2>
         <input
           className="input"
@@ -56,7 +56,7 @@ export function NewItemDialog({ onClose }: { onClose: () => void }) {
             ))}
           </div>
         )}
-        <label className="dialog-row">
+        <label className="new-item-row">
           <span className="muted">Kind</span>
           <select className="btn" value={kind} onChange={(e) => setKind(e.target.value)}>
             {kinds.map((k) => (
@@ -70,7 +70,7 @@ export function NewItemDialog({ onClose }: { onClose: () => void }) {
             Couldn't add it: {create.error.message}
           </div>
         )}
-        <div className="dialog-actions">
+        <div className="new-item-actions">
           <button type="button" className="btn" onClick={onClose}>
             Cancel
           </button>
