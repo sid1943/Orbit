@@ -1,9 +1,11 @@
+import { type AppearancePref, parseAppearance } from "./appearance.js";
+import { type LocationPref, type Prefs, parseLocation } from "./prefs.js";
 import type { Checklist, Confidence, Entity, Item, Review, ReviewDecision, Status } from "./types.js";
 import { STATUSES } from "./types.js";
 
 /**
- * Converts the file made by "Download everything" in the original Orbit page
- * (format "orbit-export", version 1) into Orbit's data model.
+ * Reads and writes the "Download everything" file (format "orbit-export", version 1),
+ * made by Orbit today and by the web app. `ui` and `here` (settings) are optional, so older files still load.
  */
 
 type RawRow = [string, number | boolean, (string | null)?, (string | null)?];
@@ -31,6 +33,25 @@ interface RawItem {
 type RawEntity = Record<string, unknown> & { id?: string; n?: string; cat?: string; conf?: string };
 type RawDecision = string | { d: string; [k: string]: unknown };
 
+/** Orbit today's appearance and profile settings. `theme` is "auto", "light" or "dark". */
+export interface RawUi {
+  size?: number;
+  font?: string;
+  heads?: string;
+  detail?: string;
+  theme?: string;
+  name?: string;
+}
+
+/** Orbit today's location. `src` is how it was set ("device", "city", ...); `at` is when. */
+export interface RawHere {
+  lat?: number;
+  lng?: number;
+  label?: string;
+  src?: string;
+  at?: number;
+}
+
 export interface OrbitExportV1 {
   format: "orbit-export";
   version: 1;
@@ -38,17 +59,46 @@ export interface OrbitExportV1 {
   items: RawItem[];
   ent: Record<string, RawEntity>;
   reviews: Record<string, RawDecision>;
+  /** Appearance and the greeting name. Optional: files from before 2026-11-17 don't have it. */
+  ui?: RawUi;
+  /** Location. Optional, and null when it was never set. */
+  here?: RawHere | null;
 }
+
+/** Settings found in an export; a key is present only when the file had it. */
+export type ImportedPrefs = Partial<Pick<Prefs, "appearance" | "profile">> & { location?: LocationPref };
 
 export interface ImportResult {
   items: Item[];
   entities: Entity[];
   reviews: Review[];
+  prefs: ImportedPrefs;
 }
 
 const KIND_RENAMES: Record<string, string> = { Goal: "To-do", Health: "To-do" };
 const str = (v: unknown): string | undefined => (typeof v === "string" && v ? v : undefined);
 const num = (v: unknown): number | undefined => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
+
+/** Entity field ↔ short key in the export file, and whether the value is text or a number. */
+const ENTITY_FIELDS = [
+  ["qid", "q", "s"],
+  ["label", "label", "s"],
+  ["description", "d", "s"],
+  ["imdb", "imdb", "s"],
+  ["igdb", "igdb", "s"],
+  ["openLibrary", "ol", "s"],
+  ["author", "author", "s"],
+  ["year", "yr", "n"],
+  ["wikipedia", "wp", "s"],
+  ["website", "web", "s"],
+  ["unesco", "un", "s"],
+  ["steam", "steam", "s"],
+  ["lat", "lat", "n"],
+  ["lng", "lng", "n"],
+  ["location", "loc", "s"],
+  ["mapQuery", "mq", "s"],
+  ["closed", "closed", "s"],
+] as const satisfies readonly (readonly [keyof Entity, string, "s" | "n"])[];
 
 export function mapEntity(id: string, r: RawEntity, now: number): Entity {
   const e: Entity = {
@@ -58,26 +108,11 @@ export function mapEntity(id: string, r: RawEntity, now: number): Entity {
     confidence: (str(r.conf) ?? "none") as Confidence,
     updatedAt: num(r.updatedAt) ?? now,
   };
-  const put = <K extends keyof Entity>(k: K, v: Entity[K] | undefined) => {
-    if (v !== undefined) e[k] = v;
-  };
-  put("qid", str(r.q));
-  put("label", str(r.label));
-  put("description", str(r.d));
-  put("imdb", str(r.imdb));
-  put("igdb", str(r.igdb));
-  put("openLibrary", str(r.ol));
-  put("author", str(r.author));
-  put("year", num(r.yr));
-  put("wikipedia", str(r.wp));
-  put("website", str(r.web));
-  put("unesco", str(r.un));
-  put("steam", str(r.steam));
-  put("lat", num(r.lat));
-  put("lng", num(r.lng));
-  put("location", str(r.loc));
-  put("mapQuery", str(r.mq));
-  put("closed", str(r.closed));
+  const out = e as unknown as Record<string, unknown>;
+  for (const [field, key, type] of ENTITY_FIELDS) {
+    const v = type === "n" ? num(r[key]) : str(r[key]);
+    if (v !== undefined) out[field] = v;
+  }
   if (r.cand && typeof r.cand === "object") e.candidate = r.cand as Partial<Entity>;
   if (Array.isArray(r.alts)) e.alternatives = r.alts as Partial<Entity>[];
   return e;
@@ -143,6 +178,20 @@ export function mapDecision(raw: RawDecision): ReviewDecision | null {
   }
 }
 
+/** Settings in an export: `ui` becomes `appearance` and `profile`, `here` becomes `location`. */
+export function prefsFromExport(x: { ui?: unknown; here?: unknown }): ImportedPrefs {
+  const prefs: ImportedPrefs = {};
+  const ui = x.ui;
+  if (ui && typeof ui === "object" && !Array.isArray(ui)) {
+    prefs.appearance = parseAppearance(ui);
+    const name = (ui as RawUi).name;
+    if (typeof name === "string" && name.trim()) prefs.profile = { name: name.trim() };
+  }
+  const location = parseLocation(x.here);
+  if (location) prefs.location = location;
+  return prefs;
+}
+
 export function importOrbitExport(data: unknown, now = Date.now()): ImportResult {
   const x = data as Partial<OrbitExportV1>;
   if (!x || x.format !== "orbit-export" || x.version !== 1 || !Array.isArray(x.items) || typeof x.ent !== "object") {
@@ -156,5 +205,89 @@ export function importOrbitExport(data: unknown, now = Date.now()): ImportResult
     if (decision)
       reviews.push({ entityId, decision, at: typeof raw === "object" && typeof raw.at === "number" ? raw.at : now });
   }
-  return { items, entities, reviews };
+  return { items, entities, reviews, prefs: prefsFromExport(x) };
+}
+
+/* ---------- Writing the file (the web app's "Download everything") ---------- */
+
+export interface ExportInput {
+  items: Item[];
+  entities: Entity[];
+  reviews: Review[];
+  /** Settings to include; omit to leave `ui` and `here` out. */
+  prefs?: Pick<Prefs, "appearance" | "profile" | "location">;
+}
+
+export function unmapItem(it: Item): RawItem {
+  const r: RawItem = { id: it.id, t: it.title, k: it.kind, s: it.status, _at: it.updatedAt };
+  if (it.tags.length) r.tg = it.tags;
+  if (it.source) r.src = it.source;
+  if (Object.keys(it.props).length) r.p = it.props;
+  if (it.notes) r.d = it.notes;
+  if (it.due) r.due = it.due;
+  if (it.start) r.start = it.start;
+  if (it.archived) r.a = 1;
+  if (it.deleted) r.del = 1;
+  if (it.entityId) r.ent = it.entityId;
+  if (it.refs.length) r.lk = it.refs;
+  if (it.links.length) r.lnk = it.links.map((l) => (l.note ? [l.label, l.url, l.note] : [l.label, l.url]));
+  if (it.attachments.length) r.at = it.attachments.map((a) => [a.label, a.url]);
+  if (it.comments.length) r.cm = it.comments.map((c) => [c.date, c.text]);
+  if (it.checklists.length)
+    r.cl = it.checklists.map((c) => ({
+      n: c.name,
+      i: c.rows.map((row): RawRow => [row.text, row.done ? 1 : 0, row.ref, row.entityId]),
+    }));
+  return r;
+}
+
+export function unmapEntity(e: Entity): RawEntity {
+  const r: RawEntity = { n: e.name, cat: e.category, conf: e.confidence, updatedAt: e.updatedAt };
+  for (const [field, key] of ENTITY_FIELDS) if (e[field] !== undefined) r[key] = e[field];
+  if (e.candidate) r.cand = e.candidate;
+  if (e.alternatives) r.alts = e.alternatives;
+  return r;
+}
+
+export function unmapDecision(r: Review): RawDecision {
+  const { decision: dec, at } = r;
+  if (dec.d === "alt") return { d: "alt", q: dec.qid, ...(dec.label ? { label: dec.label } : {}), at };
+  return { ...dec, at };
+}
+
+/** Settings as Orbit today keeps them, so either Orbit can read the file. */
+export function uiFromPrefs(p: Pick<Prefs, "appearance" | "profile">): RawUi {
+  const a: AppearancePref = p.appearance;
+  return {
+    size: a.size,
+    font: a.font,
+    detail: a.detail,
+    heads: a.heads,
+    theme: a.theme === "system" ? "auto" : a.theme,
+    name: p.profile.name,
+  };
+}
+
+/** Builds the "Download everything" file: the same format Orbit today writes, with settings included. */
+export function exportOrbit(input: ExportInput, exported = new Date()): OrbitExportV1 {
+  const file: OrbitExportV1 = {
+    format: "orbit-export",
+    version: 1,
+    exported: exported.toISOString(),
+    items: input.items.map(unmapItem),
+    ent: Object.fromEntries(input.entities.map((e) => [e.id, unmapEntity(e)])),
+    reviews: Object.fromEntries(input.reviews.map((r) => [r.entityId, unmapDecision(r)])),
+  };
+  if (input.prefs) {
+    file.ui = uiFromPrefs(input.prefs);
+    const loc = input.prefs.location;
+    file.here = loc ? { label: loc.label, ...(loc.lat !== undefined ? { lat: loc.lat, lng: loc.lng } : {}) } : null;
+  }
+  return file;
+}
+
+/** `orbit-export-YYYY-MM-DD.json`, in local time, as Orbit today names it. */
+export function exportFileName(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `orbit-export-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.json`;
 }

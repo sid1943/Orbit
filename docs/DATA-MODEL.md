@@ -41,12 +41,40 @@ A movie, show, book, game or place in the real world, with its standard ids: `im
 ## Other tables
 
 - `reviews`: Sid's answers to guesses (`yes`, `no`, `none`, `alt` with another Wikidata id, `fix` with his own link, `hide`).
-- `prefs`: settings by key.
+- `prefs`: settings by key (see below).
 - `live`: TV status per linked show (status, seasons, last and next episode) and when to check again.
 - `covers`: a cover image address per linked thing.
 - `enrich_queue`: cards waiting to be linked (`mode` new or backfill, retries with back-off).
 
-## Import from the first Orbit
+## Settings (`prefs` table)
 
-`importOrbitExport()` in `packages/core/src/importExport.ts` reads the "Download everything" file
-(format `orbit-export`, version 1). Goal and Health cards become To-do cards.
+One row per key; `value` is JSON. Read with `parsePrefs()` (`packages/core/src/prefs.ts`), which falls back
+to the default for anything missing or malformed, so a bad value never breaks the app. Saved with
+`PUT /api/prefs/:key`.
+
+| Key          | Value                                                                                                                                                                                                 | In the export                             |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| `appearance` | `theme` (`system`, `light`, `dark`), `size` (1, 1.15, 1.3, 1.45), `font` (a `TEXT_FONTS` id), `heads` (a `HEADING_FONTS` id), `detail` (`mono` or `text`); lists in `packages/core/src/appearance.ts` | `ui` (`theme` `system` is written `auto`) |
+| `profile`    | `name`: the name in the greeting                                                                                                                                                                      | `ui.name`                                 |
+| `location`   | `label` (e.g. "Springfield, IL"), and `lat`, `lng` when known                                                                                                                                         | `here`                                    |
+| `lists`      | `showArchived`: show archived cards in lists                                                                                                                                                          | not exported                              |
+
+## The export file
+
+"Download everything", in Orbit today and in the web app (Settings → Your data), writes
+`orbit-export-YYYY-MM-DD.json`: format `orbit-export`, version 1. `packages/core/src/import-export.ts`
+reads it (`importOrbitExport()`) and writes it (`exportOrbit()`).
+
+| Field               | Holds                                                                                                                         |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `format`, `version` | `"orbit-export"`, `1`                                                                                                         |
+| `exported`          | When, as an ISO date                                                                                                          |
+| `items`             | Cards in short keys (`t` title, `k` kind, `s` status, `cl` checklists...)                                                     |
+| `ent`               | Linked things by id                                                                                                           |
+| `reviews`           | Review answers by linked-thing id                                                                                             |
+| `ui` (optional)     | Orbit today's settings object: `size`, `font`, `heads`, `detail`, `theme` (`auto`, `light`, `dark`), `name`                   |
+| `here` (optional)   | Location: `label`, `lat`, `lng`, and in Orbit today `src` and `at`; `null` when not set. A leading "near " is dropped on read |
+
+`ui` and `here` were added on 2026-11-17 without a version change: files without them still load, with no
+settings. When loading, Goal and Health cards become To-do cards, and `export-to-sql` writes the settings it
+finds into `prefs` as `appearance`, `profile` and `location` (`--no-prefs` skips them).

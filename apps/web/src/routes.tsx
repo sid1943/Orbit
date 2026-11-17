@@ -3,6 +3,7 @@ import { Layout } from "./components/layout.js";
 import { KindPage } from "./pages/kind.js";
 import { NotFound } from "./pages/not-found.js";
 import { Planned } from "./pages/planned.js";
+import { Settings } from "./pages/settings.js";
 import { Today } from "./pages/today.js";
 
 /** Every page, in one list: the router uses it now, and Settings → About will show it as the app map. */
@@ -20,8 +21,8 @@ export const PAGES = [
   {
     path: "/settings/:section?",
     title: "Settings",
-    what: "Appearance, profile, location, lists, your data",
-    element: <Planned title="Settings" step={4} />,
+    what: "Appearance, profile, location, lists, your data, guide, about",
+    element: <Settings />,
   },
   {
     path: "/review",
@@ -37,6 +38,15 @@ export const PAGES = [
     what: "Everything sharing one topic",
     element: <Planned title="Topic" step={7} />,
   },
+] as const;
+
+/** Panels and dialogs that open over a page, for the app map (Settings → About). */
+export const PANELS = [
+  { title: "Card", opens: "any item", what: "Useful links, notes, checklists, comments; details on the side" },
+  { title: "New item", opens: "N or New", what: "Title with #topics, kind, status" },
+  { title: "Search palette", opens: "the search bar, Ctrl/Cmd + K", what: "Jump to any card by name" },
+  { title: "Fix links", opens: "a card or Review", what: "Current links, alternatives, paste a link" },
+  { title: "Location", opens: "the location in the greeting", what: "Use my location, type a city, pick a city" },
 ] as const;
 
 const routes: RouteObject[] = [

@@ -1,4 +1,4 @@
-import { type Item, type Prefs, type PrefKey, type Status, parsePrefs } from "@orbit/core";
+import { type Entity, type Item, type Prefs, type PrefKey, type Review, type Status, parsePrefs } from "@orbit/core";
 
 /** The light card fields `GET /api/items` returns without `full=1`. */
 export interface ItemSummary {
@@ -89,6 +89,33 @@ export function createApiClient(config: ApiConfig) {
       return out;
     },
     getItem: (id: string) => request<Item>(`/items/${encodeURIComponent(id)}`),
+    /** Every card, complete, deleted ones included: for the backup. */
+    async allFullItems(): Promise<Item[]> {
+      const out: Item[] = [];
+      let offset: number | null = 0;
+      while (offset !== null) {
+        const page: { items: Item[]; next: number | null } = await request(
+          `/items?full=1&deleted=1&limit=2000&offset=${offset}`,
+        );
+        out.push(...page.items);
+        offset = page.next;
+      }
+      return out;
+    },
+    /** Every linked thing, following the API's pages. */
+    async allEntities(): Promise<Entity[]> {
+      const out: Entity[] = [];
+      let offset: number | null = 0;
+      while (offset !== null) {
+        const page: { entities: Entity[]; next?: number | null } = await request(
+          `/entities?limit=2000&offset=${offset}`,
+        );
+        out.push(...page.entities);
+        offset = page.next ?? null;
+      }
+      return out;
+    },
+    listReviews: async (): Promise<Review[]> => (await request<{ reviews: Review[] }>("/reviews")).reviews,
     getPrefs: async (): Promise<Prefs> => parsePrefs(await request<unknown>("/prefs")),
     putPref: <K extends PrefKey>(key: K, value: Prefs[K]) =>
       request<{ ok: boolean }>(`/prefs/${key}`, { method: "PUT", body: JSON.stringify(value) }),

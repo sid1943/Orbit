@@ -23,3 +23,11 @@ All notable changes to Orbit are listed here. The format follows
 - `scripts/mac-background.sh`: runs the API, the web app and the 10-minute update job in the background on a Mac
   (LaunchAgents), surviving closed Terminals and restarting at login.
 - Core: shared settings (`parsePrefs`), the greeting rule and each kind's colour.
+- Web app (build step 4): Settings in the Mac layout (Appearance, Profile, Location, Lists, Your data, Guide,
+  About with the app map). Theme, text size, heading font, detail lines and 18 text fonts apply at once and are
+  remembered in the browser for the first paint. "Download everything" writes an `orbit-export` file from the app.
+- Core: appearance options and validation (`appearance.ts`); prefs keys `appearance` and `lists`;
+  `exportOrbit()` writes the export file, and `importOrbitExport()` reads its optional `ui` and `here` settings.
+- Loader: `export-to-sql` writes the export's settings into `prefs` (`appearance`, `profile`, `location`);
+  `--no-prefs` skips them.
+- API: `GET /api/entities` pages through every linked thing (`limit`, `offset`, `next`).
