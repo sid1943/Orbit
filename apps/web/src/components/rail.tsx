@@ -10,12 +10,12 @@ const VIEWS = [
 ] as const;
 
 /** Views only. Kinds are tiles on the home page, not rail entries. */
-export function Rail({ open }: { open: boolean }) {
+export function Rail({ open, inert = false }: { open: boolean; inert?: boolean }) {
   const items = useItemSummaries();
   const live = items.data?.filter((i) => !i.deleted && !i.archived).length;
 
   return (
-    <nav className={`rail${open ? " open" : ""}`} aria-label="Views">
+    <nav className={`rail${open ? " open" : ""}`} aria-label="Views" inert={inert}>
       <Link className="brand" to="/" aria-label="Orbit home">
         <b>Orbit</b>
       </Link>
