@@ -1,6 +1,17 @@
-import { type Entity, type Item, type Prefs, type PrefKey, type Review, type Status, parsePrefs } from "@orbit/core";
+import {
+  type Entity,
+  type FullItem,
+  type Item,
+  type Prefs,
+  type PrefKey,
+  type Review,
+  type ReviewDecision,
+  type Status,
+  type SyncPage,
+  parsePrefs,
+} from "@orbit/core";
 
-/** The light card fields `GET /api/items` returns without `full=1`. */
+/** The light card fields `GET /api/items` returns without `full=1`. A `SyncItem` has all of them. */
 export interface ItemSummary {
   id: string;
   kind: string;
@@ -74,6 +85,15 @@ export function createApiClient(config: ApiConfig) {
     return request<{ items: ItemSummary[]; next: number | null }>(`/items${qs ? `?${qs}` : ""}`);
   };
 
+  const syncPage = (q: { since?: number; after?: string; limit?: number } = {}) => {
+    const params = new URLSearchParams();
+    if (q.since) params.set("since", String(q.since));
+    if (q.after) params.set("after", q.after);
+    if (q.limit) params.set("limit", String(q.limit));
+    const qs = params.toString();
+    return request<SyncPage>(`/sync${qs ? `?${qs}` : ""}`);
+  };
+
   return {
     health: () => request<{ ok: boolean; app: string; version: string }>("/health"),
     listItems,
@@ -89,6 +109,21 @@ export function createApiClient(config: ApiConfig) {
       return out;
     },
     getItem: (id: string) => request<Item>(`/items/${encodeURIComponent(id)}`),
+    /** One card with its linked things, TV status, covers and review answers (the card panel). */
+    getFullItem: (id: string) => request<FullItem>(`/items/${encodeURIComponent(id)}/full`),
+    syncPage,
+    /** Every card changed since `since` (0 for all), following the pages. `at` is the next `since`. */
+    async syncAll(since = 0): Promise<Pick<SyncPage, "items" | "removed" | "at">> {
+      const first = await syncPage({ since });
+      const items = [...first.items];
+      let after = first.next;
+      while (after) {
+        const page = await syncPage({ since, after });
+        items.push(...page.items);
+        after = page.next;
+      }
+      return { items, removed: first.removed, at: first.at };
+    },
     /** Every card, complete, deleted ones included: for the backup. */
     async allFullItems(): Promise<Item[]> {
       const out: Item[] = [];
@@ -116,6 +151,12 @@ export function createApiClient(config: ApiConfig) {
       return out;
     },
     listReviews: async (): Promise<Review[]> => (await request<{ reviews: Review[] }>("/reviews")).reviews,
+    /** Answer a link guess (or hide links: key `x:<id>`). */
+    putReview: (key: string, decision: ReviewDecision) =>
+      request<Review>(`/reviews/${encodeURIComponent(key)}`, { method: "PUT", body: JSON.stringify(decision) }),
+    /** Undo an answer. */
+    deleteReview: (key: string) =>
+      request<{ ok: boolean }>(`/reviews/${encodeURIComponent(key)}`, { method: "DELETE" }),
     getPrefs: async (): Promise<Prefs> => parsePrefs(await request<unknown>("/prefs")),
     putPref: <K extends PrefKey>(key: K, value: Prefs[K]) =>
       request<{ ok: boolean }>(`/prefs/${key}`, { method: "PUT", body: JSON.stringify(value) }),

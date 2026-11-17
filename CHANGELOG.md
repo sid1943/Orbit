@@ -33,3 +33,22 @@ All notable changes to Orbit are listed here. The format follows
 - API: `GET /api/entities` pages through every linked thing (`limit`, `offset`, `next`).
 - `scripts/mac-background.sh`: the 10-minute updater also pulls new commits on `main` (fast-forward only, never
   over local edits), runs `npm install` and migrations when needed, and restarts the API when its code changed.
+- API: `GET /api/sync`, every card in light form (topics, details, checklist progress, coordinates and cover of
+  its linked thing), in pages, with `since` for only what changed and `removed` for cards deleted for good.
+  Migration `0002_sync.sql` adds the `removed` table and indexes; existing cards need no back-fill.
+- API: `GET /api/items/:id/full`, a card with every linked thing on its checklists, TV status, covers and review
+  answers, however long its lists.
+- API: `DELETE /api/reviews/:key` undoes an answer; `GET /api/entities?confidence=review&pending=1` lists only
+  unanswered guesses.
+- Core: `applyReview()` (Orbit today's rule for review answers), `SyncItem`, `toSyncItem()`, `mergeSync()`,
+  `upsertSyncItem()`, `FullItem`; confidence `rejected`.
+- Web: `useSync()`, `useFullItem()` and `useReview()`; the card counts now come from the sync list.
+- API tests run the real SQL and migrations on Node's built-in SQLite (`apps/api/test/helpers/d1.ts`).
+
+### Fixed
+
+- API: review answers are applied wherever a linked thing is returned; before, they were stored but a confirmed or
+  corrected guess still showed as a guess.
+- API: TV status checks follow review answers (a confirmed guess is checked, a rejected one isn't).
+- API: `?ids=` lists were cut to 90 without saying so; now up to 2000 go as one parameter, and more is refused.
+- API: fixing a linked thing by hand and saving settings check what is sent.

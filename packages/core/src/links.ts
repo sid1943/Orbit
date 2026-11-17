@@ -9,6 +9,9 @@ export interface BuiltLink {
 /** Kinds of things that are not places, so they never get a map link. */
 const NO_MAP = new Set(["movie", "show", "book", "game", "festival", "show_taping", "event", "phenomenon", "trip"]);
 
+/** Whether a linked thing of this category can sit on a map. */
+export const isMappable = (category: string): boolean => !NO_MAP.has(category);
+
 export function entityLinks(e: Entity): BuiltLink[] {
   const out: BuiltLink[] = [];
   if (e.imdb) out.push({ label: "IMDb", url: `https://www.imdb.com/title/${encodeURIComponent(e.imdb)}/` });

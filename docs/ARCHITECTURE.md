@@ -13,7 +13,10 @@
        D1 database (items, entities, reviews, prefs, live, covers, enrich_queue)
 
  packages/core is shared by all of the above: the data model, search, link building,
- the import of Orbit export files, and the enricher's matching rules.
+ the import of Orbit export files, the enricher's matching rules, review answers and the sync list.
+
+ Pages read one compact list of every card (GET /api/sync, refreshed with only what changed)
+ and open a card in full (GET /api/items/:id/full) only when it is shown.
 ```
 
 ## Why these choices

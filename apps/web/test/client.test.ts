@@ -94,4 +94,29 @@ describe("createApiClient", () => {
     const api = createApiClient({ baseUrl: "", token: "t", fetch: f.fetch });
     expect(await api.allEntities()).toHaveLength(1);
   });
+
+  it("follows sync pages and keeps the first page's time and removals", async () => {
+    const f = fakeFetch([
+      { body: { items: [{ id: "a" }, { id: "b" }], removed: ["z"], at: 50, next: "b" } },
+      { body: { items: [{ id: "c" }], removed: [], at: 60, next: null } },
+    ]);
+    const api = createApiClient({ baseUrl: "", token: "t", fetch: f.fetch });
+    const r = await api.syncAll(10);
+    expect(r.items.map((i) => i.id)).toEqual(["a", "b", "c"]);
+    expect(r).toMatchObject({ removed: ["z"], at: 50 });
+    expect(f.calls.map((c) => c.url)).toEqual(["/api/sync?since=10", "/api/sync?since=10&after=b"]);
+  });
+
+  it("asks for a full card and sends review answers", async () => {
+    const f = fakeFetch([{ body: { item: { id: "x y" } } }, { body: {} }, { body: { ok: true } }]);
+    const api = createApiClient({ baseUrl: "", token: "t", fetch: f.fetch });
+    await api.getFullItem("x y");
+    await api.putReview("x:e1", { d: "hide", urls: ["https://a.example"] });
+    await api.deleteReview("e1");
+    expect(f.calls.map((c) => [c.init?.method ?? "GET", c.url])).toEqual([
+      ["GET", "/api/items/x%20y/full"],
+      ["PUT", "/api/reviews/x%3Ae1"],
+      ["DELETE", "/api/reviews/e1"],
+    ]);
+  });
 });

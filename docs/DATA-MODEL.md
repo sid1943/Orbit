@@ -29,14 +29,20 @@ A movie, show, book, game or place in the real world, with its standard ids: `im
 
 `confidence` says how sure the link is:
 
-| Value    | Meaning                                               |
-| -------- | ----------------------------------------------------- |
-| `high`   | Confirmed                                             |
-| `user`   | Set by Sid by hand                                    |
-| `review` | A guess waiting for Sid (`candidate`, `alternatives`) |
-| `map`    | A place known by name and location: map link only     |
-| `none`   | Nothing found                                         |
-| `nolink` | Not a real-world thing                                |
+| Value      | Meaning                                                 |
+| ---------- | ------------------------------------------------------- |
+| `high`     | Confirmed                                               |
+| `user`     | Set by Sid by hand                                      |
+| `review`   | A guess waiting for Sid (`candidate`, `alternatives`)   |
+| `map`      | A place known by name and location: map link only       |
+| `none`     | Nothing found                                           |
+| `nolink`   | Not a real-world thing                                  |
+| `rejected` | Sid said the guess was wrong and hasn't said what it is |
+
+Sid's answers (the `reviews` table) are applied when a linked thing is read, by `applyReview()`
+(`packages/core/src/review.ts`): `yes` takes the guess, `alt` another candidate, `no` drops the guess's links
+(`rejected`), `none` means no link needed (`nolink`), `fix` sets his own links (`userLinks`, `user`, or added
+alongside with `add`). The result carries `reviewed` with the answer. Deleting the answer brings the guess back.
 
 ## Other tables
 
@@ -45,6 +51,15 @@ A movie, show, book, game or place in the real world, with its standard ids: `im
 - `live`: TV status per linked show (status, seasons, last and next episode) and when to check again.
 - `covers`: a cover image address per linked thing.
 - `enrich_queue`: cards waiting to be linked (`mode` new or backfill, retries with back-off).
+- `removed`: ids of cards deleted for good, so `GET /api/sync` can tell other devices to drop them.
+
+## The sync list
+
+`GET /api/sync` sends each card as a `SyncItem` (`packages/core/src/sync.ts`): the light fields, topics (`tags`),
+details (`props`), checklist progress (`done`, `total`) and a few fields from the card's linked thing
+(`category`, `confidence`, `lat`, `lng`, `cover`). The database reads these straight from each card's JSON,
+so nothing has to be stored twice or back-filled. `toSyncItem()` builds the same row from a full card, for
+updating the list after an edit.
 
 ## Settings (`prefs` table)
 

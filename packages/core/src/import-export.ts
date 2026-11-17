@@ -79,8 +79,8 @@ const KIND_RENAMES: Record<string, string> = { Goal: "To-do", Health: "To-do" };
 const str = (v: unknown): string | undefined => (typeof v === "string" && v ? v : undefined);
 const num = (v: unknown): number | undefined => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
 
-/** Entity field ↔ short key in the export file, and whether the value is text or a number. */
-const ENTITY_FIELDS = [
+/** Entity field ↔ short key in the export file, and whether the value is text or a number. Also used to read guesses, which keep the short keys. */
+export const ENTITY_FIELDS = [
   ["qid", "q", "s"],
   ["label", "label", "s"],
   ["description", "d", "s"],
