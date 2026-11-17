@@ -43,6 +43,7 @@ export const keys = {
   health: ["health"] as const,
   sync: ["sync"] as const,
   item: (id: string) => ["item", id] as const,
+  connections: (id: string) => ["connections", id] as const,
   places: ["places"] as const,
   kinds: ["kinds"] as const,
   prefs: ["prefs"] as const,
@@ -151,6 +152,21 @@ export function useAddKind() {
 export const useFullItem = (id: string | undefined) => {
   const api = useApi();
   return useQuery({ queryKey: keys.item(id ?? ""), queryFn: () => api.getFullItem(id!), enabled: !!id });
+};
+
+/**
+ * A card's connections: its series in order (with where this card sits and what's next), what it
+ * follows and what follows it, what it's based on, what was made from it, its franchise. Each
+ * connected thing lists Sid's cards for it in `inOrbit`; the rest are for "tap to add".
+ */
+export const useConnections = (id: string | undefined) => {
+  const api = useApi();
+  return useQuery({
+    queryKey: keys.connections(id ?? ""),
+    queryFn: () => api.getConnections(id!),
+    enabled: !!id,
+    staleTime: 10 * 60_000,
+  });
 };
 
 /** Answer a link guess (`decision`), or undo the answer (`null`). Refreshes the card and the list. */

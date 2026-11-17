@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import type { AppEnv } from "./env.js";
 import { requireToken } from "./middleware/auth.js";
+import { connections } from "./routes/connections.js";
 import { enrich } from "./routes/enrich.js";
 import { entities } from "./routes/entities.js";
 import { items } from "./routes/items.js";
@@ -37,6 +38,7 @@ app.route("/live", live);
 app.route("/reviews", reviews);
 app.route("/prefs", prefs);
 app.route("/enrich", enrich);
+app.route("/connections", connections);
 
 app.notFound((c) => c.json({ error: "not found" }, 404));
 app.onError((err, c) => {

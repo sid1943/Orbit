@@ -10,7 +10,8 @@
     "test": "vitest run",
     "db:migrate:local": "wrangler d1 migrations apply orbit --local",
     "db:migrate": "wrangler d1 migrations apply orbit --remote",
-    "import:sql": "tsx scripts/export-to-sql.ts"
+    "import:sql": "tsx scripts/export-to-sql.ts",
+    "connect": "tsx scripts/connect-all.ts"
   },
   "dependencies": {
     "@orbit/core": "0.1.0",

@@ -1,4 +1,5 @@
 import {
+  type Connections,
   type Entity,
   type FullItem,
   type Item,
@@ -154,6 +155,9 @@ export function createApiClient(config: ApiConfig) {
     deleteItem: (id: string) => request<{ ok: boolean }>(`/items/${encodeURIComponent(id)}`, { method: "DELETE" }),
     /** One card with its linked things, TV status, covers and review answers (the card panel). */
     getFullItem: (id: string) => request<FullItem>(`/items/${encodeURIComponent(id)}/full`),
+    /** A card's series, sequels, adaptations and franchise (null when its linked thing has no Wikidata id yet). */
+    getConnections: async (id: string): Promise<Connections | null> =>
+      (await request<{ connections: Connections | null }>(`/connections/${encodeURIComponent(id)}`)).connections,
     /** Every card and checklist row linked to a place; with `since`, only the places of cards that changed. */
     getPlaces: (since = 0) => request<PlacesPage>(`/places${since ? `?since=${since}` : ""}`),
     syncPage,

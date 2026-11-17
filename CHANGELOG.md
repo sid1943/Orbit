@@ -8,6 +8,11 @@ All notable changes to Orbit are listed here. The format follows
 
 ### Added
 
+- Connections from Wikidata: each linked movie, show, book and game gets its series (all members in order, where it
+  sits, what's next), sequels, what it's based on and what was made from it, and its franchise, whether or not
+  they're in Orbit. Books get Wikidata ids from their Open Library ids. The cron gathers 50 per run;
+  `npm run connect -w @orbit/api` does everything at once. `GET /api/connections/:itemId` and `useConnections()`
+  give a card its connections; core `connections.ts`, migration `0003_connections`.
 - Monorepo with npm workspaces: `packages/core` and `apps/api`.
 - Core: data model, search rule, standard links per kind, import of Orbit export files.
 - Linking: IMDb via Wikidata, Open Library, IGDB and map links; links already in a card's notes are used first; list cards are skipped; strict back-fill for old cards.
