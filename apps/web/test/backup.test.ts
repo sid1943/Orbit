@@ -30,6 +30,10 @@ const api = {
   allFullItems: async () => [item],
   allEntities: async () => [{ id: "e1", name: "Demo", category: "movie", confidence: "high" as const, updatedAt: 3 }],
   listReviews: async () => [{ entityId: "e1", decision: { d: "yes" as const }, at: 4 }],
+  listKinds: async () => [
+    { name: "Movie", hue: 265, order: 3, standard: true, count: 1 },
+    { name: "Zine", hue: 40, order: 13, standard: false, count: 0 },
+  ],
 };
 
 describe("buildBackup", () => {
@@ -41,7 +45,7 @@ describe("buildBackup", () => {
     expect(b.counts).toEqual({ items: 1, entities: 1, reviews: 1 });
   });
 
-  it("writes a file Orbit can load again, settings included", async () => {
+  it("writes a file Orbit can load again, settings and custom kinds included", async () => {
     const b = await buildBackup(api, prefs);
     const back = importOrbitExport(JSON.parse(b.json));
     expect(back.items[0]).toMatchObject({ id: "a", deleted: true });
@@ -50,6 +54,7 @@ describe("buildBackup", () => {
       appearance: DEFAULT_PREFS.appearance,
       profile: { name: "Alex" },
       location: { label: "Testville", lat: 1, lng: 2 },
+      kinds: [{ name: "Zine", hue: 40 }],
     });
   });
 });

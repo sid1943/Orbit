@@ -48,6 +48,14 @@ All notable changes to Orbit are listed here. The format follows
   `since` for only the cards that changed. Near you and Near me can now find places on lists, as Orbit today did.
 - Core: `places.ts` with Orbit today's distance rules (`placeSpot`, city centers for city lists, `placesByDistance`,
   `placeLabel`, `mergePlaces`) and its `CITIES` list. Web: `usePlaces()`.
+- Custom kinds: `/api/kinds` lists every kind in order (standard ones first, then Sid's own, each with hue, order
+  and card count, even at 0), adds one (empty or taken names refused in any capitalization), renames (moving its
+  cards), recolours, reorders, and deletes one with no cards (otherwise 409 with the count). Stored as the `kinds`
+  prefs row; carried in the export file and loaded by `export-to-sql`; older files still load.
+- Core `kinds.ts`: `kindList()`, `parseCustomKinds()`, `kindNameProblem()`, `findKind()`, `suggestHue()`,
+  `reorderKinds()`; `countByKind()`, `kindSlug()` and `kindFromSlug()` moved here from the web app and take the
+  kind list; `kindHue()` takes the custom kinds. Web: `useKinds()`, `useAddKind()`, client calls for the rest;
+  `/kind/:kind` opens custom kinds; "Download everything" includes them.
 - Web app (build step 2): Today with every section from Orbit today (kind tiles, Near you, Coming up, In season
   now, In progress, To-do with add and tick off grouped by quest, Closest to finished, Pick one today, Recently
   changed, Topics); Everything and kind pages with status filter and grouping kept in the address; search results

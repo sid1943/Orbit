@@ -1,5 +1,8 @@
 import {
+  kindList,
+  kindNameProblem,
   mergePlaces,
+  suggestHue,
   mergeSync,
   upsertSyncItem,
   type Item,
@@ -12,7 +15,7 @@ import {
 } from "@orbit/core";
 import { QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext } from "react";
-import { ApiError, type ApiClient, type NewItemFields } from "./client.js";
+import { ApiError, type ApiClient, type KindEntry, type NewItemFields } from "./client.js";
 
 export const ApiContext = createContext<ApiClient | null>(null);
 
@@ -40,6 +43,7 @@ export const keys = {
   sync: ["sync"] as const,
   item: (id: string) => ["item", id] as const,
   places: ["places"] as const,
+  kinds: ["kinds"] as const,
   prefs: ["prefs"] as const,
 };
 
@@ -87,6 +91,58 @@ export function usePlaces() {
       return mergePlaces(prev, await api.getPlaces(prev?.at ?? 0));
     },
     staleTime: 30_000,
+  });
+}
+
+/**
+ * Every kind in order (the 13 standard ones, then Sid's own), each with name, hue, `order`, `standard`
+ * and card count. Until it loads, the standard list stands in, so tiles and colours never wait.
+ * Pass the list to `countByKind()`, `kindFromSlug()` and `kindHue()` from core so custom kinds work.
+ */
+export function useKinds() {
+  const api = useApi();
+  return useQuery({
+    queryKey: keys.kinds,
+    queryFn: api.listKinds,
+    placeholderData: (): KindEntry[] => kindList().map((k) => ({ ...k, count: 0 })),
+    staleTime: 5 * 60_000,
+  });
+}
+
+/**
+ * Add a kind (`{ name, hue? }`). The cached list shows it at once and goes back if the API refuses it.
+ * A name that's empty or already taken (in any capitalization) is refused before anything is sent:
+ * the error's message says why.
+ */
+export function useAddKind() {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (kind: { name: string; hue?: number }) => {
+      const current = qc.getQueryData<KindEntry[]>(keys.kinds) ?? kindList().map((k) => ({ ...k, count: 0 }));
+      const problem = kindNameProblem(kind.name, current);
+      if (problem) throw new ApiError(400, problem);
+      return api.addKind(kind);
+    },
+    onMutate: (kind) => {
+      const prev = qc.getQueryData<KindEntry[]>(keys.kinds);
+      if (prev && !kindNameProblem(kind.name, prev))
+        qc.setQueryData<KindEntry[]>(keys.kinds, [
+          ...prev,
+          {
+            name: kind.name.trim(),
+            hue: kind.hue ?? suggestHue(prev),
+            order: prev.length,
+            standard: false,
+            count: 0,
+          },
+        ]);
+      return { prev };
+    },
+    onError: (_err, _kind, ctx) => {
+      if (ctx?.prev) qc.setQueryData(keys.kinds, ctx.prev);
+    },
+    onSuccess: (res) => qc.setQueryData(keys.kinds, res.kinds),
   });
 }
 

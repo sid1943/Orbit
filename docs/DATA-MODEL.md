@@ -73,6 +73,7 @@ to the default for anything missing or malformed, so a bad value never breaks th
 | `profile`    | `name`: the name in the greeting                                                                                                                                                                      | `ui.name`                                 |
 | `location`   | `label` (e.g. "Springfield, IL"), and `lat`, `lng` when known                                                                                                                                         | `here`                                    |
 | `lists`      | `showArchived`: show archived cards in lists                                                                                                                                                          | not exported                              |
+| `kinds`      | Custom kinds in order: `[{ "name", "hue" }]`. Changed only through `/api/kinds` (`PUT /api/prefs/kinds` is refused); see "Kinds" below                                                                | `kinds`                                   |
 
 ## The export file
 
@@ -89,10 +90,27 @@ reads it (`importOrbitExport()`) and writes it (`exportOrbit()`).
 | `reviews`           | Review answers by linked-thing id                                                                                             |
 | `ui` (optional)     | Orbit today's settings object: `size`, `font`, `heads`, `detail`, `theme` (`auto`, `light`, `dark`), `name`                   |
 | `here` (optional)   | Location: `label`, `lat`, `lng`, and in Orbit today `src` and `at`; `null` when not set. A leading "near " is dropped on read |
+| `kinds` (optional)  | Custom kinds in order: `[{ "name": "Zine", "hue": 40 }]`. Written by the web app; Orbit today has none                        |
 
 `ui` and `here` were added on 2026-11-17 without a version change: files without them still load, with no
 settings. When loading, Goal and Health cards become To-do cards, and `export-to-sql` writes the settings it
-finds into `prefs` as `appearance`, `profile` and `location` (`--no-prefs` skips them).
+finds into `prefs` as `appearance`, `profile`, `location` and `kinds` (`--no-prefs` skips them). `kinds` was
+added the same way: older files load with only the standard kinds.
+
+## Kinds
+
+Every card has a kind. The 13 standard kinds (`KINDS`, with hues in `KIND_HUES`) are built in and always come
+first, in that order; they can't be renamed, recoloured, moved or deleted. Sid can add his own after them,
+each with a name and a hue (0–360), in an order he chooses. They are kept as the `kinds` row of `prefs` and
+read with `parseCustomKinds()` (`packages/core/src/kinds.ts`).
+
+- `kindList(custom)` gives the full ordered list: `{ name, hue, order, standard }`.
+- Names are compared by their slug (`kindSlug`), so "zine", "ZINE" and "Zine!" are one kind. A name must have a
+  letter or number and at most 40 characters (`kindNameProblem`).
+- Renaming a custom kind moves its cards (deleted ones too) to the new name. A custom kind can be deleted only
+  when it has no cards (not counting deleted ones).
+- `kindHue(kind, custom)`, `kindFromSlug(slug, list)` and `countByKind(items, list)` take the list so custom
+  kinds get their colour, page and place in the order.
 
 ## Places on lists
 

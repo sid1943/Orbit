@@ -134,6 +134,8 @@ All routes except `/api/health` need `Authorization: Bearer <API_TOKEN>`.
 | `GET /api/items/:id`                                        | One card, complete                                                      |
 | `GET /api/items/:id/full`                                   | One card with its linked things, TV status, covers and review answers   |
 | `GET /api/places?since=`                                    | Every card and checklist row linked to a place (Near you, Near me)      |
+| `GET /api/kinds`, `POST /api/kinds`                         | Every kind in order with its card count; add a custom kind              |
+| `PATCH` / `DELETE /api/kinds/:name`, `PUT /api/kinds/order` | Rename or recolour, delete (only with no cards), reorder custom kinds   |
 | `POST /api/items`                                           | Add a card (`kind`, `title` required); it is queued for linking         |
 | `PATCH /api/items/:id`                                      | Change fields                                                           |
 | `DELETE /api/items/:id`                                     | Move to deleted (`?hard=1` removes it for good)                         |
@@ -163,4 +165,12 @@ Notes:
 - **Review answers** stay apart from the guesses so they can be undone. Every route that returns a linked thing
   applies them (`applyReview` in `packages/core/src/review.ts`, the same rule as Orbit today). Keys are an entity
   id, `card-<itemId>`, or `x:<key>` for links Sid hid (`{ "d": "hide", "urls": [...] }`).
-- **Settings** keys other than `appearance`, `profile`, `location` and `lists` are refused.
+- **Kinds** (`/api/kinds`): `GET` returns `{ kinds }`, each `{ name, hue, order, standard, count }`, the
+  13 standard kinds first and then Sid's own, even with no cards. `POST { name, hue? }` adds one after the others
+  (a hue far from the others when none is given) and answers `{ kind, kinds }` with 201; an empty name, or a
+  name taken in any capitalization, is refused with 400. `PATCH /api/kinds/:name { name?, hue? }` renames
+  (moving the cards; `moved` says how many) or recolours; `PUT /api/kinds/order { names }` takes every custom
+  kind once; `DELETE /api/kinds/:name` answers 409 with `count` when the kind has cards. Standard kinds can't
+  be changed (400).
+- **Settings** keys other than `appearance`, `profile`, `location` and `lists` are refused (custom kinds go
+  through `/api/kinds`).

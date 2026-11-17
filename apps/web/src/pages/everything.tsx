@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useParams, useSearchParams } from "react-router";
-import { useItemSummaries, usePrefs } from "../api/queries.js";
+import { useItemSummaries, useKinds, usePrefs } from "../api/queries.js";
 import { ItemList } from "../components/item-list.js";
 import { KindTiles } from "../components/kind-tiles.js";
 import { PageBar } from "../components/page-bar.js";
@@ -18,7 +18,8 @@ const plural = (kind: string) => (kind.endsWith("s") ? kind : `${kind}s`);
  */
 export function Everything() {
   const slug = useParams().kind;
-  const kind = slug ? kindFromSlug(slug) : undefined;
+  const kindsQuery = useKinds();
+  const kind = slug ? kindFromSlug(slug, kindsQuery.data) : undefined;
   const [params, setParams] = useSearchParams();
   const status = parseStatus(params.get("status"));
   const group = parseGroup(params.get("group"));
@@ -29,7 +30,8 @@ export function Everything() {
     [items.data, kind, status, showArchived],
   );
 
-  if (slug && !kind) return <NotFound />;
+  // A custom kind's page waits for the kind list rather than flashing "not found".
+  if (slug && !kind) return kindsQuery.isPlaceholderData ? null : <NotFound />;
 
   const set = (key: string, value: string, empty: string) =>
     setParams(

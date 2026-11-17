@@ -105,7 +105,10 @@ export const KIND_HUES: Record<Kind, number> = {
   Note: 210,
 };
 
-/** Hue for any kind name; unknown kinds get a neutral blue. */
-export function kindHue(kind: string): number {
-  return (KIND_HUES as Record<string, number>)[kind] ?? 210;
+/** Hue for any kind name: a standard kind's, else a custom kind's from `custom` (see `kinds.ts`), else a neutral blue. */
+export function kindHue(kind: string, custom: readonly { name: string; hue: number }[] = []): number {
+  const standard = (KIND_HUES as Record<string, number>)[kind];
+  if (standard !== undefined) return standard;
+  const k = kind.trim().toLowerCase();
+  return custom.find((c) => c.name.toLowerCase() === k)?.hue ?? 210;
 }

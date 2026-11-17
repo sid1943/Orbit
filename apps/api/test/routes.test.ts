@@ -241,6 +241,74 @@ describe("GET /api/places", () => {
   });
 });
 
+describe("kinds", () => {
+  type K = { name: string; hue: number; order: number; standard: boolean; count: number };
+  const kindsNow = async () => (await get<{ kinds: K[] }>("/api/kinds")).body.kinds;
+
+  it("lists the standard kinds in order, then custom ones, even with no cards", async () => {
+    await seed([card({ id: "a", kind: "Movie" }), card({ id: "b", kind: "Movie", deleted: true })]);
+    const list = await kindsNow();
+    expect(list).toHaveLength(13);
+    expect(list[0]).toMatchObject({ name: "To-do", order: 0, standard: true, count: 0 });
+    expect(list.find((k) => k.name === "Movie")?.count).toBe(1);
+
+    const added = await send("POST", "/api/kinds", { name: " Zine ", hue: 40 });
+    expect(added.status).toBe(201);
+    expect(added.body.kind).toEqual({ name: "Zine", hue: 40, order: 13, standard: false, count: 0 });
+    expect((await kindsNow()).at(-1)).toMatchObject({ name: "Zine", count: 0 });
+  });
+
+  it("refuses empty and duplicate names in any capitalization, and bad hues", async () => {
+    await send("POST", "/api/kinds", { name: "Zine", hue: 40 });
+    expect((await send("POST", "/api/kinds", { name: "" })).status).toBe(400);
+    expect((await send("POST", "/api/kinds", { name: "ZINE" })).body.error).toMatch(/already a kind called Zine/);
+    expect((await send("POST", "/api/kinds", { name: "movie" })).status).toBe(400);
+    expect((await send("POST", "/api/kinds", { name: "Comics", hue: 400 })).status).toBe(400);
+    const auto = await send("POST", "/api/kinds", { name: "Comics" });
+    expect(typeof (auto.body.kind as K).hue).toBe("number");
+  });
+
+  it("renames a kind and moves its cards, recolours and reorders", async () => {
+    await send("POST", "/api/kinds", { name: "Zine", hue: 40 });
+    await send("POST", "/api/kinds", { name: "Comics", hue: 300 });
+    await seed([card({ id: "z1", kind: "Zine", updatedAt: 1 }), card({ id: "z2", kind: "Zine", deleted: true })]);
+    const renamed = await send("PATCH", "/api/kinds/zine", { name: "Fanzine", hue: 50 });
+    expect(renamed.status).toBe(200);
+    expect(renamed.body.moved).toBe(2);
+    const full = await get<{ item: Item }>("/api/items/z1/full");
+    expect(full.body.item.kind).toBe("Fanzine");
+    expect(full.body.item.updatedAt).toBeGreaterThan(1);
+    const synced = await get<SyncPage>("/api/sync");
+    expect(synced.body.items.find((i) => i.id === "z1")?.kind).toBe("Fanzine");
+    expect((await send("PATCH", "/api/kinds/Fanzine", { name: "comics" })).status).toBe(400);
+    expect((await send("PATCH", "/api/kinds/Movie", { hue: 1 })).status).toBe(400);
+    expect((await send("PATCH", "/api/kinds/Nope", { hue: 1 })).status).toBe(404);
+
+    expect((await send("PUT", "/api/kinds/order", { names: ["Comics"] })).status).toBe(400);
+    await send("PUT", "/api/kinds/order", { names: ["Comics", "Fanzine"] });
+    expect((await kindsNow()).slice(-2).map((k) => [k.name, k.hue, k.order])).toEqual([
+      ["Comics", 300, 13],
+      ["Fanzine", 50, 14],
+    ]);
+  });
+
+  it("deletes a custom kind only when it has no cards", async () => {
+    await send("POST", "/api/kinds", { name: "Zine", hue: 40 });
+    await seed([card({ id: "z1", kind: "Zine" })]);
+    const refused = await send("DELETE", "/api/kinds/Zine");
+    expect(refused.status).toBe(409);
+    expect(refused.body).toMatchObject({ count: 1, error: expect.stringMatching(/has 1 card/) });
+    expect((await send("DELETE", "/api/kinds/Movie")).status).toBe(400);
+    await send("DELETE", "/api/items/z1?hard=1");
+    expect((await send("DELETE", "/api/kinds/Zine")).status).toBe(200);
+    expect(await kindsNow()).toHaveLength(13);
+  });
+
+  it("can't be written around through prefs", async () => {
+    expect((await send("PUT", "/api/prefs/kinds", [{ name: "Movie", hue: 1 }])).status).toBe(400);
+  });
+});
+
 describe("GET /api/entities", () => {
   it("takes more than 100 ids at once", async () => {
     const many = Array.from({ length: 150 }, (_, n) => thing({ id: `e${n}` }));
