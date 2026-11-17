@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   CITIES,
+  categoryLabel,
+  findCity,
   cityCenter,
   mergePlaces,
   placeLabel,
@@ -96,5 +98,30 @@ describe("mergePlaces", () => {
     const next = mergePlaces(full, { places: [b2], items: ["b", "gone"], at: 20 });
     expect(next.places.map((p) => p.entityId)).toEqual(["a1", "b2"]);
     expect(mergePlaces(next, { places: [], items: ["a"], at: 30 }).places.map((p) => p.entityId)).toEqual(["b2"]);
+  });
+});
+
+describe("findCity", () => {
+  it("finds a listed city by full name, start or first part", () => {
+    expect(findCity("San Jose, CA")?.name).toBe("San Jose, CA");
+    expect(findCity("san j")?.name).toBe("San Jose, CA");
+    expect(findCity("Cleveland, Ohio")?.name).toBe("Cleveland, OH");
+  });
+
+  it("finds an extra town center, title-cased", () => {
+    expect(findCity("hoboken")).toEqual({ name: "Hoboken", lat: 40.744, lng: -74.0324 });
+  });
+
+  it("returns null for unknown or too-short names", () => {
+    expect(findCity("Atlantis")).toBeNull();
+    expect(findCity("s")).toBeNull();
+  });
+});
+
+describe("categoryLabel", () => {
+  it("uses Orbit today's names, then readable raw names", () => {
+    expect(categoryLabel("city_todo")).toBe("City to-dos");
+    expect(categoryLabel("fed_bank")).toBe("Federal Reserve banks");
+    expect(categoryLabel("new_kind_of_place")).toBe("New kind of place");
   });
 });

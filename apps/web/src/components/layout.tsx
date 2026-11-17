@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { matchPath, useLocation, useNavigate, useRoutes, type Location, type RouteObject } from "react-router";
 import { CardOverlay } from "./card-overlay.js";
 import { isTyping } from "../lib/keys.js";
+import { LocationPanelContext } from "../lib/location-panel.js";
 import { ApiStatus } from "./api-status.js";
+import { LocationDialog } from "./location-dialog.js";
 import { NewItemDialog } from "./new-item-dialog.js";
 import { Rail } from "./rail.js";
 import { SearchBar } from "./search-bar.js";
@@ -31,6 +33,9 @@ export function Layout({ pages }: { pages: RouteObject[] }) {
   const [openOn, setOpenOn] = useState<string | null>(null);
   const railOpen = openOn === pathname;
   const [adding, setAdding] = useState(false);
+  // The Location panel, opened from the greeting, Near you, Near me or Settings (with a note when there is one).
+  const [locating, setLocating] = useState<{ note?: string } | null>(null);
+  const openLocation = useCallback((note?: string) => setLocating({ note }), []);
 
   // N opens New item from anywhere, unless you're typing in a box.
   useEffect(() => {
@@ -45,22 +50,25 @@ export function Layout({ pages }: { pages: RouteObject[] }) {
   }, []);
 
   return (
-    <div className="app">
-      <Rail open={railOpen} inert={!!card} />
-      {railOpen && <div className="rail-scrim" onClick={() => setOpenOn(null)} aria-hidden="true" />}
-      <main className="main" inert={!!card}>
-        <TopBar isHome={pathname === "/"} onMenu={() => setOpenOn(pathname)} onNew={() => setAdding(true)} />
-        <SearchBar />
-        <ApiStatus />
-        <div className="scroll">{page}</div>
-      </main>
-      {card?.params.id && (
-        <CardOverlay
-          id={card.params.id}
-          onClose={() => void navigate({ pathname: behind.pathname, search: behind.search, hash: behind.hash })}
-        />
-      )}
-      {adding && <NewItemDialog onClose={() => setAdding(false)} />}
-    </div>
+    <LocationPanelContext value={openLocation}>
+      <div className="app">
+        <Rail open={railOpen} inert={!!card} />
+        {railOpen && <div className="rail-scrim" onClick={() => setOpenOn(null)} aria-hidden="true" />}
+        <main className="main" inert={!!card}>
+          <TopBar isHome={pathname === "/"} onMenu={() => setOpenOn(pathname)} onNew={() => setAdding(true)} />
+          <SearchBar />
+          <ApiStatus />
+          <div className="scroll">{page}</div>
+        </main>
+        {card?.params.id && (
+          <CardOverlay
+            id={card.params.id}
+            onClose={() => void navigate({ pathname: behind.pathname, search: behind.search, hash: behind.hash })}
+          />
+        )}
+        {adding && <NewItemDialog onClose={() => setAdding(false)} />}
+        {locating && <LocationDialog note={locating.note} onClose={() => setLocating(null)} />}
+      </div>
+    </LocationPanelContext>
   );
 }

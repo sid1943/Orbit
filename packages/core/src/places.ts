@@ -242,3 +242,57 @@ export function mergePlaces(prev: PlacesState | undefined, page: PlacesPage): Pl
     at: Math.max(prev.at, page.at),
   };
 }
+
+/** What each place category is called on chip rows (Near me, Review), as in Orbit today. */
+export const CATEGORY_LABELS: Readonly<Record<string, string>> = {
+  natural_place: "Natural places",
+  building: "Buildings",
+  us_park: "US parks",
+  museum: "Museums",
+  district: "Luxury districts",
+  ballpark: "Ballparks",
+  fed_bank: "Federal Reserve banks",
+  burger: "Burger spots",
+  nyc: "New York",
+  nyc_building: "NYC buildings",
+  done_place: "Done places",
+  pagoda: "Peace pagodas",
+  city_todo: "City to-dos",
+  eatery: "Places to eat",
+  sport_event: "Sports",
+  show_taping: "Show tapings",
+  chain: "Restaurant chains",
+  phenomenon: "Natural phenomena",
+  festival: "Festivals",
+  trip: "Trips",
+  movie: "Movies",
+  show: "TV shows",
+  book: "Books",
+  game: "Video games",
+  card: "Cards",
+};
+
+/** A category's name for people: its label, or the raw name with spaces ("new_thing" → "New thing"). */
+export function categoryLabel(category: string): string {
+  const known = CATEGORY_LABELS[category];
+  if (known) return known;
+  const words = category.replace(/_/g, " ").trim();
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : category;
+}
+
+/**
+ * A city Orbit knows by name: a `CITIES` entry ("San Jose, CA", or just "san jose"), or one of the extra
+ * town and borough centers ("Hoboken"). Null when it isn't known.
+ */
+export function findCity(name: string): City | null {
+  const s = name.trim().toLowerCase();
+  if (s.length < 2) return null;
+  const first = s.split(",")[0]!.trim();
+  const listed =
+    CITIES.find((c) => c.name.toLowerCase() === s) ??
+    CITIES.find((c) => c.name.toLowerCase().startsWith(s)) ??
+    CITIES.find((c) => c.name.split(",")[0]!.toLowerCase() === first);
+  if (listed) return listed;
+  const more = MORE_CENTERS.find(([n]) => n === first);
+  return more ? { name: more[0].replace(/\b\w/g, (c) => c.toUpperCase()), lat: more[1], lng: more[2] } : null;
+}

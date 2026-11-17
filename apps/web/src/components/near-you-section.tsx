@@ -2,6 +2,7 @@ import { formatMiles } from "@orbit/core";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { useItemSummaries, usePlaces, usePrefs } from "../api/queries.js";
+import { useOpenLocation } from "../lib/location-panel.js";
 import { nearYou, placesWithSpot } from "../lib/near-you.js";
 import { NearbyRow } from "./nearby-row.js";
 import { Section } from "./section.js";
@@ -11,6 +12,7 @@ export function NearYouSection() {
   const prefs = usePrefs();
   const places = usePlaces();
   const cards = useItemSummaries();
+  const openLocation = useOpenLocation();
   const loc = prefs.data?.location;
   const showArchived = prefs.data?.lists.showArchived ?? false;
   const here = useMemo(
@@ -30,16 +32,16 @@ export function NearYouSection() {
           {count !== null
             ? `Orbit can sort ${count.toLocaleString()} places on your lists by how far they are from you.`
             : "Orbit can sort the places on your lists by how far they are from you."}
-          <Link className="btn primary" to="/settings/location">
+          <button type="button" className="btn primary" onClick={() => openLocation()}>
             Set my location
-          </Link>
+          </button>
         </div>
       </Section>
     );
   }
 
   const towns = near?.towns.map((t) => (
-    <Link key={t.city} className="btn small" to="/near">
+    <Link key={t.city} className="btn small" to="/near?within=25">
       + {t.count} thing{t.count > 1 ? "s" : ""} to do in {t.city} →
     </Link>
   ));

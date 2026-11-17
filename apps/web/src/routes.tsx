@@ -1,6 +1,7 @@
 import { createBrowserRouter, type RouteObject } from "react-router";
 import { Layout } from "./components/layout.js";
 import { Everything } from "./pages/everything.js";
+import { NearMe } from "./pages/near-me.js";
 import { NotFound } from "./pages/not-found.js";
 import { Planned } from "./pages/planned.js";
 import { Search } from "./pages/search.js";
@@ -37,7 +38,12 @@ export const PAGES = [
     what: "Link guesses waiting for an answer",
     element: <Planned title="Review links" step={5} />,
   },
-  { path: "/near", title: "Near me", what: "Places by distance", element: <Planned title="Near me" step={6} /> },
+  {
+    path: "/near",
+    title: "Near me",
+    what: "Places on your lists by distance: 5, 25, 100, 500 mi or Any; Show done; category chips; city groups",
+    element: <NearMe />,
+  },
   { path: "/map", title: "Map", what: "Topics as a network", element: <Planned title="Map" step={7} /> },
   {
     path: "/topic/:name",
@@ -53,7 +59,11 @@ export const PANELS = [
   { title: "New item", opens: "N or New", what: "Title with #topics, kind, status" },
   { title: "Search palette", opens: "the search bar, Ctrl/Cmd + K", what: "Jump to any card by name" },
   { title: "Fix links", opens: "a card or Review", what: "Current links, alternatives, paste a link" },
-  { title: "Location", opens: "the location in the greeting", what: "Use my location, type a city, pick a city" },
+  {
+    title: "Location",
+    opens: "the location in the greeting",
+    what: "Use my location, type a city, paste a Maps link, pick a city",
+  },
 ] as const;
 
 /** The pages Layout draws (a card's address draws the page behind it, with the card on top). */

@@ -442,13 +442,14 @@ a.chip:hover {
 
 /* Near you: places on your lists */
 .place-row {
-  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-columns: calc(84px * var(--fz)) minmax(0, 1fr) auto;
 }
 
+/* "in Santa Clara" wraps under itself rather than running into the name. */
 .place-row .dist {
   font: 600 calc(12px * var(--fz)) var(--mono);
   margin-top: 2px;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .towns {
@@ -558,4 +559,117 @@ a.chip:hover {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+/* Near me: category chips, the place list and its city groups */
+.near-facets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-bottom: 14px;
+}
+
+.near-facets .chip,
+.location-pick .chip {
+  cursor: pointer;
+  font: inherit;
+  font-size: calc(12.5px * var(--fz));
+  line-height: 1.7;
+  padding: 0 9px;
+}
+
+.near-facets .chip:hover,
+.location-pick .chip:hover,
+.near-facets .chip.on,
+.location-pick .chip.on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.near-list .rows {
+  border-top: 1px solid var(--line);
+}
+
+.near-list .row {
+  padding: 10px 20px;
+}
+
+.near-city-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg);
+  padding: 14px 20px 6px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.place-row .chip {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+}
+
+.place-row.done .tt {
+  color: var(--muted);
+}
+
+@media (max-width: 720px) {
+  .near-list .row {
+    padding: 10px 14px;
+  }
+
+  .near-city-head {
+    padding: 12px 14px 6px;
+  }
+}
+
+/* Location panel */
+.location-dialog {
+  width: min(560px, calc(100vw - 32px));
+}
+
+.location-dialog form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.location-dialog form > .btn.primary {
+  align-self: flex-start;
+}
+
+.location-dialog .field,
+.location-dialog .error {
+  margin: 0;
+}
+
+.location-dialog .field > span {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.location-now h2 {
+  margin: 2px 0 0;
+}
+
+.location-note {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  font-size: calc(13px * var(--fz));
+}
+
+.location-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.location-dialog .dialog-buttons {
+  align-items: center;
 }
