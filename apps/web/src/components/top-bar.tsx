@@ -6,7 +6,7 @@ import { longDate } from "../lib/dates.js";
 import { locateDevice } from "../lib/locate.js";
 
 /** Greeting, date, location and New: the same on every page. Back is absolute: it always goes to Today. */
-export function TopBar({ isHome, onMenu }: { isHome: boolean; onMenu: () => void }) {
+export function TopBar({ isHome, onMenu, onNew }: { isHome: boolean; onMenu: () => void; onNew: () => void }) {
   const prefs = usePrefs();
   const setLocation = useSetPref("location");
   const navigate = useNavigate();
@@ -57,12 +57,7 @@ export function TopBar({ isHome, onMenu }: { isHome: boolean; onMenu: () => void
           </div>
         )}
       </div>
-      <button
-        type="button"
-        className="btn primary new-btn"
-        disabled
-        title="New item arrives with the card panel (build step 3)"
-      >
+      <button type="button" className="btn primary new-btn" onClick={onNew} title="New item (N)">
         New
       </button>
     </header>

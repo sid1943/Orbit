@@ -1,0 +1,520 @@
+/* The card panel: one big centered card, main column and a side column (Orbit today's layout). */
+.card-panel {
+  max-width: 1120px;
+  margin: 18px auto 48px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 10px 40px rgb(0 0 0 / 8%);
+}
+
+.card-empty {
+  max-width: 640px;
+  padding: 14px 22px 26px;
+}
+
+.card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 22px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.card-line1 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-close {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: calc(24px * var(--fz));
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.card-close:hover {
+  color: var(--ink);
+}
+
+.card-title {
+  width: calc(100% + 8px);
+  margin: 0 -4px;
+  padding: 2px 4px;
+  font: 700 calc(24px * var(--fz)) / 1.2 var(--display);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  resize: none;
+  overflow: hidden;
+}
+
+.card-title:hover,
+.card-title:focus {
+  border-color: var(--line);
+}
+
+.card-error {
+  margin: 10px 22px 0;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 300px);
+  gap: 32px;
+  padding: 4px 22px 28px;
+}
+
+.card-side {
+  min-width: 0;
+}
+
+.card-sec {
+  margin-top: 20px;
+}
+
+.card-sec h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 8px;
+  font: 600 calc(13px * var(--fz)) / 1.3 var(--body);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.card-sec h3 .btn,
+.card-sec h3 .small-text {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+.card-sec h3 .btn {
+  margin-left: auto;
+}
+
+.small-text {
+  font-size: calc(12px * var(--fz));
+}
+
+.btn.del {
+  color: var(--bad);
+  border-color: color-mix(in srgb, var(--bad) 45%, var(--line));
+}
+
+.x-btn {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  padding: 0 4px;
+  font-size: calc(15px * var(--fz));
+  line-height: 1;
+}
+
+.x-btn:hover {
+  color: var(--bad);
+}
+
+/* Useful links */
+.ulinks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.ulinks a {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 7px 9px;
+  border-radius: 6px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.ulinks a:hover {
+  background: var(--panel);
+}
+
+.ulinks a b {
+  font-weight: 600;
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}
+
+.ulinks a b::after {
+  content: " ↗";
+  font-weight: 400;
+}
+
+.ulinks a span {
+  font-size: calc(12px * var(--fz));
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+/* Notes and comments */
+.notes {
+  max-width: 70ch;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.notes.clamp {
+  max-height: 260px;
+  overflow: hidden;
+  mask-image: linear-gradient(#000 70%, transparent);
+}
+
+.notes + .btn {
+  margin-top: 6px;
+}
+
+.notes-edit {
+  width: 100%;
+  min-height: 220px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  resize: vertical;
+}
+
+.comment {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.comment-body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* One-line add boxes */
+.add-box {
+  display: flex;
+  margin-top: 6px;
+}
+
+.add-box input,
+.cl-search input,
+.row-tools input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+/* Checklists */
+.cl-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.cl {
+  margin-bottom: 16px;
+}
+
+.cl-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.cl-head .bar {
+  flex: 1;
+}
+
+.cl-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 3px 0;
+}
+
+.cl-row .check {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+}
+
+.cl-row.done .cl-label {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--line);
+}
+
+.cl-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.cl-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  font: calc(11.5px * var(--fz)) var(--mono);
+}
+
+.cl-links a {
+  text-decoration: none;
+}
+
+.cl-links a:hover {
+  text-decoration: underline;
+}
+
+.cl-go {
+  flex: none;
+  margin-left: auto;
+  padding: 0 5px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font: calc(11.5px * var(--fz)) var(--mono);
+  text-decoration: none;
+}
+
+.cl-menu {
+  flex: none;
+  margin-left: auto;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  padding: 0 5px;
+  line-height: 1.4;
+}
+
+.cl-go + .cl-menu {
+  margin-left: 2px;
+}
+
+.cl-head .cl-menu {
+  margin-left: 2px;
+}
+
+.cl-menu.on,
+.cl-menu:hover {
+  color: var(--ink);
+}
+
+.row-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 10px 24px;
+}
+
+.row-tools input {
+  flex: 1 1 220px;
+}
+
+.list-tools {
+  margin-left: 0;
+}
+
+/* Side column */
+.topic-edit {
+  padding-right: 3px;
+}
+
+.topic-edit a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.topic-edit a:hover {
+  color: var(--accent);
+}
+
+.due-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.due-box input {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.props {
+  margin: 10px 0 0;
+}
+
+.prop {
+  display: grid;
+  grid-template-columns: minmax(80px, auto) 1fr;
+  gap: 10px;
+  padding: 3px 0;
+  border-top: 1px solid var(--line);
+}
+
+.prop dt {
+  color: var(--muted);
+}
+
+.prop dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.when-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.months {
+  display: flex;
+  gap: 3px;
+}
+
+.months span {
+  display: grid;
+  place-items: center;
+  width: calc(20px * var(--fz));
+  height: calc(20px * var(--fz));
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--muted);
+  font: calc(11px * var(--fz)) var(--mono);
+}
+
+.months span.on {
+  background: color-mix(in srgb, var(--good) 22%, var(--panel));
+  color: var(--ink);
+}
+
+.months span.cur {
+  outline: 1.5px solid var(--accent);
+}
+
+.conn {
+  display: flex;
+  flex-direction: column;
+}
+
+.conn a {
+  --kc: hsl(var(--kh) var(--kind-s) var(--kind-l));
+
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 8px;
+  padding: 5px 6px;
+  border-radius: 6px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.conn a:hover {
+  background: var(--bg);
+}
+
+.conn .dot {
+  margin-top: 6px;
+  background: var(--kc);
+}
+
+.conn .muted {
+  grid-column: 2;
+}
+
+/* New item dialog */
+.dialog-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: start center;
+  padding: 12vh 16px 16px;
+  background: rgb(0 0 0 / 35%);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(520px, 100%);
+  padding: 18px 20px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 25%);
+}
+
+.dialog h2 {
+  margin: 0;
+  font: 700 calc(18px * var(--fz)) / 1.2 var(--display);
+}
+
+.dialog-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Phones: the card fills the screen in one column */
+@media (max-width: 720px) {
+  .card-panel {
+    margin: 0 0 32px;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    box-shadow: none;
+  }
+
+  .card-head,
+  .card-grid {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .card-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .card-title {
+    font-size: calc(20px * var(--fz));
+  }
+
+  .row-tools {
+    margin-left: 0;
+  }
+}
+
+.card-head .seg {
+  align-self: flex-start;
+  max-width: 100%;
+}

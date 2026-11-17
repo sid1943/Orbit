@@ -50,7 +50,9 @@ checklist row linked to a place, sorted with `placesByDistance()` and joined to 
 uses `useFullItem(id)` (`GET /api/items/:id/full`): the card, every linked thing on its checklists, TV status,
 covers and review answers, with no limit on list size. Review links and Fix links use
 `GET /api/entities?confidence=review&pending=1` and `useReview()`. After editing a card, put it into the list
-with `upsertSyncItem()` from core rather than refetching everything.
+with `upsertSyncItem()` from core rather than refetching everything. The card panel saves through `useEditCard(id)`,
+which sends whole fields (the whole checklist list, say) worked out with the edit rules in `packages/core/src/card.ts`,
+shows the change at once in the card and the lists, and goes back if saving fails.
 
 Kinds come from `useKinds()` (`GET /api/kinds`): the standard kinds, then Sid's own, each with hue, order and
 card count, shown even with no cards. Pass that list to `countByKind()`, `kindFromSlug()` and `kindHue()` from

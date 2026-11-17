@@ -32,6 +32,28 @@ export type NewItemFields = Partial<
 > &
   Pick<Item, "kind" | "title">;
 
+/** Fields the card panel can change on a card (everything the API lets a client set). */
+export type ItemEditFields = Partial<
+  Pick<
+    Item,
+    | "kind"
+    | "title"
+    | "status"
+    | "tags"
+    | "props"
+    | "notes"
+    | "due"
+    | "start"
+    | "archived"
+    | "deleted"
+    | "refs"
+    | "links"
+    | "attachments"
+    | "comments"
+    | "checklists"
+  >
+>;
+
 export interface ItemQuery {
   kind?: string;
   status?: Status;
@@ -123,11 +145,13 @@ export function createApiClient(config: ApiConfig) {
     /** Add a card; the API fills in the rest. */
     createItem: (fields: NewItemFields) => request<Item>("/items", { method: "POST", body: JSON.stringify(fields) }),
     /** Change some of a card's fields. */
-    updateItem: (id: string, fields: Partial<NewItemFields>) =>
+    updateItem: (id: string, fields: ItemEditFields) =>
       request<Item>(`/items/${encodeURIComponent(id)}`, {
         method: "PATCH",
         body: JSON.stringify(fields),
       }),
+    /** Move a card to deleted (it stays in the backup and can be brought back). */
+    deleteItem: (id: string) => request<{ ok: boolean }>(`/items/${encodeURIComponent(id)}`, { method: "DELETE" }),
     /** One card with its linked things, TV status, covers and review answers (the card panel). */
     getFullItem: (id: string) => request<FullItem>(`/items/${encodeURIComponent(id)}/full`),
     /** Every card and checklist row linked to a place; with `since`, only the places of cards that changed. */

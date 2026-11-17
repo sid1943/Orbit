@@ -68,6 +68,17 @@ All notable changes to Orbit are listed here. The format follows
 - Today's Near you uses the places on your lists (`usePlaces()`, `placesByDistance()`): checklist rows as well as
   cards, "on <list>" under each row, "+ N things to do in <city>" for city-list places with no exact spot, and the
   closest place when nothing is within 100 miles. Shared `NearbyRow` and `lib/near-you.ts` for Near me.
+- Web app (build step 3): the card panel at `/item/:id`, a big centered card filled from `useFullItem()`. Header with
+  kind, title, status, Archive and Delete; main column with Useful links (standard link first, then the card's links
+  and attachments, all with readable names, hidden links left out), Notes (readable links, `[[Exact title]]` opens the
+  card, edit in place), Checklists (search across rows and their linked things, progress, tick, add, edit, move up and
+  down or to another checklist, delete, rename or delete a checklist, first 40 rows then Show all) and Comments; side
+  column with topics, due date, details, When (months and season) and connected cards. One column on phones.
+- Web app: New item (the New button or N) with title and #topics, kind and status; it opens the new card.
+- Core: `card.ts` with the card panel's rules (`usefulLinks`, `thingLinks`, `hiddenFor`, `textParts`, `splitTopics`,
+  checklist, comment and topic edits, `checklistMatches`, `linkedCardIds`, `relatedByTopics`).
+- Web API client: `updateItem` takes every editable field, `deleteItem`; hooks `useEditCard()` (the card and lists
+  change at once, and go back if saving fails) and `useDeleteItem()`.
 
 ### Fixed
 

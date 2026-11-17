@@ -6,3 +6,11 @@ export const longDate = (d: Date) =>
 export const shortDate = (d: Date, now = new Date()) =>
   d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) +
   (d.getFullYear() !== now.getFullYear() ? `, ${d.getFullYear()}` : "");
+
+/** "today", "in 3 days", "2 days ago". */
+export function relativeDays(n: number): string {
+  if (n === 0) return "today";
+  if (n === 1) return "tomorrow";
+  if (n === -1) return "yesterday";
+  return n > 0 ? `in ${n} days` : `${-n} days ago`;
+}

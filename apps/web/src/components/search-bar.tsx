@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { useItemSummaries } from "../api/queries.js";
+import { isTyping } from "../lib/keys.js";
 import { quickMatches } from "../lib/search.js";
 import { KindChip } from "./kind-chip.js";
-
-const isTyping = (el: Element | null) =>
-  el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || (el as HTMLElement | null)?.isContentEditable;
 
 /**
  * Search under the greeting. `/` or Ctrl/Cmd+K focuses it. Typing opens the palette right on the bar:

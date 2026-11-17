@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router";
+import { isTyping } from "../lib/keys.js";
 import { ApiStatus } from "./api-status.js";
+import { NewItemDialog } from "./new-item-dialog.js";
 import { Rail } from "./rail.js";
 import { SearchBar } from "./search-bar.js";
 import { TopBar } from "./top-bar.js";
@@ -13,19 +15,33 @@ export function Layout() {
   // The rail remembers the page it was opened on, so moving to another page closes it.
   const [openOn, setOpenOn] = useState<string | null>(null);
   const railOpen = openOn === pathname;
+  const [adding, setAdding] = useState(false);
+
+  // N opens New item from anywhere, unless you're typing in a box.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === "n" && !e.metaKey && !e.ctrlKey && !e.altKey && !isTyping(document.activeElement)) {
+        e.preventDefault();
+        setAdding(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   return (
     <div className="app">
       <Rail open={railOpen} />
       {railOpen && <div className="rail-scrim" onClick={() => setOpenOn(null)} aria-hidden="true" />}
       <main className="main">
-        <TopBar isHome={pathname === "/"} onMenu={() => setOpenOn(pathname)} />
+        <TopBar isHome={pathname === "/"} onMenu={() => setOpenOn(pathname)} onNew={() => setAdding(true)} />
         <SearchBar />
         <ApiStatus />
         <div className="scroll">
           <Outlet />
         </div>
       </main>
+      {adding && <NewItemDialog onClose={() => setAdding(false)} />}
     </div>
   );
 }

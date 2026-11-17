@@ -28,7 +28,9 @@
 - [x] Home: greeting, date, location, kind tiles
 - [x] Home: search palette and the rest of Today (build step 2)
 - [x] Everything, kind pages (status filter, grouping) and search results
-- [ ] Card modal (links, notes, checklists with search, comments, due date)
+- [x] Card panel (links, notes, checklists with search and row tools, comments, topics, due date, when, connections) and New item (build step 3)
+- [ ] Card panel: "Linked from" (cards whose refs point here) needs refs in the sync list (API chat)
+- [ ] Card panel: Fix links button (build step 5), cover and TV status (build step 8)
 - [ ] Map view with big topics, Near you
 - [ ] Review queue
 - [x] Settings (appearance, fonts, sizes, location, lists, data, guide, about) and the app map
