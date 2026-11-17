@@ -1,88 +1,43 @@
-# Smart Kanban 🎯
+# Orbit
 
-An intelligent task management app that adapts its behavior based on task categories.
+One place for everything Sid wants to watch, read, play, visit and do.
+Orbit replaced Trello: movies, shows, books, games, places, to-dos and notes live here,
+and each one links to its standard page (IMDb, Open Library, IGDB, a map).
 
-## Features
+This repository is the app version of Orbit. It is being built in steps; the first Orbit
+(a single page on claude.ai) stays in use until this app does everything it does.
 
-### Currently Available
-- **🥬 Groceries** - Tell the app what ingredients you have, get recipe suggestions, and auto-generate shopping lists
+## What's here
 
-### Coming Soon
-- **📚 Learning** - Get personalized learning roadmaps with daily topic reminders
-- **✈️ Travel/Visa** - Break down complex processes into deadline-driven checklists  
-- **⏰ Reminders** - Smart recurring reminders
+| Folder | What it is |
+| --- | --- |
+| `packages/core` | Shared TypeScript: the data model, search rules, link building, the import of Orbit export files, and the enricher (finds the IMDb / Open Library / IGDB link for a new card, and TV status from TVmaze). Used by the API now and the web and phone apps later. |
+| `apps/api` | The backend: a Cloudflare Worker with a D1 database. A small JSON API, plus a job every 10 minutes that links newly added cards and refreshes TV shows. |
+| `apps/web` | The web app (next step). |
+| `docs/` | How it fits together, the data model, and setup steps. |
 
-## Quick Start
-
-### Prerequisites
-- Node.js 18+
-- Claude API key from [console.anthropic.com](https://console.anthropic.com/settings/keys)
-
-### Installation
+## Quick start (on your computer)
 
 ```bash
-# Install dependencies
 npm install
+npm test              # core rules
+npm run typecheck
 
-# Start development server
-npm run dev
+cd apps/api
+echo "API_TOKEN=pick-any-local-password" > .dev.vars
+npx wrangler d1 migrations apply orbit --local
+npx wrangler dev      # http://localhost:8787/api/health
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+Putting it online on Cloudflare (free plan) and loading your data: see [docs/SETUP.md](docs/SETUP.md).
 
-### Enter API Key
-On first launch, enter your Claude API key. It's stored locally in your browser.
+## Your data stays out of this repository
 
-## How It Works
+This repository is public. Personal data (the export file, the SQL made from it, `.dev.vars`)
+is listed in `.gitignore` and must never be committed.
 
-### Grocery Flow
-1. Select "Groceries" category
-2. List what ingredients you have at home
-3. Claude suggests recipes you can make
-4. Select a recipe → get a shopping list for missing items
-5. Check off items as you shop
+## Costs
 
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Frontend | React 18 + TypeScript |
-| Styling | Tailwind CSS |
-| AI | Claude API (Sonnet) |
-| Storage | localStorage |
-| Build | Vite |
-
-## Project Structure
-
-```
-src/
-├── components/        # React UI components
-├── categories/        # Category-specific handlers
-│   └── grocery/      # Grocery planning logic
-├── services/         # API & storage services
-├── hooks/            # Custom React hooks
-├── types/            # TypeScript types
-└── App.tsx           # Main app component
-```
-
-## Adding New Categories
-
-1. Create a new folder in `src/categories/`
-2. Implement a handler following the pattern in `grocery/GroceryHandler.ts`
-3. Add the category to the sidebar in `components/Sidebar.tsx`
-4. Handle the category in `App.tsx`
-
-## Mobile Support (Future)
-
-The app is built with Capacitor compatibility in mind. To wrap for iOS/Android:
-
-```bash
-npm install @capacitor/core @capacitor/cli
-npx cap init
-npx cap add ios
-npx cap add android
-```
-
-## License
-
-MIT
+Everything runs on free plans: Cloudflare Workers and D1 free tiers, and free public sources
+(Wikidata, Open Library, TVmaze). No keys are needed for those. IGDB and TMDB need free
+keys and are optional.

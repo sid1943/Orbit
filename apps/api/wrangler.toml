@@ -1,0 +1,17 @@
+name = "orbit-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# The database. After `wrangler d1 create orbit`, paste the id it prints here.
+[[d1_databases]]
+binding = "DB"
+database_name = "orbit"
+database_id = "REPLACE_WITH_YOUR_D1_ID"
+migrations_dir = "migrations"
+
+# Every 10 minutes: link a few newly added items, then refresh a few TV shows.
+[triggers]
+crons = ["*/10 * * * *"]
+
+# Secrets (never in this file): `wrangler secret put API_TOKEN`
+# For local dev put API_TOKEN=... in apps/api/.dev.vars (gitignored).
