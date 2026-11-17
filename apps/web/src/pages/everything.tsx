@@ -57,7 +57,7 @@ export function Everything() {
       {items.data ? (
         <>
           <div className="pad tiles-pad">
-            <KindTiles items={items.data} current={kind} />
+            <KindTiles items={items.data} current={kind} canAdd={!kind} />
           </div>
           <ItemList
             key={`${kind ?? ""}|${status}|${group}`}

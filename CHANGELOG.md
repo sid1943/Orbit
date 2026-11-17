@@ -63,6 +63,9 @@ All notable changes to Orbit are listed here. The format follows
 - Core: Today rules (`today.ts`): dates from "Preferable Time" (`timeInfo`, `nextDate`, `monthsOf`, `inSeason`),
   list order, daily picks, closest to finished, topic counts, distances in miles, `parseTodo`, `nextStatus`.
 - Web API client: `createItem` and `updateItem`, with `useCreateItem` / `useUpdateItem` updating the sync list at once.
+- "+" square tile after the kind tiles (Today and Everything) adds a kind: a dialog with a name (checked as you type:
+  empty or taken names are refused) and a colour slider starting far from the other kinds. Kind tiles follow
+  `useKinds()`, so a new kind shows at once with 0 cards; kind chips and groups use custom kinds' colours.
 - Kind tiles (Today, Everything, kind pages) are square, keep one size that follows the text-size setting, and wrap
   onto more rows as kinds are added; three across on phones.
 - Today's Near you uses the places on your lists (`usePlaces()`, `placesByDistance()`): checklist rows as well as
@@ -70,6 +73,9 @@ All notable changes to Orbit are listed here. The format follows
   closest place when nothing is within 100 miles. Shared `NearbyRow` and `lib/near-you.ts` for Near me.
 
 ### Fixed
+
+- `useAddKind()` refused every new name ("there is already a kind called …"): it checked the name after
+  adding it to the list. It now checks first, then shows the new kind.
 
 - API: review answers are applied wherever a linked thing is returned; before, they were stored but a confirmed or
   corrected guess still showed as a guess.
