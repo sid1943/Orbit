@@ -14,7 +14,7 @@
 - [ ] Sid: Cloudflare account, `wrangler d1 create`, secret, deploy (docs/SETUP.md)
 - [ ] Sid: load the export
 
-## Step 2: Web app
+## Step 2: Web app (spec: docs/WEB-APP.md)
 
 - [ ] Vite + React app in `apps/web`, signed in with the API token
 - [ ] Home with greeting, location, search palette, kind tiles

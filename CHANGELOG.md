@@ -16,4 +16,4 @@ All notable changes to Orbit are listed here. The format follows
 - Cron every 10 minutes for linking and TV status.
 - Loader from an export file to D1 SQL, splitting very large cards to fit D1's statement limit.
 - Tooling: ESLint, Prettier, EditorConfig, Vitest in each workspace, GitHub Actions CI, Dependabot, PR template.
-- Docs: architecture, data model, setup, conventions.
+- Docs: architecture, data model, setup, conventions, web app plan.

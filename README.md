@@ -79,6 +79,7 @@ To put it online on Cloudflare and load your data, follow [docs/SETUP.md](docs/S
 - [Data model](docs/DATA-MODEL.md): cards, linked things, confidence, tables
 - [Setup](docs/SETUP.md): Cloudflare deploy, loading data, API reference
 - [Conventions](docs/CONVENTIONS.md): code style, structure, commits and branches
+- [Web app plan](docs/WEB-APP.md): every page, panel and setting the web app needs, and the build order
 
 ## Privacy
 
