@@ -16,6 +16,7 @@ import { loadFont } from "../lib/appearance.js";
 import { type Backup, buildBackup, saveFile } from "../lib/backup.js";
 import { GUIDE } from "../lib/guide.js";
 import { locateDevice } from "../lib/locate.js";
+import { useOpenLocation } from "../lib/location-panel.js";
 import { PAGES, PANELS } from "../routes.js";
 import { Segmented } from "./segmented.js";
 import { SettingRow } from "./setting-row.js";
@@ -130,6 +131,7 @@ export function ProfilePane({ prefs }: { prefs: Prefs }) {
 
 export function LocationPane({ prefs }: { prefs: Prefs }) {
   const save = useSetPref("location");
+  const openLocation = useOpenLocation();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const place = prefs.location;
@@ -148,6 +150,9 @@ export function LocationPane({ prefs }: { prefs: Prefs }) {
       <SettingRow title="Where you are" hint="Used for Near me and distances. Kept until you change it.">
         <div className="sbtns">
           <span className="value">{place ? place.label : "Not set"}</span>
+          <button type="button" className="btn" onClick={() => openLocation()}>
+            {place ? "Change" : "Set location"}
+          </button>
           <button type="button" className="btn" onClick={useMine} disabled={busy}>
             {busy ? "Finding you…" : "Use my location"}
           </button>

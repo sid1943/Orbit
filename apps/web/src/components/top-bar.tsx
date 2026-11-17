@@ -1,25 +1,24 @@
 import { greeting } from "@orbit/core";
-import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { usePrefs, useSetPref } from "../api/queries.js";
 import { longDate } from "../lib/dates.js";
 import { locateDevice } from "../lib/locate.js";
+import { useOpenLocation } from "../lib/location-panel.js";
 
 /** Greeting, date, location and New: the same on every page. Back is absolute: it always goes to Today. */
 export function TopBar({ isHome, onMenu, onNew }: { isHome: boolean; onMenu: () => void; onNew: () => void }) {
   const prefs = usePrefs();
   const setLocation = useSetPref("location");
-  const navigate = useNavigate();
-  const [locError, setLocError] = useState("");
+  const openLocation = useOpenLocation();
   const now = new Date();
   const name = prefs.data?.profile.name || "Sid";
   const place = prefs.data?.location;
 
+  // When the device can't say where it is, the Location panel opens with the reason and the other ways.
   const useMyLocation = () => {
-    setLocError("");
     locateDevice()
       .then((loc) => setLocation.mutate(loc))
-      .catch((e: unknown) => setLocError(e instanceof Error ? e.message : String(e)));
+      .catch((e: unknown) => openLocation(e instanceof Error ? e.message : String(e)));
   };
 
   return (
@@ -37,7 +36,12 @@ export function TopBar({ isHome, onMenu, onNew }: { isHome: boolean; onMenu: () 
         <div className="sub">
           <span>{longDate(now)}</span>
           <span aria-hidden="true">·</span>
-          <button type="button" className="link-btn" onClick={() => navigate("/settings/location")}>
+          <button
+            type="button"
+            className="link-btn"
+            onClick={() => openLocation()}
+            title={place ? "Change your location" : undefined}
+          >
             {place ? (
               <>
                 <span className="pin">●</span> {place.label}
@@ -51,9 +55,9 @@ export function TopBar({ isHome, onMenu, onNew }: { isHome: boolean; onMenu: () 
             Use my location
           </button>
         </div>
-        {(locError || setLocation.isError) && (
+        {setLocation.isError && (
           <div className="sub error" role="alert">
-            {locError || "Couldn't save your location."}
+            Couldn&apos;t save your location.
           </div>
         )}
       </div>

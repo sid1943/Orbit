@@ -1,20 +1,26 @@
-import type { LocationPref } from "@orbit/core";
+import { locationAt, type LocationPref } from "@orbit/core";
 
-/** Rounds to about 10 m: precise enough for distances, without keeping an exact address. */
-export const roundCoord = (n: number): number => Math.round(n * 1e4) / 1e4;
-
-/** Asks the browser where this device is. Rejects with a sentence to show when it can't. */
+/**
+ * Asks the browser where this device is, labelled with the nearest city. Rejects with a sentence to show
+ * when it can't (the Location panel shows it, with the other ways to set a place).
+ */
 export function locateDevice(): Promise<LocationPref> {
   return new Promise((resolve, reject) => {
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
-      reject(new Error("This browser can't share its location."));
+      reject(new Error("This browser can't share its location. Pick a city or paste a Google Maps link."));
       return;
     }
     navigator.geolocation.getCurrentPosition(
-      ({ coords }) =>
-        resolve({ label: "Current location", lat: roundCoord(coords.latitude), lng: roundCoord(coords.longitude) }),
-      () => reject(new Error("Location permission was refused.")),
-      { timeout: 10_000 },
+      ({ coords }) => resolve(locationAt(coords.latitude, coords.longitude)),
+      (err) =>
+        reject(
+          new Error(
+            err.code === err.PERMISSION_DENIED
+              ? "Location access is blocked for this page. Pick a city or paste a Google Maps link instead."
+              : "Couldn't get your location just now. Pick a city or paste a Google Maps link instead.",
+          ),
+        ),
+      { timeout: 12_000, maximumAge: 600_000 },
     );
   });
 }

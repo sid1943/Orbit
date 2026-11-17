@@ -1,8 +1,10 @@
-import { placeSpot, placesByDistance, type NearbyPlace, type PlaceRow, type SyncItem } from "@orbit/core";
+import { formatMiles, placeSpot, placesByDistance, type NearbyPlace, type PlaceRow, type SyncItem } from "@orbit/core";
 
 export interface NearbyOnCard extends NearbyPlace {
   /** The card the place is on (or is). */
   card: SyncItem;
+  /** Ticked off (a row) or done (a card that is itself the place). */
+  done: boolean;
 }
 
 export interface NearYou {
@@ -19,6 +21,37 @@ function visibleCards(cards: readonly SyncItem[], showArchived: boolean): Map<st
   return new Map(cards.filter((c) => !c.deleted && (showArchived || !c.archived)).map((c) => [c.id, c]));
 }
 
+/** Every place on a visible card that has a spot, closest first, with its card and whether it's done. */
+export function placesOnCards(
+  places: readonly PlaceRow[],
+  cards: readonly SyncItem[],
+  here: { lat: number; lng: number },
+  showArchived = false,
+): NearbyOnCard[] {
+  const byId = visibleCards(cards, showArchived);
+  const out: NearbyOnCard[] = [];
+  for (const p of placesByDistance(places, here)) {
+    const card = byId.get(p.place.itemId);
+    if (!card) continue;
+    // A card that is itself the place follows the card's status, which the list updates at once after a tick.
+    const done = p.place.checklist === null ? card.status === "done" : p.place.done;
+    out.push({ ...p, card, done });
+  }
+  return out;
+}
+
+/** How far, as Orbit today shows it: "12 mi"; a place at its city's center is "in San Jose" when close, else "~40 mi". */
+export function placeDistance(p: Pick<NearbyPlace, "miles" | "approx" | "city">): string {
+  if (!p.approx) return formatMiles(p.miles);
+  return p.miles < 25 && p.city ? `in ${p.city}` : `~${formatMiles(p.miles)}`;
+}
+
+/** A Google Maps search for the place: its name plus the location on the list, if any. */
+export function placeMapLink(p: Pick<NearbyPlace, "label" | "place">): string {
+  const q = p.place.location ? `${p.label}, ${p.place.location}` : p.label;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+}
+
 /**
  * Today's Near you, the same rule as Orbit today: places on your lists (cards and checklist rows) you haven't
  * done, by distance. Rows on a card take their card for the title and link.
@@ -29,15 +62,7 @@ export function nearYou(
   here: { lat: number; lng: number },
   showArchived = false,
 ): NearYou {
-  const byId = visibleCards(cards, showArchived);
-  const open: NearbyOnCard[] = [];
-  for (const p of placesByDistance(places, here)) {
-    const card = byId.get(p.place.itemId);
-    if (!card) continue;
-    // A card that is itself the place follows the card's status, which the list updates at once after a tick.
-    const done = p.place.checklist === null ? card.status === "done" : p.place.done;
-    if (!done) open.push({ ...p, card });
-  }
+  const open = placesOnCards(places, cards, here, showArchived).filter((p) => !p.done);
   const close = open.filter((p) => p.miles <= 100 && !p.approx).slice(0, 8);
   const towns = new Map<string, number>();
   for (const p of open) if (p.approx && p.city && p.miles < 25) towns.set(p.city, (towns.get(p.city) ?? 0) + 1);

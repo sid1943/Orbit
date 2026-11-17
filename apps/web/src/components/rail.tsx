@@ -1,5 +1,5 @@
 import { Link, NavLink } from "react-router";
-import { useItemSummaries } from "../api/queries.js";
+import { useItemSummaries, usePrefs } from "../api/queries.js";
 
 const VIEWS = [
   { to: "/", label: "Today", end: true },
@@ -13,6 +13,9 @@ const VIEWS = [
 export function Rail({ open, inert = false }: { open: boolean; inert?: boolean }) {
   const items = useItemSummaries();
   const live = items.data?.filter((i) => !i.deleted && !i.archived).length;
+  // Near me shows where you are (the city part), or "set" until a location is chosen.
+  const here = usePrefs().data?.location;
+  const nearNote = here ? here.label.split(",")[0] : "set";
 
   return (
     <nav className={`rail${open ? " open" : ""}`} aria-label="Views" inert={inert}>
@@ -25,6 +28,7 @@ export function Rail({ open, inert = false }: { open: boolean; inert?: boolean }
           <NavLink key={v.to} to={v.to} end={v.end} className={({ isActive }) => `rail-item${isActive ? " on" : ""}`}>
             {v.label}
             {v.to === "/all" && live !== undefined && <span className="n">{live.toLocaleString()}</span>}
+            {v.to === "/near" && <span className="n">{nearNote}</span>}
           </NavLink>
         ))}
       </div>

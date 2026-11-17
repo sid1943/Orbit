@@ -8,6 +8,14 @@ All notable changes to Orbit are listed here. The format follows
 
 ### Added
 
+- Near me (`/near`, build step 6): every place on your lists by distance, as in Orbit today: 5, 25, 100, 500 mi or
+  Any, Show done and category chips (all kept in the address), places with an exact spot first, then places known
+  only by their city, grouped by city. Each place opens its card and has a Map link. The rail shows your city.
+- Location panel, opened from the location in the greeting, Near you, Near me and Settings → Location: use this
+  device's location, type a city, paste a Google Maps link or coordinates, or pick a city; Clear location. When the
+  device can't share its location, the panel opens and says why.
+- Core `location.ts`: `parseLatLng()` (Maps links, typed coordinates), `nearestCity()`, `locationAt()`,
+  `readLocationInput()`; `findCity()`, `CATEGORY_LABELS` and `categoryLabel()` in `places.ts`.
 - Connections from Wikidata: each linked movie, show, book and game gets its series (all members in order, where it
   sits, what's next), sequels, what it's based on and what was made from it, and its franchise, whether or not
   they're in Orbit. Books get Wikidata ids from their Open Library ids. The cron gathers 50 per run;
@@ -91,6 +99,11 @@ All notable changes to Orbit are listed here. The format follows
   checklist, comment and topic edits, `checklistMatches`, `linkedCardIds`, `relatedByTopics`).
 - Web API client: `updateItem` takes every editable field, `deleteItem`; hooks `useEditCard()` (the card and lists
   change at once, and go back if saving fails) and `useDeleteItem()`.
+
+### Changed
+
+- Near you rows show "~40 mi" for a place measured to a far city's center, mark done places, and have a Map link;
+  "+ N things to do in …" opens Near me at 25 mi. A device location is now labelled with the nearest city.
 
 ### Fixed
 
