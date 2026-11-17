@@ -272,3 +272,59 @@
     padding: 8px 16px 14px;
   }
 }
+
+/* Search palette: opens on the bar itself, the same width */
+.search.open input {
+  border-color: var(--accent);
+  border-radius: 10px 10px 0 0;
+  background: var(--panel);
+}
+
+.palette {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 20;
+  max-height: 55vh;
+  overflow: auto;
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 18%);
+}
+
+.palette button {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  padding: 9px 14px;
+  align-items: baseline;
+}
+
+.palette button .tt {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.palette button.on {
+  background: var(--accent-soft);
+}
+
+.palette button.all {
+  border-top: 1px solid var(--line);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.palette .k {
+  margin-left: auto;
+  font: calc(11px * var(--fz)) var(--mono);
+  color: var(--muted);
+}

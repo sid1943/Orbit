@@ -22,7 +22,8 @@
 - [x] API for the pages: one sync list for every page, a full card for the panel, review answers applied
 - [ ] Decide how the hosted app signs in (API token in the browser, or Cloudflare Access)
 - [x] Home: greeting, date, location, kind tiles
-- [ ] Home: search palette and the rest of Today (build step 2)
+- [x] Home: search palette and the rest of Today (build step 2)
+- [x] Everything, kind pages (status filter, grouping) and search results
 - [ ] Card modal (links, notes, checklists with search, comments, due date)
 - [ ] Map view with big topics, Near you
 - [ ] Review queue

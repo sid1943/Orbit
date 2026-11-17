@@ -24,6 +24,12 @@ export interface ItemSummary {
   updatedAt: number;
 }
 
+/** Fields a new card (or an edit) can set. */
+export type NewItemFields = Partial<
+  Pick<Item, "kind" | "title" | "status" | "tags" | "props" | "notes" | "due" | "start" | "archived">
+> &
+  Pick<Item, "kind" | "title">;
+
 export interface ItemQuery {
   kind?: string;
   status?: Status;
@@ -109,6 +115,14 @@ export function createApiClient(config: ApiConfig) {
       return out;
     },
     getItem: (id: string) => request<Item>(`/items/${encodeURIComponent(id)}`),
+    /** Add a card; the API fills in the rest. */
+    createItem: (fields: NewItemFields) => request<Item>("/items", { method: "POST", body: JSON.stringify(fields) }),
+    /** Change some of a card's fields. */
+    updateItem: (id: string, fields: Partial<NewItemFields>) =>
+      request<Item>(`/items/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        body: JSON.stringify(fields),
+      }),
     /** One card with its linked things, TV status, covers and review answers (the card panel). */
     getFullItem: (id: string) => request<FullItem>(`/items/${encodeURIComponent(id)}/full`),
     syncPage,

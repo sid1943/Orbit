@@ -24,6 +24,18 @@ describe("createApiClient", () => {
     expect(new Headers(f.calls[0]?.init?.headers).get("Authorization")).toBe("Bearer t0k");
   });
 
+  it("adds and changes cards with POST and PATCH", async () => {
+    const f = fakeFetch([{ status: 201, body: { id: "n1" } }, { body: { id: "n1" } }]);
+    const api = createApiClient({ baseUrl: "", token: "t", fetch: f.fetch });
+    await api.createItem({ kind: "To-do", title: "Buy stamps", props: { Quest: "Errands" } });
+    await api.updateItem("n1", { status: "done" });
+    expect(f.calls.map((c) => [c.init?.method, c.url])).toEqual([
+      ["POST", "/api/items"],
+      ["PATCH", "/api/items/n1"],
+    ]);
+    expect(JSON.parse(String(f.calls[1]?.init?.body))).toEqual({ status: "done" });
+  });
+
   it("follows pages until next is null", async () => {
     const row = (id: string) => ({ id, kind: "Movie", title: id, status: "todo", archived: false, deleted: false });
     const f = fakeFetch([

@@ -1,22 +1,28 @@
 import { createBrowserRouter, type RouteObject } from "react-router";
 import { Layout } from "./components/layout.js";
-import { KindPage } from "./pages/kind.js";
+import { Everything } from "./pages/everything.js";
 import { NotFound } from "./pages/not-found.js";
 import { Planned } from "./pages/planned.js";
+import { Search } from "./pages/search.js";
 import { Settings } from "./pages/settings.js";
 import { Today } from "./pages/today.js";
 
 /** Every page, in one list: the router uses it now, and Settings → About will show it as the app map. */
 export const PAGES = [
-  { path: "/", title: "Today", what: "Greeting, kind tiles and today's sections", element: <Today /> },
+  {
+    path: "/",
+    title: "Today",
+    what: "Kind tiles, Near you, Coming up, In season, In progress, To-do, Closest to finished, Pick one, Recently changed, Topics",
+    element: <Today />,
+  },
   {
     path: "/all",
     title: "Everything",
-    what: "Every card, filtered by status",
-    element: <Planned title="Everything" step={2} />,
+    what: "Every card, filtered by status, grouped by kind or status",
+    element: <Everything />,
   },
-  { path: "/kind/:kind", title: "Kind", what: "The Everything list for one kind", element: <KindPage /> },
-  { path: "/search", title: "Search", what: "Ranked search results", element: <Planned title="Search" step={2} /> },
+  { path: "/kind/:kind", title: "Kind", what: "The Everything list for one kind", element: <Everything /> },
+  { path: "/search", title: "Search", what: "Ranked search results", element: <Search /> },
   { path: "/item/:id", title: "Card", what: "One card, opened", element: <Planned title="Card" step={3} /> },
   {
     path: "/settings/:section?",
