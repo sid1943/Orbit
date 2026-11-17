@@ -1,88 +1,87 @@
-# Smart Kanban 🎯
+# Orbit
 
-An intelligent task management app that adapts its behavior based on task categories.
+[![CI](https://github.com/sid1943/orbit/actions/workflows/ci.yml/badge.svg)](https://github.com/sid1943/orbit/actions/workflows/ci.yml)
+
+One place for everything to watch, read, play, visit and do.
+
+Orbit keeps movies, shows, books, games, places, to-dos and notes as cards. Each card links to its
+standard page (IMDb, Open Library, IGDB or a map), new cards are linked automatically, and TV shows
+carry live status: seasons aired, the last episode, and the next one.
 
 ## Features
 
-### Currently Available
-- **🥬 Groceries** - Tell the app what ingredients you have, get recipe suggestions, and auto-generate shopping lists
+- **Cards for everything**: one model for movies, shows, books, games, places, to-dos, recipes, notes and more.
+- **Standard links**: IMDb for movies and shows (ids from Wikidata), Open Library for books, IGDB for games, a map for places.
+- **Automatic linking**: new cards are matched every 10 minutes. Sure matches are kept; unsure ones wait for review.
+- **Live TV status** from TVmaze, and cover images from Open Library, TVmaze and Wikimedia.
+- **Free to run**: Cloudflare Workers and D1 free plans, and free public data sources with no keys.
 
-### Coming Soon
-- **📚 Learning** - Get personalized learning roadmaps with daily topic reminders
-- **✈️ Travel/Visa** - Break down complex processes into deadline-driven checklists  
-- **⏰ Reminders** - Smart recurring reminders
+## Repository layout
 
-## Quick Start
+```
+orbit/
+├── apps/
+│   ├── api/                  Cloudflare Worker + D1 (Hono)
+│   │   ├── migrations/       Database schema
+│   │   ├── scripts/          Export file → SQL loader
+│   │   ├── src/
+│   │   │   ├── app.ts        Routes and middleware
+│   │   │   ├── index.ts      Worker entry (fetch + cron)
+│   │   │   ├── db/           SQL statements and row mapping
+│   │   │   ├── jobs/         Linking queue and TV status refresh
+│   │   │   ├── lib/          Request validation
+│   │   │   ├── middleware/   Token auth
+│   │   │   └── routes/       items, entities, live, reviews, prefs, enrich
+│   │   └── test/
+│   └── web/                  Web app (planned)
+├── packages/
+│   └── core/                 Shared model and rules, no platform code
+│       ├── src/              types, text, links, enrich, live, import-export
+│       └── test/
+├── docs/                     Architecture, data model, setup, conventions
+└── .github/                  CI, Dependabot, PR template
+```
 
-### Prerequisites
-- Node.js 18+
-- Claude API key from [console.anthropic.com](https://console.anthropic.com/settings/keys)
+## Getting started
 
-### Installation
+Requires Node 22 (see `.nvmrc`).
 
 ```bash
-# Install dependencies
 npm install
-
-# Start development server
-npm run dev
+npm run check          # format, lint, typecheck, tests
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
-
-### Enter API Key
-On first launch, enter your Claude API key. It's stored locally in your browser.
-
-## How It Works
-
-### Grocery Flow
-1. Select "Groceries" category
-2. List what ingredients you have at home
-3. Claude suggests recipes you can make
-4. Select a recipe → get a shopping list for missing items
-5. Check off items as you shop
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Frontend | React 18 + TypeScript |
-| Styling | Tailwind CSS |
-| AI | Claude API (Sonnet) |
-| Storage | localStorage |
-| Build | Vite |
-
-## Project Structure
-
-```
-src/
-├── components/        # React UI components
-├── categories/        # Category-specific handlers
-│   └── grocery/      # Grocery planning logic
-├── services/         # API & storage services
-├── hooks/            # Custom React hooks
-├── types/            # TypeScript types
-└── App.tsx           # Main app component
-```
-
-## Adding New Categories
-
-1. Create a new folder in `src/categories/`
-2. Implement a handler following the pattern in `grocery/GroceryHandler.ts`
-3. Add the category to the sidebar in `components/Sidebar.tsx`
-4. Handle the category in `App.tsx`
-
-## Mobile Support (Future)
-
-The app is built with Capacitor compatibility in mind. To wrap for iOS/Android:
+Run the API locally:
 
 ```bash
-npm install @capacitor/core @capacitor/cli
-npx cap init
-npx cap add ios
-npx cap add android
+cd apps/api
+echo "API_TOKEN=pick-a-local-password" > .dev.vars
+npm run db:migrate:local
+npm run dev            # http://localhost:8787/api/health
 ```
 
-## License
+To put it online on Cloudflare and load your data, follow [docs/SETUP.md](docs/SETUP.md).
 
-MIT
+## Scripts
+
+| Command                     | What it does                                       |
+| --------------------------- | -------------------------------------------------- |
+| `npm run check`             | Everything CI runs: format, lint, typecheck, tests |
+| `npm test`                  | Unit tests (Vitest) in every workspace             |
+| `npm run typecheck`         | TypeScript, no output                              |
+| `npm run lint`              | ESLint (`lint:fix` to fix)                         |
+| `npm run format`            | Prettier, writes changes (`format:check` to check) |
+| `npm run dev -w @orbit/api` | API on localhost with a local database             |
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md): how the pieces fit, the linking rules, TV status
+- [Data model](docs/DATA-MODEL.md): cards, linked things, confidence, tables
+- [Setup](docs/SETUP.md): Cloudflare deploy, loading data, API reference
+- [Conventions](docs/CONVENTIONS.md): code style, structure, commits and branches
+- [Web app plan](docs/WEB-APP.md): every page, panel and setting the web app needs, and the build order
+
+## Privacy
+
+This repository is public; personal data never goes in it. Exports, generated SQL and `.dev.vars`
+are ignored by git.
