@@ -42,6 +42,15 @@ can put a sign-in (Google, email code) in front of both the app and the API (fre
 | Settings       | `/settings/:section` | Mac-style: categories on the left, settings on the right (see below)                                                                                                                                                                                        |
 | App map        | `/settings/about`    | Index of every page and panel, generated from the route list                                                                                                                                                                                                |
 
+### Where pages get their data
+
+Every list page works from one cached list, `useSync()` (`GET /api/sync`): Today, Everything, kind pages,
+search, Topic, Map and Near me (cards with coordinates). Refreshes fetch only what changed. The card panel
+uses `useFullItem(id)` (`GET /api/items/:id/full`): the card, every linked thing on its checklists, TV status,
+covers and review answers, with no limit on list size. Review links and Fix links use
+`GET /api/entities?confidence=review&pending=1` and `useReview()`. After editing a card, put it into the list
+with `upsertSyncItem()` from core rather than refetching everything.
+
 ## Panels and dialogs
 
 | Panel          | Opens from                                   | What's in it                                                                                                                                                                                                                                                                                                                                           |

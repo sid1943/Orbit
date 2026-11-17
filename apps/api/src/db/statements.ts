@@ -1,4 +1,4 @@
-import type { Entity, Item, Review } from "@orbit/core";
+import { applyReview, type Entity, type Item, type Review, type ReviewDecision } from "@orbit/core";
 
 /** SQL shared by the routes, the jobs and the import script. Rows keep the whole record as JSON in `data`. */
 
@@ -45,3 +45,24 @@ export const UPSERT_COVER = `INSERT INTO covers (entity_id, url, source, fetched
   ON CONFLICT(entity_id) DO UPDATE SET url=excluded.url, source=excluded.source, fetched_at=excluded.fetched_at`;
 
 export const parse = <T>(row: { data: string } | null): T | null => (row ? (JSON.parse(row.data) as T) : null);
+
+/** `id IN (${IN_JSON})` with the ids bound as one JSON list: one parameter however many ids. */
+export const IN_JSON = "SELECT value FROM json_each(?)";
+
+/** Ids of a card's linked thing and of every checklist row's linked thing (bind the card id as ?1). */
+export const CARD_ENTITY_IDS = `WITH ids(id) AS (
+  SELECT entity_id FROM items WHERE id = ?1 AND entity_id IS NOT NULL
+  UNION
+  SELECT json_extract(r.value, '$.entityId') FROM items i, json_each(i.data, '$.checklists') c, json_each(c.value, '$.rows') r
+  WHERE i.id = ?1 AND json_extract(r.value, '$.entityId') IS NOT NULL
+)`;
+
+/** A linked thing's row with its review answer, for `withReview`. */
+export interface EntityReviewRow {
+  data: string;
+  decision: string | null;
+}
+
+/** Applies Sid's answer to a linked thing as it comes out of the database (see `applyReview`). */
+export const withReview = (r: EntityReviewRow): Entity =>
+  applyReview(JSON.parse(r.data) as Entity, r.decision ? (JSON.parse(r.decision) as ReviewDecision) : null);

@@ -86,7 +86,8 @@ export type Confidence =
   | "none" // nothing found
   | "map" // a place known only by name and location: map link only
   | "nolink" // not a real-world thing (a header, a note)
-  | "user"; // Sid set the link himself
+  | "user" // Sid set the link himself
+  | "rejected"; // Sid said the guess was wrong and hasn't said what it is yet
 
 export type EntityCategory =
   | "movie"
@@ -147,6 +148,10 @@ export interface Entity {
   /** The best guess while confidence is "review" */
   candidate?: Partial<Entity>;
   alternatives?: Partial<Entity>[];
+  /** Set when Sid answered a guess or fixed the link (see `applyReview`). */
+  reviewed?: ReviewDecision["d"];
+  /** Links Sid pasted or typed in "Fix links". */
+  userLinks?: UsefulLink[];
   updatedAt: number;
 }
 

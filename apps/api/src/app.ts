@@ -8,6 +8,7 @@ import { items } from "./routes/items.js";
 import { live } from "./routes/live.js";
 import { prefs } from "./routes/prefs.js";
 import { reviews } from "./routes/reviews.js";
+import { sync } from "./routes/sync.js";
 
 export const VERSION = "0.1.0";
 
@@ -25,6 +26,7 @@ app.use(
 app.get("/health", (c) => c.json({ ok: true, app: "orbit", version: VERSION }));
 
 app.use("*", requireToken);
+app.route("/sync", sync);
 app.route("/items", items);
 app.route("/entities", entities);
 app.route("/live", live);

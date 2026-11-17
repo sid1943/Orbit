@@ -6,3 +6,5 @@ export * from "./enrich.js";
 export * from "./live.js";
 export * from "./appearance.js";
 export * from "./prefs.js";
+export * from "./review.js";
+export * from "./sync.js";

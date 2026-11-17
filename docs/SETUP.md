@@ -129,15 +129,31 @@ All routes except `/api/health` need `Authorization: Bearer <API_TOKEN>`.
 | Route                                                       | What it does                                                            |
 | ----------------------------------------------------------- | ----------------------------------------------------------------------- |
 | `GET /api/health`                                           | Is it up                                                                |
+| `GET /api/sync?since=&after=&limit=`                        | Every card in light form (see below)                                    |
 | `GET /api/items?kind=&status=&since=&limit=&offset=&full=1` | List cards (light fields unless `full=1`)                               |
 | `GET /api/items/:id`                                        | One card, complete                                                      |
+| `GET /api/items/:id/full`                                   | One card with its linked things, TV status, covers and review answers   |
 | `POST /api/items`                                           | Add a card (`kind`, `title` required); it is queued for linking         |
 | `PATCH /api/items/:id`                                      | Change fields                                                           |
 | `DELETE /api/items/:id`                                     | Move to deleted (`?hard=1` removes it for good)                         |
-| `GET /api/entities?ids=a,b` / `?confidence=review`          | Linked things (or all, in pages: `?limit=&offset=`, see `next`)         |
+| `GET /api/entities?ids=a,b` / `?confidence=review`          | Linked things, answers applied (`&pending=1`: unanswered only)          |
 | `GET /api/entities/:id`                                     | One linked thing with its TV status and cover                           |
 | `PATCH /api/entities/:id`                                   | Fix a link by hand (marked as set by you; the enricher leaves it alone) |
 | `GET /api/live?ids=a,b`                                     | TV status and covers for several linked things                          |
-| `GET /api/reviews`, `PUT /api/reviews/:entityId`            | Your answers to link guesses                                            |
+| `GET /api/reviews`, `PUT` / `DELETE /api/reviews/:key`      | Your answers to link guesses; `DELETE` undoes one                       |
 | `GET /api/prefs`, `PUT /api/prefs/:key`                     | Settings by key: `appearance`, `profile`, `location`, `lists`           |
 | `POST /api/enrich/run`                                      | Run the enricher now instead of waiting for the next 10 minutes         |
+
+Notes:
+
+- **Sync** (`GET /api/sync`) is what the pages work from. It returns `{ items, removed, at, next }`: every card
+  (deleted ones flagged `deleted`) with its topics, details, due and start dates, checklist progress
+  (`done`, `total`) and, from its linked thing, `category`, `confidence`, `lat`, `lng` and `cover`. Pages are
+  ordered by id; pass `next` as `after` for the next one. Pass the first page's `at` as `since` next time to get
+  only what changed, plus `removed`: cards deleted for good. Changes up to 5 seconds before `since` are sent again,
+  so nothing written during a sync is missed. The shape is `SyncItem` in `packages/core/src/sync.ts`.
+- **Lists of ids** (`?ids=`) take up to 2000 ids. More is refused with 400, never cut short.
+- **Review answers** stay apart from the guesses so they can be undone. Every route that returns a linked thing
+  applies them (`applyReview` in `packages/core/src/review.ts`, the same rule as Orbit today). Keys are an entity
+  id, `card-<itemId>`, or `x:<key>` for links Sid hid (`{ "d": "hide", "urls": [...] }`).
+- **Settings** keys other than `appearance`, `profile`, `location` and `lists` are refused.
