@@ -131,4 +131,12 @@ describe("createApiClient", () => {
       ["DELETE", "/api/reviews/e1"],
     ]);
   });
+
+  it("asks for places, all of them or only what changed", async () => {
+    const f = fakeFetch([{ body: { places: [], items: null, at: 5 } }, { body: { places: [], items: [], at: 9 } }]);
+    const api = createApiClient({ baseUrl: "", token: "t", fetch: f.fetch });
+    await api.getPlaces();
+    await api.getPlaces(5);
+    expect(f.calls.map((c) => c.url)).toEqual(["/api/places", "/api/places?since=5"]);
+  });
 });

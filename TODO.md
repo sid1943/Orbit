@@ -20,6 +20,7 @@
 - [x] Run in the background on Sid's Mac until it goes online (`scripts/mac-background.sh`)
 - [x] The Mac picks up merged changes by itself (updater pulls `main` and restarts what changed)
 - [x] API for the pages: one sync list for every page, a full card for the panel, review answers applied
+- [x] API: places on lists (checklist rows linked to places) for Near you and Near me
 - [ ] Decide how the hosted app signs in (API token in the browser, or Cloudflare Access)
 - [x] Home: greeting, date, location, kind tiles
 - [x] Home: search palette and the rest of Today (build step 2)
