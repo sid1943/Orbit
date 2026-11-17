@@ -53,8 +53,7 @@ covers and review answers, with no limit on list size. Review links and Fix link
 with `upsertSyncItem()` from core rather than refetching everything.
 
 Today's sections are worked out in `apps/web/src/lib/today-sections.ts` with the rules in `packages/core/src/today.ts`
-(the same as Orbit today). Near you uses the coordinates of each card's own linked thing; places that only appear as
-checklist rows come with Near me (build step 6). Coming up and In season read the card's "Preferable Time" detail.
+(the same as Orbit today). Near you uses the places list (`usePlaces()`, rows and cards) through `apps/web/src/lib/near-you.ts`. Coming up and In season read the card's "Preferable Time" detail.
 
 ## Panels and dialogs
 

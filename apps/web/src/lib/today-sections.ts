@@ -3,7 +3,6 @@ import {
   closestToFinished,
   dailyPick,
   daysUntil,
-  distanceMiles,
   inSeason,
   timeInfo,
   topicCounts,
@@ -19,21 +18,12 @@ export interface Dated {
   days: number | null;
 }
 
-export interface Nearby {
-  item: SyncItem;
-  miles: number;
-}
-
 export interface TodoGroup {
   quest: string;
   items: SyncItem[];
 }
 
 export interface TodaySections {
-  /** Places and experiences within 100 miles that aren't done, closest first (empty without a location). */
-  near: Nearby[];
-  /** Cards with coordinates that Near you can sort, for the "set your location" prompt. */
-  placeCount: number;
   comingUp: Dated[];
   inSeason: Dated[];
   inProgress: SyncItem[];
@@ -48,25 +38,13 @@ export interface TodaySections {
 
 /** Kinds "Pick one today" chooses from. */
 const PICK_KINDS = new Set(["Movie", "Show", "Book", "Experience", "Place"]);
-const open = (i: SyncItem) => i.status !== "done" && i.status !== "dropped";
 
-/** Everything the Today page shows, worked out from the sync list. The same rules as the first Orbit. */
-export function todaySections(
-  all: readonly SyncItem[],
-  here: { lat: number; lng: number } | null,
-  now = new Date(),
-): TodaySections {
+/**
+ * Everything the Today page shows from the sync list, with the same rules as the first Orbit.
+ * Near you comes from the places list instead (`near-you.ts`).
+ */
+export function todaySections(all: readonly SyncItem[], now = new Date()): TodaySections {
   const live = all.filter((i) => !i.deleted && !i.archived);
-
-  const located = live.filter((i) => i.lat !== null && i.lng !== null);
-  const near = here
-    ? located
-        .filter(open)
-        .map((item) => ({ item, miles: distanceMiles(here, { lat: item.lat!, lng: item.lng! }) }))
-        .filter((x) => x.miles <= 100)
-        .sort((a, b) => a.miles - b.miles)
-        .slice(0, 8)
-    : [];
 
   const dated: Dated[] = [];
   for (const item of live) {
@@ -103,8 +81,6 @@ export function todaySections(
   );
 
   return {
-    near,
-    placeCount: located.length,
     comingUp,
     inSeason: seasonal,
     inProgress: doing.slice(0, 8),
