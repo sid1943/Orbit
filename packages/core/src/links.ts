@@ -18,6 +18,11 @@ export function entityLinks(e: Entity): BuiltLink[] {
   if (e.igdb) out.push({ label: "IGDB", url: `https://www.igdb.com/games/${encodeURIComponent(e.igdb)}` });
   if (e.openLibrary)
     out.push({ label: "Open Library", url: `https://openlibrary.org/works/${encodeURIComponent(e.openLibrary)}` });
+  if (e.category === "book") {
+    // Goodreads has no API any more; a search by title and author opens the right book page.
+    const q = [e.label ?? e.name, e.author].filter(Boolean).join(" ");
+    out.push({ label: "Goodreads", url: `https://www.goodreads.com/search?q=${encodeURIComponent(q)}` });
+  }
   if (e.wikipedia)
     out.push({
       label: "Wikipedia",

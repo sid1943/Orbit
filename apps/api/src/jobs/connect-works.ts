@@ -5,6 +5,7 @@ import {
   seriesOf,
   worksByQid,
   type Entity,
+  type Fetch,
   type Relation,
 } from "@orbit/core";
 import { UPSERT_ENTITY, entityRow } from "../db/statements.js";
@@ -59,7 +60,7 @@ export interface ConnectResult {
  *    names and years of everything connected.
  * Adds no cards: the card shows connections and Sid adds what he wants.
  */
-export async function connectWorks(env: Env, now = Date.now()): Promise<ConnectResult> {
+export async function connectWorks(env: Env, now = Date.now(), fetch: Fetch = workerFetch): Promise<ConnectResult> {
   const out: ConnectResult = { mapped: 0, connected: 0, relations: 0, works: 0, failed: 0 };
   const db = env.DB;
 
@@ -82,12 +83,12 @@ export async function connectWorks(env: Env, now = Date.now()): Promise<ConnectR
       const titles = ents.filter((e) => !e.openLibrary && e.imdb);
       const [byOl, byImdb] = await Promise.all([
         qidsByExternalId(
-          workerFetch,
+          fetch,
           "P648",
           books.map((e) => e.openLibrary!),
         ),
         qidsByExternalId(
-          workerFetch,
+          fetch,
           "P345",
           titles.map((e) => e.imdb!),
         ),
@@ -126,8 +127,8 @@ export async function connectWorks(env: Env, now = Date.now()): Promise<ConnectR
   if (!due.length) return out;
   const qids = [...new Set(due.map((d) => d.qid))];
   try {
-    const rels = await relationsOf(workerFetch, qids);
-    const members = await seriesMembers(workerFetch, seriesOf(rels));
+    const rels = await relationsOf(fetch, qids);
+    const members = await seriesMembers(fetch, seriesOf(rels));
     const all: Relation[] = [...rels, ...members];
     const wanted = [...new Set([...qids, ...all.flatMap((r) => [r.from, r.to])])];
     const { results: fresh } = await db
@@ -136,7 +137,7 @@ export async function connectWorks(env: Env, now = Date.now()): Promise<ConnectR
       .all<{ qid: string }>();
     const have = new Set(fresh.map((r) => r.qid));
     const works = await worksByQid(
-      workerFetch,
+      fetch,
       wanted.filter((q) => !have.has(q)),
     );
     await db.batch([

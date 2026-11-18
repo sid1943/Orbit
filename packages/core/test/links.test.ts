@@ -14,6 +14,22 @@ describe("entityLinks", () => {
     expect(links.map((l) => l.label)).toEqual(["IMDb"]);
   });
 
+  it("gives a book a Goodreads search by title and author", () => {
+    const links = entityLinks({
+      id: "b",
+      name: "Harbor Lights",
+      category: "book",
+      confidence: "high",
+      openLibrary: "OL1W",
+      author: "A. Writer",
+      updatedAt: 0,
+    });
+    expect(links.map((l) => [l.label, l.url])).toEqual([
+      ["Open Library", "https://openlibrary.org/works/OL1W"],
+      ["Goodreads", "https://www.goodreads.com/search?q=Harbor%20Lights%20A.%20Writer"],
+    ]);
+  });
+
   it("gives a place a map link", () => {
     const links = entityLinks({
       id: "p",

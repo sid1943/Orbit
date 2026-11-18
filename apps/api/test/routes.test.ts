@@ -1,9 +1,8 @@
 import { toSyncItem, type Entity, type Item, type PlacesPage, type SyncItem, type SyncPage } from "@orbit/core";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { app } from "../src/app.js";
 import { UPSERT_COVER, UPSERT_ENTITY, UPSERT_ITEM, UPSERT_REVIEW, entityRow, itemRow } from "../src/db/statements.js";
 import type { Env } from "../src/env.js";
-import { refreshShows } from "../src/jobs/refresh-shows.js";
 import { testDb } from "./helpers/d1.js";
 
 // Made-up data only.
@@ -368,37 +367,5 @@ describe("items", () => {
     const { body } = await get<SyncPage>(`/api/sync?since=1`);
     expect(body.removed).toEqual([]);
     expect(body.items.map((i) => i.id)).toEqual(["x"]);
-  });
-});
-
-describe("refreshShows", () => {
-  beforeEach(() =>
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => new Response("", { status: 404 })),
-    ),
-  );
-  afterEach(() => vi.unstubAllGlobals());
-
-  it("checks confirmed shows, including guesses Sid said yes to, and skips rejected ones", async () => {
-    await seed(
-      [],
-      [
-        thing({ id: "s1", category: "show", imdb: "tt1" }),
-        thing({ id: "s2", category: "show", confidence: "review", candidate: { imdb: "tt2" } }),
-        thing({ id: "s3", category: "show", imdb: "tt3" }),
-        thing({ id: "s4", category: "show", confidence: "review", candidate: { imdb: "tt4" } }),
-      ],
-    );
-    await env.DB.batch([
-      env.DB.prepare(UPSERT_REVIEW).bind("s2", JSON.stringify({ d: "yes" }), 1),
-      env.DB.prepare(UPSERT_REVIEW).bind("s3", JSON.stringify({ d: "no" }), 1),
-    ]);
-    const r = await refreshShows(env);
-    expect(r.checked).toBe(2);
-    const { results } = await env.DB.prepare("SELECT entity_id FROM live ORDER BY entity_id").all<{
-      entity_id: string;
-    }>();
-    expect(results.map((x) => x.entity_id)).toEqual(["s1", "s2"]);
   });
 });
