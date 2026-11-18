@@ -79,6 +79,7 @@ All notable changes to Orbit are listed here. The format follows
 - "+" square tile after the kind tiles (Today and Everything) adds a kind: a dialog with a name (checked as you type:
   empty or taken names are refused) and a colour slider starting far from the other kinds. Kind tiles follow
   `useKinds()`, so a new kind shows at once with 0 cards; kind chips and groups use custom kinds' colours.
+- Kind tiles show their count (and the add tile its "+") centred in the tile, under the name.
 - Kind tiles (Today, Everything, kind pages) are square, keep one size that follows the text-size setting, and wrap
   onto more rows as kinds are added; three across on phones.
 - Today's Near you uses the places on your lists (`usePlaces()`, `placesByDistance()`): checklist rows as well as

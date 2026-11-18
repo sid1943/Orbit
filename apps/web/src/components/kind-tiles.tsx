@@ -41,10 +41,10 @@ export function KindTiles({
         ))}
         {canAdd && (
           <button type="button" className="kind-tile add" onClick={() => setAdding(true)} aria-label="Add a kind">
+            <span className="label">New kind</span>
             <span className="plus" aria-hidden="true">
               +
             </span>
-            <span className="label">New kind</span>
           </button>
         )}
       </nav>
