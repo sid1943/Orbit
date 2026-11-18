@@ -10,7 +10,7 @@ All notable changes to Orbit are listed here. The format follows
 
 - Books link to Goodreads instead of Open Library: the book's own page when Wikidata (work id) or Open Library (edition
   id) records its Goodreads id, a Goodreads search for the title and author otherwise. The connections job looks the ids
-  up (100 books a run; migration `0004_lookups`) and `npm run connect` reports how many books have a Goodreads page.
+  up (100 books a run; migration `0005_lookups`) and `npm run connect` reports how many books have a Goodreads page.
 - Near me (`/near`, build step 6): every place on your lists by distance, as in Orbit today: 5, 25, 100, 500 mi or
   Any, Show done and category chips (all kept in the address), places with an exact spot first, then places known
   only by their city, grouped by city. Each place opens its card and has a Map link. The rail shows your city.

@@ -1,4 +1,4 @@
--- Orbit schema v4: when an extra id was last looked up for a linked thing (and when to look again),
+-- Orbit schema v5: when an extra id was last looked up for a linked thing (and when to look again),
 -- one row per kind of lookup. First kind: 'goodreads' (Goodreads ids for books).
 CREATE TABLE lookup_state (
   entity_id   TEXT NOT NULL,
