@@ -1,11 +1,14 @@
 import { relativeDays } from "@orbit/core";
 import { useMemo } from "react";
+import { useSearchParams } from "react-router";
 import { useItemSummaries } from "../api/queries.js";
+import { AllCardsView } from "../components/all-cards-view.js";
 import { ItemCard } from "../components/item-card.js";
 import { ItemRow } from "../components/item-row.js";
 import { KindTiles } from "../components/kind-tiles.js";
 import { NearYouSection } from "../components/near-you-section.js";
 import { ProgressBar } from "../components/progress-bar.js";
+import { Segmented } from "../components/segmented.js";
 import { Section } from "../components/section.js";
 import { TodoSection } from "../components/todo-section.js";
 import { TopicCloud } from "../components/topic-cloud.js";
@@ -14,9 +17,19 @@ import { todaySections } from "../lib/today-sections.js";
 
 const MONTH = () => new Date().toLocaleDateString(undefined, { month: "long" });
 
-/** Home, and where Back always goes: kind tiles, then what matters today. */
+const VIEWS = [
+  { value: "today", label: "Today" },
+  { value: "all", label: "All cards" },
+] as const;
+
+/**
+ * Home, and where Back always goes: kind tiles, then what matters today. The "All cards" switch shows every
+ * card with filters instead (`?all=1`, with the filters in the address too).
+ */
 export function Today() {
   const items = useItemSummaries();
+  const [params, setParams] = useSearchParams();
+  const showAll = params.get("all") === "1";
   const s = useMemo(() => (items.data ? todaySections(items.data) : null), [items.data]);
 
   if (!items.data || !s) {
@@ -29,6 +42,24 @@ export function Today() {
     <div className="pad today">
       <KindTiles items={items.data} canAdd />
 
+      <div className="today-switch">
+        <Segmented
+          label="Show"
+          value={showAll ? "all" : "today"}
+          options={VIEWS}
+          onChange={(v) => setParams(v === "all" ? { all: "1" } : {}, { replace: true })}
+        />
+      </div>
+
+      {showAll ? <AllCardsView /> : <TodaySections s={s} />}
+    </div>
+  );
+}
+
+/** Today's own sections: Near you, Coming up, In season, In progress, To-do, and the rest. */
+function TodaySections({ s }: { s: ReturnType<typeof todaySections> }) {
+  return (
+    <>
       <NearYouSection />
 
       {s.comingUp.length > 0 && (
@@ -119,6 +150,6 @@ export function Today() {
           <TopicCloud topics={s.topics} />
         </Section>
       )}
-    </div>
+    </>
   );
 }

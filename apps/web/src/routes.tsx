@@ -1,7 +1,7 @@
 import { createBrowserRouter, type RouteObject } from "react-router";
 import { Layout } from "./components/layout.js";
-import { Everything } from "./pages/everything.js";
 import { NearMe } from "./pages/near-me.js";
+import { EverythingRedirect, KindPage } from "./pages/kind.js";
 import { NotFound } from "./pages/not-found.js";
 import { Planned } from "./pages/planned.js";
 import { Search } from "./pages/search.js";
@@ -13,16 +13,16 @@ export const PAGES = [
   {
     path: "/",
     title: "Today",
-    what: "Kind tiles, Near you, Coming up, In season, In progress, To-do, Closest to finished, Pick one, Recently changed, Topics",
+    what: "Kind tiles; Today or All cards (every card with filters); Near you, Coming up, In season, In progress, To-do, Closest to finished, Pick one, Recently changed, Topics",
     element: <Today />,
   },
   {
     path: "/all",
-    title: "Everything",
-    what: "Every card, filtered by status, grouped by kind or status",
-    element: <Everything />,
+    title: "All cards",
+    what: "Old Everything address: opens Today's All cards view with its filters",
+    element: <EverythingRedirect />,
   },
-  { path: "/kind/:kind", title: "Kind", what: "The Everything list for one kind", element: <Everything /> },
+  { path: "/kind/:kind", title: "Kind", what: "One kind's cards, with the All cards filters", element: <KindPage /> },
   { path: "/search", title: "Search", what: "Ranked search results", element: <Search /> },
   // A card opens over the page behind it (Layout draws it), so the route has no page of its own.
   { path: "/item/:id", title: "Card", what: "One card, opened over the page you were on", element: null },

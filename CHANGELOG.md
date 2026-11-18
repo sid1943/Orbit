@@ -82,6 +82,10 @@ All notable changes to Orbit are listed here. The format follows
 - "+" square tile after the kind tiles (Today and Everything) adds a kind: a dialog with a name (checked as you type:
   empty or taken names are refused) and a colour slider starting far from the other kinds. Kind tiles follow
   `useKinds()`, so a new kind shows at once with 0 cards; kind chips and groups use custom kinds' colours.
+- Today has a **Today / All cards** switch. All cards shows every card with a Filters button (filters only appear
+  there): status, kind, topic, distance (5/25/100/500 mi to the closest place on a card or its lists), when (coming
+  up, in season, has a date), show archived, grouping and sort (recent, A–Z, nearest), all kept in the address.
+  Kind pages use the same Filters. "Everything" left the menu; `/all` links open All cards with their filters.
 - Kind tiles show their count (and the add tile its "+") centred in the tile, under the name.
 - Kind tiles (Today, Everything, kind pages) are square, keep one size that follows the text-size setting, and wrap
   onto more rows as kinds are added; three across on phones.
@@ -114,6 +118,7 @@ All notable changes to Orbit are listed here. The format follows
 - Connections: "series" that aren't one (a "list of …" item, or a show's episodes) no longer show; more book and comic
   types are recognised. `npm run connect` waits for the API when the Mac's updater restarts it instead of stopping.
   Things with no Wikidata id are tried again monthly instead of every three months.
+- A stray accent line next to the chosen button in button rows (the focus ring was clipped); it now sits inside.
 
 - `useAddKind()` refused every new name ("there is already a kind called …"): it checked the name after
   adding it to the list. It now checks first, then shows the new kind.
