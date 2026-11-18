@@ -12,6 +12,12 @@ All notable changes to Orbit are listed here. The format follows
   (`git ls-remote`, no download) and pulls only when `main` moved; the 10-minute updater keeps the scheduled job,
   pulls as a fallback, and installs the sync agent on Macs set up before it. "Skipped" reasons are logged once.
 
+- A second look at books and movies the first matching pass missed (`jobs/rematch.ts`, core `rematch.ts`): each row is
+  read as title / author pairs ("Title by Author", "Title (Author)", "Author's Title", `Author "Title`, "Title, Author",
+  an author at the end, a recommendation sentence), checked on Open Library (books) or Wikidata (movies), and kept only
+  when title and author agree. Linked books whose Open Library id Wikidata doesn't know are found on Wikidata by title and
+  author. Rows Sid answered in review are left alone. On request only: `POST /api/connections/run?rematch=1`, which
+  `npm run connect` now uses; the cron doesn't.
 - Books link to Goodreads instead of Open Library: the book's own page when Wikidata (work id) or Open Library (edition
   id) records its Goodreads id, a Goodreads search for the title and author otherwise. The connections job looks the ids
   up (100 books a run; migration `0005_lookups`) and `npm run connect` reports how many books have a Goodreads page.

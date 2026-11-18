@@ -11,14 +11,23 @@ import {
 import { IN_JSON } from "../db/statements.js";
 import type { AppEnv } from "../env.js";
 import { connectProgress, connectWorks } from "../jobs/connect-works.js";
+import { rematchProgress, rematchUnlinked } from "../jobs/rematch.js";
 
 export const connections = new Hono<AppEnv>();
 
 /** How far gathering connections has got. */
-connections.get("/progress", async (c) => c.json(await connectProgress(c.env)));
+connections.get("/progress", async (c) =>
+  c.json({ ...(await connectProgress(c.env)), rematch: await rematchProgress(c.env) }),
+);
 
-/** Gather one batch now (the cron does this every 10 minutes too). */
-connections.post("/run", async (c) => c.json(await connectWorks(c.env)));
+/**
+ * Gather one batch now (the cron does this every 10 minutes too). With `?rematch=1`, first take a
+ * second look at unmatched books and movies (`jobs/rematch.ts`; on request only, never by the cron).
+ */
+connections.post("/run", async (c) => {
+  const rematch = c.req.query("rematch") === "1" ? await rematchUnlinked(c.env) : null;
+  return c.json({ ...(await connectWorks(c.env)), ...(rematch ? { rematch } : {}) });
+});
 
 /**
  * A card's connections: its series (every member in order, where this one sits, what's next),

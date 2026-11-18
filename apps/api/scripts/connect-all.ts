@@ -1,6 +1,7 @@
 /**
  * Gathers connections (series, sequels, based on, franchise) for every linked movie, show, book and
- * game in one go, instead of 50 per 10-minute cron run. Talks to the running API:
+ * game in one go, instead of 50 per 10-minute cron run. It also takes the second look at books and
+ * movies that never matched (`?rematch=1`), which the cron doesn't do. Talks to the running API:
  *
  *   npm run connect -w @orbit/api
  *
@@ -30,6 +31,7 @@ interface Progress {
   works: number;
   books: number;
   goodreads: number;
+  rematch: { unmatched: number; rematchLooked: number; rematchLinked: number; titleLooked: number; titleFound: number };
 }
 interface RunResult {
   mapped: number;
@@ -39,6 +41,7 @@ interface RunResult {
   relations: number;
   works: number;
   failed: number;
+  rematch?: { looked: number; linked: number; qids: number; failed: number };
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -63,13 +66,15 @@ async function call<T>(method: string, path: string): Promise<T> {
 }
 const show = (p: Progress) =>
   `${p.connected}/${p.total} connected, ${p.withQid} with a Wikidata id, ${p.noQid} without, ` +
-  `${p.relations} connections, ${p.works} things, ${p.goodreads}/${p.books} books with a Goodreads page`;
+  `${p.relations} connections, ${p.works} things, ${p.goodreads}/${p.books} books with a Goodreads page · ` +
+  `second look: ${p.rematch.rematchLinked} of ${p.rematch.rematchLooked} unmatched now linked, ` +
+  `${p.rematch.titleFound} of ${p.rematch.titleLooked} books found on Wikidata by title`;
 
 let failures = 0;
 console.log(show(await call<Progress>("GET", "/progress")));
 for (;;) {
-  const r = await call<RunResult>("POST", "/run");
-  if (r.failed) failures++;
+  const r = await call<RunResult>("POST", "/run?rematch=1");
+  if (r.failed || r.rematch?.failed) failures++;
   else failures = 0;
   if (failures >= 5) {
     console.error("Wikidata failed 5 times in a row; stopping. Run it again later to carry on.");
@@ -77,9 +82,10 @@ for (;;) {
   }
   const p = await call<Progress>("GET", "/progress");
   console.log(
-    `+${r.mapped} ids, +${r.goodreads} Goodreads, +${r.connected} connected${r.failed ? `, ${r.failed} failed` : ""} · ${show(p)}`,
+    `+${r.rematch?.linked ?? 0} linked, +${r.mapped + (r.rematch?.qids ?? 0)} ids, +${r.goodreads} Goodreads, ` +
+      `+${r.connected} connected${r.failed ? `, ${r.failed} failed` : ""} · ${show(p)}`,
   );
-  if (!r.looked && !r.connected && !r.failed) break;
+  if (!r.looked && !r.connected && !r.failed && !r.rematch?.looked && !r.rematch?.failed) break;
   // Be gentle with Wikidata: a short pause, longer after a failure.
   await sleep(r.failed ? 30_000 : 2_000);
 }

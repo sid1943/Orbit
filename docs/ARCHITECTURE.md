@@ -59,6 +59,14 @@ The cron also gathers connections from the Wikidata Query Service (free, no key;
 missing Wikidata ids for books (from Open Library ids) and movies (from IMDb ids), Goodreads ids for 100 books (from
 Wikidata, then Open Library), then for 50 linked things per
 run their series and its other members, sequels, what they're based on and what was made from them, and franchises,
-plus the names and years of everything connected. Each is read again after 30 days; missing ids are tried again monthly. `npm run connect -w @orbit/api`
+plus the names and years of everything connected. Each is read again after 30 days; missing ids are tried again monthly.
+
+The second look (`jobs/rematch.ts`, on request only) takes unmatched books and movies (`none`, not answered in review)
+and reads each row as possible title / author pairs (core `titleGuesses()`), then searches Open Library (books, all
+fields, without a leading article) or Wikidata (movies, the enricher's sure rule). A book counts only when the title
+(ignoring case, punctuation and a leading article, or the part before a colon) and the author's surname agree; with no
+author, only a clear first result with 3+ editions and no rival of similar size. Linked books with no Wikidata id are
+searched on Wikidata by title and author (40 per query, editions left out, one clear work only). Matched rows become
+sure links and flow into the connections job. Not found: looked at again after 90 days. `npm run connect -w @orbit/api`
 runs it all in one go against the local API. The card reads it with `GET /api/connections/:itemId`
 (`useConnections()` in the web app).
