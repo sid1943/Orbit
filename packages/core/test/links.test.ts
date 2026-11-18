@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { entityLinks } from "../src/index.js";
+import { entityLinks, goodreadsLink } from "../src/index.js";
 
 describe("entityLinks", () => {
   it("gives a movie its IMDb link and no map", () => {
@@ -24,5 +24,30 @@ describe("entityLinks", () => {
       updatedAt: 0,
     });
     expect(links.map((l) => l.label)).toEqual(["Map"]);
+  });
+});
+
+describe("goodreadsLink", () => {
+  const book = { name: "Sand Planet by Ada Example", confidence: "high" as const };
+  it("opens the work's page when Goodreads' work id is known", () => {
+    expect(goodreadsLink({ ...book, goodreads: "123", goodreadsBook: "9" })?.url).toBe(
+      "https://www.goodreads.com/work/best_book/123",
+    );
+  });
+  it("opens the edition's page with only a book id", () => {
+    expect(goodreadsLink({ ...book, goodreadsBook: "9" })?.url).toBe("https://www.goodreads.com/book/show/9");
+  });
+  it("searches Goodreads otherwise, adding the author when the title lacks it", () => {
+    expect(goodreadsLink(book)?.url).toBe("https://www.goodreads.com/search?q=Sand%20Planet%20by%20Ada%20Example");
+    expect(goodreadsLink({ name: "Sand Planet", author: "Ada Example", confidence: "none" })?.url).toBe(
+      "https://www.goodreads.com/search?q=Sand%20Planet%20Ada%20Example",
+    );
+  });
+  it("gives nothing for a row that isn't a book", () => {
+    expect(goodreadsLink({ name: "Fiction", confidence: "nolink" })).toBeNull();
+  });
+  it("is a book's only standard link", () => {
+    const links = entityLinks({ id: "b", category: "book", openLibrary: "OL1W", updatedAt: 0, ...book });
+    expect(links.map((l) => l.label)).toEqual(["Goodreads"]);
   });
 });

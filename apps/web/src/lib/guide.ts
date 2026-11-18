@@ -12,7 +12,7 @@ export const GUIDE: readonly { title: string; lines: readonly string[] }[] = [
   {
     title: "Movies, TV shows and books",
     lines: [
-      "Each one links to its standard source: IMDb for movies and TV, Open Library for books",
+      "Each one links to its standard source: IMDb for movies and TV, Goodreads for books",
       "Notes hold a one-line synopsis",
       "TV shows move To watch → Running → Finished; seasons are a checklist",
       "Books are kept as Want to read, Recommendations, or Read by genre, author or series",

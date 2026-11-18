@@ -23,6 +23,8 @@ const BLANKED = [
   "imdb",
   "igdb",
   "openLibrary",
+  "goodreads",
+  "goodreadsBook",
   "wikipedia",
   "website",
   "unesco",

@@ -1,4 +1,6 @@
 import {
+  goodreadsByOpenLibrary,
+  goodreadsByQid,
   qidsByExternalId,
   relationsOf,
   seriesMembers,
@@ -18,8 +20,10 @@ const CONNECT_PER_RUN = 50;
 const DAY = 24 * HOUR;
 /** Connections hardly change; look again monthly (the watch rules may ask sooner). */
 export const RECONNECT_AFTER = 30 * DAY;
-/** No Wikidata id found: try again in three months (Wikidata grows). */
-const RETRY_MISSING_AFTER = 90 * DAY;
+/** No Wikidata or Goodreads id found: try again monthly (both sources keep growing; a retry is one request per 100-200). */
+const RETRY_MISSING_AFTER = 30 * DAY;
+/** Books whose Goodreads id is looked up per run (one Wikidata and one Open Library request). */
+const GOODREADS_PER_RUN = 100;
 /** A work's name and year are read again after this long. */
 const WORK_STALE_AFTER = 90 * DAY;
 
@@ -41,9 +45,17 @@ const WORKS = `INSERT INTO works (qid, data, fetched_at)
   SELECT json_extract(value, '$.qid'), value, ? FROM json_each(?) WHERE true
   ON CONFLICT(qid) DO UPDATE SET data=excluded.data, fetched_at=excluded.fetched_at`;
 
+const LOOKUP = `INSERT INTO lookup_state (entity_id, kind, checked_at, next_check, status)
+  SELECT json_extract(value, '$.id'), ?, ?, json_extract(value, '$.next'), json_extract(value, '$.status') FROM json_each(?) WHERE true
+  ON CONFLICT(entity_id, kind) DO UPDATE SET checked_at=excluded.checked_at, next_check=excluded.next_check, status=excluded.status`;
+
 export interface ConnectResult {
   /** Linked things that just got a Wikidata id. */
   mapped: number;
+  /** Books that just got a Goodreads id. */
+  goodreads: number;
+  /** Linked things looked up for a missing id this run, found or not (0 when nothing was due). */
+  looked: number;
   /** Linked things whose connections were read. */
   connected: number;
   relations: number;
@@ -60,7 +72,7 @@ export interface ConnectResult {
  * Adds no cards: the card shows connections and Sid adds what he wants.
  */
 export async function connectWorks(env: Env, now = Date.now()): Promise<ConnectResult> {
-  const out: ConnectResult = { mapped: 0, connected: 0, relations: 0, works: 0, failed: 0 };
+  const out: ConnectResult = { mapped: 0, goodreads: 0, looked: 0, connected: 0, relations: 0, works: 0, failed: 0 };
   const db = env.DB;
 
   // 1. Missing Wikidata ids.
@@ -77,6 +89,7 @@ export async function connectWorks(env: Env, now = Date.now()): Promise<ConnectR
     .all<{ data: string }>();
   if (missing.length) {
     const ents = missing.map((r) => JSON.parse(r.data) as Entity);
+    out.looked += ents.length;
     try {
       const books = ents.filter((e) => e.openLibrary);
       const titles = ents.filter((e) => !e.openLibrary && e.imdb);
@@ -111,7 +124,10 @@ export async function connectWorks(env: Env, now = Date.now()): Promise<ConnectR
     }
   }
 
-  // 2. Connections for the linked things that are due.
+  // 2. Goodreads ids for books (after step 1, so books that just got a Wikidata id can use it).
+  await findGoodreads(env, now, out);
+
+  // 3. Connections for the linked things that are due.
   const { results: due } = await db
     .prepare(
       `SELECT e.id, json_extract(e.data, '$.qid') AS qid FROM entities e LEFT JOIN connect_state cs ON cs.entity_id = e.id
@@ -176,7 +192,10 @@ export async function connectProgress(env: Env, now = Date.now()) {
     .bind(now)
     .first<Record<string, number | null>>();
   const counts = await env.DB.prepare(
-    `SELECT (SELECT COUNT(*) FROM relations) AS relations, (SELECT COUNT(*) FROM works) AS works`,
+    `SELECT (SELECT COUNT(*) FROM relations) AS relations, (SELECT COUNT(*) FROM works) AS works,
+      (SELECT COUNT(*) FROM entities WHERE category = 'book' AND confidence IN ${SURE}) AS books,
+      (SELECT COUNT(*) FROM entities WHERE category = 'book' AND confidence IN ${SURE}
+        AND (json_extract(data, '$.goodreads') IS NOT NULL OR json_extract(data, '$.goodreadsBook') IS NOT NULL)) AS goodreads`,
   ).first<Record<string, number>>();
   return {
     total: row?.total ?? 0,
@@ -186,5 +205,67 @@ export async function connectProgress(env: Env, now = Date.now()) {
     due: row?.due ?? 0,
     relations: counts?.relations ?? 0,
     works: counts?.works ?? 0,
+    books: counts?.books ?? 0,
+    goodreads: counts?.goodreads ?? 0,
   };
+}
+
+/**
+ * Goodreads ids for books with a sure link, so their link opens the Goodreads page: from Wikidata
+ * (books with a Wikidata id), then from Open Library (the rest). Books with neither keep a Goodreads
+ * search link and are looked up again monthly.
+ */
+async function findGoodreads(env: Env, now: number, out: ConnectResult): Promise<void> {
+  const db = env.DB;
+  const { results } = await db
+    .prepare(
+      `SELECT e.data FROM entities e LEFT JOIN lookup_state ls ON ls.entity_id = e.id AND ls.kind = 'goodreads'
+      WHERE e.category = 'book' AND e.confidence IN ${SURE}
+        AND json_extract(e.data, '$.goodreads') IS NULL AND json_extract(e.data, '$.goodreadsBook') IS NULL
+        AND (json_extract(e.data, '$.qid') IS NOT NULL OR json_extract(e.data, '$.openLibrary') IS NOT NULL)
+        AND (ls.entity_id IS NULL OR ls.next_check <= ?)
+      ORDER BY COALESCE(ls.next_check, 0)
+      LIMIT ?`,
+    )
+    .bind(now, GOODREADS_PER_RUN)
+    .all<{ data: string }>();
+  if (!results.length) return;
+  const books = results.map((r) => JSON.parse(r.data) as Entity);
+  out.looked += books.length;
+  try {
+    const byQid = await goodreadsByQid(
+      workerFetch,
+      books.flatMap((b) => (b.qid ? [b.qid] : [])),
+    );
+    const rest = books.filter((b) => !(b.qid && byQid.has(b.qid)) && b.openLibrary);
+    const byOl = await goodreadsByOpenLibrary(
+      workerFetch,
+      rest.map((b) => b.openLibrary!),
+    );
+    const found: Entity[] = [];
+    const state: { id: string; next: number; status: string }[] = [];
+    for (const b of books) {
+      const ids = (b.qid ? byQid.get(b.qid) : undefined) ?? (b.openLibrary ? byOl.get(b.openLibrary) : undefined);
+      if (ids?.work || ids?.book)
+        found.push({
+          ...b,
+          ...(ids.work ? { goodreads: ids.work } : {}),
+          ...(ids.book ? { goodreadsBook: ids.book } : {}),
+          updatedAt: now,
+        });
+      state.push({
+        id: b.id,
+        next: ids ? now + 365 * DAY : now + RETRY_MISSING_AFTER,
+        status: ids ? "found" : "missing",
+      });
+    }
+    await db.batch([
+      ...found.map((e) => db.prepare(UPSERT_ENTITY).bind(...entityRow(e))),
+      db.prepare(LOOKUP).bind("goodreads", now, JSON.stringify(state)),
+    ]);
+    out.goodreads = found.length;
+  } catch (err) {
+    out.failed += books.length;
+    console.error(JSON.stringify({ job: "connect", step: "goodreads", error: String(err) }));
+  }
 }

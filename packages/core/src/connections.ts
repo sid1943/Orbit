@@ -218,11 +218,29 @@ export async function seriesMembers(fetch: Fetch, seriesQids: string[]): Promise
 // What a Wikidata "instance of" (P31) says a thing is.
 const TYPES: [WorkType, string[]][] = [
   ["franchise", ["Q196600"]],
-  ["series", ["Q24856", "Q7058673", "Q277759", "Q1667921", "Q867335", "Q614101"]],
+  ["series", ["Q24856", "Q7058673", "Q277759", "Q1667921", "Q867335", "Q614101", "Q14406742", "Q21198342"]],
   ["show", ["Q5398426", "Q581714", "Q1259759", "Q63952888", "Q526877", "Q117467246", "Q15416"]],
   ["movie", ["Q11424", "Q202866", "Q24862", "Q506240", "Q93204", "Q1054574", "Q229390", "Q24869"]],
   ["game", ["Q7889", "Q21125433", "Q64170203", "Q865493"]],
-  ["book", ["Q7725634", "Q571", "Q8261", "Q47461344", "Q49084", "Q1004", "Q725377", "Q5185279", "Q12308638"]],
+  [
+    "book",
+    [
+      "Q7725634",
+      "Q571",
+      "Q8261",
+      "Q47461344",
+      "Q49084",
+      "Q1004",
+      "Q725377",
+      "Q5185279",
+      "Q12308638",
+      "Q149537",
+      "Q1279564",
+      "Q8274",
+      "Q1760610",
+      "Q2831984",
+    ],
+  ],
 ];
 
 /** The first type that matches, in the order above (a "film series" is a series, not a movie). */
@@ -327,6 +345,7 @@ export interface Connections {
 }
 
 const WORK_TYPES = new Set<WorkType>(["movie", "show", "book", "game"]);
+const isListItem = (label: string): boolean => /^list of\b/i.test(label.trim());
 
 const byOrder = (a: ConnectedWork, b: ConnectedWork): number =>
   (a.ord ?? Infinity) - (b.ord ?? Infinity) ||
@@ -377,6 +396,10 @@ export function connectionsFor(
   const series: SeriesView[] = relations
     .filter((r) => r.from === qid && r.rel === "series")
     .map((r) => ({ r, members: seriesList(r.to) }))
+    // Not a real series: a "list of ..." item, or one whose other members are all episodes or odd items.
+    .filter(
+      ({ r, members }) => !isListItem(work(r.to).label) && members.some((m) => m.qid !== qid && WORK_TYPES.has(m.type)),
+    )
     // Wikidata sometimes has two items for one series ("Dune" and "Dune Chronicles"): show it once.
     .filter(({ members }) => {
       const key = members.map((m) => m.qid).join(" ");
