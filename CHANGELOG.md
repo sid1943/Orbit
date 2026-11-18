@@ -8,6 +8,10 @@ All notable changes to Orbit are listed here. The format follows
 
 ### Added
 
+- Mac: merged changes arrive within about 15 seconds. A new `com.orbit.sync` agent checks GitHub every 15 seconds
+  (`git ls-remote`, no download) and pulls only when `main` moved; the 10-minute updater keeps the scheduled job,
+  pulls as a fallback, and installs the sync agent on Macs set up before it. "Skipped" reasons are logged once.
+
 - Books link to Goodreads instead of Open Library: the book's own page when Wikidata (work id) or Open Library (edition
   id) records its Goodreads id, a Goodreads search for the title and author otherwise. The connections job looks the ids
   up (100 books a run; migration `0005_lookups`) and `npm run connect` reports how many books have a Goodreads page.
