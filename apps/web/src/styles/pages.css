@@ -688,3 +688,110 @@ a.chip:hover {
 .location-dialog .dialog-buttons {
   align-items: center;
 }
+
+/* Today / All cards switch, under the kind tiles */
+.today-switch {
+  margin-top: 18px;
+}
+
+/* All cards (Today) and kind pages: Filters button, panel, list */
+.all-cards {
+  margin-top: 14px;
+}
+
+.kind-page .all-cards,
+.tiles-pad + .all-cards {
+  margin-top: 0;
+  padding: 0 20px;
+}
+
+.all-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.filters-btn.on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.filters-btn .count {
+  margin-left: 6px;
+  min-width: 1.5em;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--panel);
+  font: 600 calc(11px * var(--fz)) / 1.5 var(--mono);
+  text-align: center;
+}
+
+.all-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 22px;
+  padding: 14px;
+  margin-bottom: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.all-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.all-filter-label {
+  font: 600 calc(11.5px * var(--fz)) var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.all-filter select.input,
+.all-filter input.input {
+  min-width: calc(170px * var(--fz));
+}
+
+.all-filter-foot {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-top: 4px;
+  border-top: 1px solid var(--line);
+}
+
+.all-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.all-cards .item-list .row {
+  padding: 9px 14px;
+}
+
+.all-cards .item-list .group-head.sticky {
+  padding: 12px 2px 6px;
+}
+
+@media (max-width: 720px) {
+  .all-filters {
+    padding: 12px;
+  }
+
+  .all-filter {
+    flex-basis: 100%;
+  }
+
+  .all-filter select.input,
+  .all-filter input.input {
+    width: 100%;
+  }
+}

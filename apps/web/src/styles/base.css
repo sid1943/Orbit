@@ -157,3 +157,8 @@ code {
   color: var(--panel);
   font-weight: 600;
 }
+
+/* Keep the focus ring inside a segmented button; outside it, the row's rounded clip cut it to a stray line. */
+.seg button:focus-visible {
+  outline-offset: -3px;
+}

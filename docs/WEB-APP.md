@@ -20,7 +20,7 @@ can put a sign-in (Google, email code) in front of both the app and the API (fre
 
 ## Layout
 
-- **Left rail**: the Orbit brand (goes home), views (Today, Everything, Map, Near me, Review), and Settings.
+- **Left rail**: the Orbit brand (goes home), views (Today, Map, Near me, Review), and Settings.
   Kinds are not listed in the rail; they are tiles on the home page.
 - **Top bar, on every page**: greeting ("Good evening, Sid", from the profile name), date, location,
   and the New button. The page title sits in a strip under the search bar.
@@ -32,8 +32,8 @@ can put a sign-in (Google, email code) in front of both the app and the API (fre
 | Page           | Route                | What's on it                                                                                                                                                                                                                                                |
 | -------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Today (home)   | `/`                  | Greeting, date, location with "Use my location"; search; big kind tiles (each opens its kind page); Near you; Coming up; In season now; In progress; To-do (add, tick off, grouped by quest); Closest to finished; Pick one today; Recently changed; Topics |
-| Everything     | `/all`               | Kind tiles; status filter (All, To do, Doing, Done, Dropped); group by flat, kind or status; rows with tags, progress, distance                                                                                                                             |
-| Kind page      | `/kind/:kind`        | The Everything list for one kind                                                                                                                                                                                                                            |
+| All cards      | `/?all=1`            | The "All cards" side of Today's switch: every card, with Filters (status, kind, topic, distance, when, archived, group, sort) in the address. `/all` redirects here                                                                                         |
+| Kind page      | `/kind/:kind`        | One kind's cards, with the same Filters (no kind or group choice)                                                                                                                                                                                           |
 | Search results | `/search?q=`         | Ranked, title matches first, using `matcher()` from core                                                                                                                                                                                                    |
 | Map            | `/map`               | Topics drawn as a network (drag, zoom, click a topic), with Big topics in a side panel                                                                                                                                                                      |
 | Near me        | `/near`              | Places by distance: 5, 25, 100, 500 mi or Any; show done; category chips (all in the address: `within`, `done`, `cat`); exact places, then city groups; each row opens its card and has a Map link                                                          |
@@ -44,7 +44,7 @@ can put a sign-in (Google, email code) in front of both the app and the API (fre
 
 ### Where pages get their data
 
-Every list page works from one cached list, `useSync()` (`GET /api/sync`): Today, Everything, kind pages,
+Every list page works from one cached list, `useSync()` (`GET /api/sync`): Today (and All cards), kind pages,
 search, Topic and Map. Near you and Near me use `usePlaces()` (`GET /api/places`): every card and
 checklist row linked to a place, sorted with `placesByDistance()` and joined to the sync list by `itemId`. Refreshes fetch only what changed. The card panel
 uses `useFullItem(id)` (`GET /api/items/:id/full`): the card, every linked thing on its checklists, TV status,
@@ -107,7 +107,7 @@ Fonts load from Google Fonts only when chosen. Settings are saved through `PUT /
 ## Build order
 
 1. Scaffold `apps/web` (Vite, React, Router, Query), connect to the API, the layout (rail, top bar).
-2. Today and Everything, with kind pages and search.
+2. Today (with All cards), kind pages and search.
 3. The card panel, then New item.
 4. Settings (appearance first) and the app map.
 5. Review links and Fix links.
