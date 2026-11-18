@@ -47,6 +47,16 @@
   hyphens: auto;
 }
 
+/* The count (and the "+") sit in the middle of the tile: centred across, and down the space under the name,
+   lifted by the name's height so they look centred in the whole square. */
+.kind-tile .value,
+.kind-tile .plus {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding-bottom: calc(18px * var(--fz));
+}
+
 .kind-tile .value {
   font: 700 calc(30px * var(--fz)) / 1 var(--display);
   font-variant-numeric: tabular-nums;
@@ -74,6 +84,11 @@
 
   .kind-tile .value {
     font-size: calc(26px * var(--fz));
+  }
+
+  .kind-tile .value,
+  .kind-tile .plus {
+    padding-bottom: calc(16px * var(--fz));
   }
 }
 
