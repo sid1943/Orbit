@@ -26,7 +26,9 @@ in `packages/core`.
 
 ## Rules for the data
 
-- Each standard link comes from one source: IMDb (movies, shows; ids via Wikidata), Open Library (books), IGDB (games), a map link (places).
+- Each standard link comes from one source: IMDb (movies, shows; ids via Wikidata), Goodreads (books; ids from Wikidata and
+  Open Library, a Goodreads search when neither has one), IGDB (games), a map link (places). Open Library stays behind the
+  scenes for books (matching, covers).
 - Links that Sid confirmed or set himself (`confidence: "high"` or `"user"`) are never overwritten by the enricher.
 - Back-filling old cards keeps only sure matches; unsure matches for new cards go to review.
 - Never change Sid's saved data unless he asks.

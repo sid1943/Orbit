@@ -28,25 +28,42 @@ interface Progress {
   due: number;
   relations: number;
   works: number;
+  books: number;
+  goodreads: number;
 }
 interface RunResult {
   mapped: number;
+  goodreads: number;
+  looked: number;
   connected: number;
   relations: number;
   works: number;
   failed: number;
 }
 
-async function call<T>(method: string, path: string): Promise<T> {
-  const r = await fetch(`${api}/api/connections${path}`, { method, headers: { Authorization: `Bearer ${token}` } });
-  if (!r.ok) throw new Error(`${method} ${path}: HTTP ${r.status}`);
-  return (await r.json()) as T;
-}
-
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * One request to the API. When the API isn't answering (the Mac's updater restarts it after a merge),
+ * waits and tries again for up to 5 minutes instead of stopping.
+ */
+async function call<T>(method: string, path: string): Promise<T> {
+  for (let wait = 0; ; wait += 15) {
+    try {
+      const r = await fetch(`${api}/api/connections${path}`, { method, headers: { Authorization: `Bearer ${token}` } });
+      if (r.ok) return (await r.json()) as T;
+      if (r.status < 500) throw new Error(`${method} ${path}: HTTP ${r.status}`);
+    } catch (err) {
+      if (!(err instanceof TypeError)) throw err; // fetch failed: the API is down or restarting
+    }
+    if (wait >= 300) throw new Error(`The API at ${api} hasn't answered for 5 minutes. Is Orbit running?`);
+    console.log("The API isn't answering (restarting?); trying again in 15 seconds…");
+    await sleep(15_000);
+  }
+}
 const show = (p: Progress) =>
   `${p.connected}/${p.total} connected, ${p.withQid} with a Wikidata id, ${p.noQid} without, ` +
-  `${p.relations} connections, ${p.works} things`;
+  `${p.relations} connections, ${p.works} things, ${p.goodreads}/${p.books} books with a Goodreads page`;
 
 let failures = 0;
 console.log(show(await call<Progress>("GET", "/progress")));
@@ -59,8 +76,10 @@ for (;;) {
     process.exit(1);
   }
   const p = await call<Progress>("GET", "/progress");
-  console.log(`+${r.mapped} ids, +${r.connected} connected${r.failed ? `, ${r.failed} failed` : ""} · ${show(p)}`);
-  if (!r.mapped && !r.connected && !r.failed) break;
+  console.log(
+    `+${r.mapped} ids, +${r.goodreads} Goodreads, +${r.connected} connected${r.failed ? `, ${r.failed} failed` : ""} · ${show(p)}`,
+  );
+  if (!r.looked && !r.connected && !r.failed) break;
   // Be gentle with Wikidata: a short pause, longer after a failure.
   await sleep(r.failed ? 30_000 : 2_000);
 }

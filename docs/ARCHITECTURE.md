@@ -56,8 +56,9 @@ every 3 days, ended shows monthly.
 ## Connections
 
 The cron also gathers connections from the Wikidata Query Service (free, no key; `jobs/connect-works.ts`):
-missing Wikidata ids for books (from Open Library ids) and movies (from IMDb ids), then for 50 linked things per
+missing Wikidata ids for books (from Open Library ids) and movies (from IMDb ids), Goodreads ids for 100 books (from
+Wikidata, then Open Library), then for 50 linked things per
 run their series and its other members, sequels, what they're based on and what was made from them, and franchises,
-plus the names and years of everything connected. Each is read again after 30 days. `npm run connect -w @orbit/api`
+plus the names and years of everything connected. Each is read again after 30 days; missing ids are tried again monthly. `npm run connect -w @orbit/api`
 runs it all in one go against the local API. The card reads it with `GET /api/connections/:itemId`
 (`useConnections()` in the web app).

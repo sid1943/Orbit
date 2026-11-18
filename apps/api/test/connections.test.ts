@@ -48,7 +48,9 @@ const rows = (list: Record<string, string>[]) =>
 
 /** A made-up Wikidata: a three-book series, a movie of book 1, and one more book with no Wikidata id. */
 function fakeWikidata() {
-  return vi.fn(async (_url: string, init?: RequestInit) => {
+  return vi.fn(async (url: string, init?: RequestInit) => {
+    if (url.startsWith("https://openlibrary.org/search.json"))
+      return Response.json({ docs: [{ key: "/works/OL1W", id_goodreads: ["900", "77"] }] });
     const q = decodeURIComponent(String(init?.body ?? "").replace(/^query=/, ""));
     // The names query mentions every id property, so it goes first.
     if (q.includes("VALUES ?w"))
@@ -63,6 +65,7 @@ function fakeWikidata() {
           .filter(([qid]) => q.includes(`wd:${qid} `) || q.includes(`wd:${qid} }`))
           .map(([qid, label, type]) => ({ w: E(qid!), label: label!, types: E(type!) })),
       );
+    if (q.includes("wdt:P8383")) return rows([{ item: E("Q50"), work: "123" }]);
     if (q.includes("wdt:P648")) return rows([{ item: E("Q1"), id: "OL1W" }]);
     if (q.includes("wdt:P345 ?id")) return rows([]);
     if (q.includes("VALUES ?item"))
@@ -107,9 +110,17 @@ afterEach(() => vi.unstubAllGlobals());
 describe("connectWorks", () => {
   it("finds missing Wikidata ids, then reads connections and names", async () => {
     const r = await connectWorks(env, 1000);
-    expect(r).toMatchObject({ mapped: 1, connected: 2, failed: 0 });
+    expect(r).toMatchObject({ mapped: 1, goodreads: 1, connected: 2, failed: 0 });
     const e1 = await env.DB.prepare("SELECT data FROM entities WHERE id = 'e1'").first<{ data: string }>();
-    expect(JSON.parse(e1!.data).qid).toBe("Q1");
+    expect(JSON.parse(e1!.data)).toMatchObject({ qid: "Q1", goodreadsBook: "77" });
+    const looked = await env.DB.prepare("SELECT entity_id, status FROM lookup_state ORDER BY entity_id").all<{
+      entity_id: string;
+      status: string;
+    }>();
+    expect(looked.results.map((l) => [l.entity_id, l.status])).toEqual([
+      ["e1", "found"],
+      ["e3", "missing"],
+    ]);
     const state = await env.DB.prepare(
       "SELECT entity_id, status, next_check FROM connect_state ORDER BY entity_id",
     ).all<{
@@ -127,7 +138,7 @@ describe("connectWorks", () => {
 
   it("has nothing to do until things are due again", async () => {
     await connectWorks(env, 1000);
-    expect(await connectWorks(env, 2000)).toMatchObject({ mapped: 0, connected: 0 });
+    expect(await connectWorks(env, 2000)).toMatchObject({ mapped: 0, looked: 0, connected: 0 });
   });
 
   it("tries again later when Wikidata fails", async () => {
@@ -165,6 +176,6 @@ describe("GET /api/connections/:itemId", () => {
   it("reports progress", async () => {
     await connectWorks(env, 1000);
     const res = await app.request("/api/connections/progress", { headers: auth }, env);
-    expect(await res.json()).toMatchObject({ total: 3, withQid: 2, connected: 2, noQid: 1 });
+    expect(await res.json()).toMatchObject({ total: 3, withQid: 2, connected: 2, noQid: 1, books: 2, goodreads: 1 });
   });
 });

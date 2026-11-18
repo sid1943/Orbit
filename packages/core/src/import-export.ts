@@ -94,6 +94,8 @@ export const ENTITY_FIELDS = [
   ["imdb", "imdb", "s"],
   ["igdb", "igdb", "s"],
   ["openLibrary", "ol", "s"],
+  ["goodreads", "gr", "s"],
+  ["goodreadsBook", "grb", "s"],
   ["author", "author", "s"],
   ["year", "yr", "n"],
   ["wikipedia", "wp", "s"],

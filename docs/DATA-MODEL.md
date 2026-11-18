@@ -25,7 +25,7 @@ Defined in `packages/core/src/types.ts`. The database keeps each record whole as
 ## Entity: a linked thing
 
 A movie, show, book, game or place in the real world, with its standard ids: `imdb`, `openLibrary`,
-`igdb`, `qid` (Wikidata), `wikipedia`, `lat`/`lng` or `mapQuery`, plus `label`, `year`, `author`.
+`goodreads` (Goodreads work id) or `goodreadsBook` (edition id), `igdb`, `qid` (Wikidata), `wikipedia`, `lat`/`lng` or `mapQuery`, plus `label`, `year`, `author`.
 
 `confidence` says how sure the link is:
 
@@ -53,6 +53,7 @@ alongside with `add`). The result carries `reviewed` with the answer. Deleting t
 - `enrich_queue`: cards waiting to be linked (`mode` new or backfill, retries with back-off).
 - `removed`: ids of cards deleted for good, so `GET /api/sync` can tell other devices to drop them.
 - `works`, `relations`, `connect_state`: connections between things (see below).
+- `lookup_state`: when an extra id was last looked up per linked thing and kind (`goodreads`), and when to try again.
 
 ## Connections
 
@@ -71,6 +72,13 @@ added by itself).
 - Books linked to Open Library get their Wikidata id from Open Library's id (Wikidata `P648`); movies and shows from
   IMDb (`P345`). Only ids that match exactly one Wikidata item are kept, and nothing else about the linked thing
   changes. Cards are found by their linked thing's `qid` (indexed).
+
+## Book links: Goodreads
+
+Every book links to Goodreads (Sid, 2026-11-17). The link opens the book's page when an id is known: the Goodreads work id
+from Wikidata (`P8383`, opens `/work/best_book/<id>`), else a Goodreads book id from Wikidata (`P2969`) or Open Library
+(`id_goodreads`, lowest edition id). Otherwise it is a Goodreads search for the title and author. Rows marked `nolink`
+get none. Ids are looked up by the connections job (100 books a run), and books with no id are tried again monthly.
 
 ## The sync list
 

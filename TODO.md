@@ -6,6 +6,8 @@
 - [x] `packages/core`: data model, search rules, link building, export import
 - [x] Enricher rules: Wikidata (IMDb, IGDB), Open Library, map links, links already in notes
 - [x] TV status from TVmaze
+- [x] Goodreads for every book: the book's page when Wikidata or Open Library has its Goodreads id, a search otherwise
+- [ ] Second search for books and movies with no match (title and author on Wikidata) (Data chat)
 - [x] Connections from Wikidata: series (with order), sequels, based on / adaptations, franchise; Wikidata ids for books from Open Library
 - [x] `apps/api`: Worker + D1 schema, items / entities / reviews / prefs routes, token auth
 - [x] Cron every 10 minutes: link new cards, back-fill old ones, refresh shows
