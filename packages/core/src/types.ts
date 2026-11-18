@@ -170,6 +170,21 @@ export interface Review {
   at: number;
 }
 
+/** Where something can be watched in one country (TMDB watch providers, data from JustWatch). */
+export interface WatchOn {
+  country: string;
+  /** Included with a subscription (Netflix, Max...). */
+  stream: string[];
+  rent: string[];
+  buy: string[];
+  /** Free with ads. */
+  free?: string[];
+  /** The channel or service a show is made for (TVmaze network or web channel). */
+  network?: string;
+  /** TMDB's page listing the offers. */
+  link?: string;
+}
+
 /** Live facts refreshed from outside sources (TV seasons, next episode, release dates). */
 export interface LiveStatus {
   entityId: string;
@@ -182,5 +197,18 @@ export interface LiveStatus {
   releaseDate?: string;
   /** When a place closed for good (YYYY-MM-DD or YYYY), from Wikidata. */
   closed?: string;
+  /** Where to watch it in Sid's country (TMDB, data from JustWatch, which must be credited where shown). */
+  watchOn?: WatchOn;
+  /** US release dates by kind (TMDB): theatres, digital (streaming / rent), physical. */
+  releases?: { theatrical?: string; digital?: string; physical?: string };
+  /** In US theatres now: a theatrical release in the last 60 days and no digital release yet. */
+  inTheatres?: boolean;
+  /** The movie's TMDB collection (its series), with every part in release order: how sequels show up. */
+  collection?: { id: number; name: string; parts: { tmdbId: number; title: string; releaseDate?: string }[] };
+  /** Games (IGDB): development status, e.g. "Released", "Early access", "Beta", "In development", "Cancelled". */
+  devStatus?: string;
+  platforms?: string[];
+  /** Games (IGDB): each platform's release, with its own date and status. */
+  platformReleases?: { platform: string; date?: string; status?: string }[];
   checkedAt: number;
 }

@@ -88,6 +88,27 @@ describe("watchRule", () => {
   });
 });
 
+describe("watchRule with keys", () => {
+  const keys = { tmdb: true, igdb: true };
+  it("watches every unseen movie on TMDB, old ones too (streaming changes)", () => {
+    const old = thing({ imdb: "tt0000002", year: 1999 });
+    expect(watchRule(old, "open", NOW, keys)).toEqual({ what: "movie", source: "tmdb", key: "tt0000002", stop: null });
+    expect(watchRule(old, "done", NOW, keys).stop).toBe("done");
+    expect(watchRule(thing({ qid: "Q1", year: 2027 }), "open", NOW, keys).source).toBe("wikidata");
+  });
+
+  it("watches games on IGDB by slug", () => {
+    const game = thing({ category: "game", igdb: "harbor-lights", year: 2015 });
+    expect(watchRule(game, "open", NOW, keys)).toEqual({
+      what: "game",
+      source: "igdb",
+      key: "harbor-lights",
+      stop: null,
+    });
+    expect(watchRule(game, "open", NOW).stop).toBe("released");
+  });
+});
+
 describe("afterCheck", () => {
   const found = (f: object) => ({ found: { source: "tvmaze" as const, checkedAt: NOW, ...f } });
 
@@ -98,13 +119,37 @@ describe("afterCheck", () => {
     expect(afterCheck("tv", found({ status: "Running" }), 0, NOW).next).toBe(NOW + 3 * DAY);
   });
 
-  it("stops a show that ended over a year ago, and checks a recently ended one monthly", () => {
-    expect(afterCheck("tv", found({ status: "Ended", lastEpisode: { date: "2019-05-01" } }), 0, NOW).stop).toBe(
-      "ended",
-    );
+  it("keeps ended shows for where to watch: every 60 days after a year, else monthly", () => {
+    expect(afterCheck("tv", found({ status: "Ended", lastEpisode: { date: "2019-05-01" } }), 0, NOW)).toEqual({
+      next: NOW + 60 * DAY,
+      stop: null,
+      misses: 0,
+    });
     expect(afterCheck("tv", found({ status: "Ended", lastEpisode: { date: "2026-09-01" } }), 0, NOW).next).toBe(
       NOW + 30 * DAY,
     );
+  });
+
+  it("watches a movie weekly around its theatre run, then for streaming", () => {
+    const tmdb = (f: object) => ({ found: { source: "tmdb" as const, checkedAt: NOW, ...f } });
+    const stream = { country: "US", stream: ["Netflix"], rent: [], buy: [] };
+    expect(afterCheck("movie", tmdb({ inTheatres: true }), 0, NOW).next).toBe(NOW + 7 * DAY);
+    expect(afterCheck("movie", tmdb({ releases: { theatrical: "2026-12-20" } }), 0, NOW).next).toBe(NOW + 7 * DAY);
+    expect(afterCheck("movie", tmdb({ releases: { theatrical: "2027-12-20" } }), 0, NOW).next).toBe(NOW + 30 * DAY);
+    expect(afterCheck("movie", tmdb({ releases: { theatrical: "1999-03-31" } }), 0, NOW).next).toBe(NOW + 14 * DAY);
+    expect(afterCheck("movie", tmdb({ releases: { theatrical: "1999-03-31" }, watchOn: stream }), 0, NOW)).toEqual({
+      next: NOW + 30 * DAY,
+      stop: null,
+      misses: 0,
+    });
+  });
+
+  it("follows a game's development until it's released, and stops a cancelled one", () => {
+    const igdb = (f: object) => ({ found: { source: "igdb" as const, checkedAt: NOW, ...f } });
+    expect(afterCheck("game", igdb({ devStatus: "Beta", releaseDate: "2026-12-01" }), 0, NOW).next).toBe(NOW + 7 * DAY);
+    expect(afterCheck("game", igdb({ devStatus: "In development" }), 0, NOW).next).toBe(NOW + 30 * DAY);
+    expect(afterCheck("game", igdb({ devStatus: "Released" }), 0, NOW).next).toBe(NOW + 90 * DAY);
+    expect(afterCheck("game", igdb({ devStatus: "Cancelled" }), 0, NOW).stop).toBe("cancelled");
   });
 
   it("stops once released, and looks weekly when the date is near", () => {

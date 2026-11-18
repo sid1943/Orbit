@@ -49,7 +49,10 @@ alongside with `add`). The result carries `reviewed` with the answer. Deleting t
 - `reviews`: Sid's answers to guesses (`yes`, `no`, `none`, `alt` with another Wikidata id, `fix` with his own link, `hide`).
 - `prefs`: settings by key (see below).
 - `live`: what live watch found per linked thing: TV status (status, seasons, last and next episode) from TVmaze,
-  release or publication date (`releaseDate`), or closing date (`closed`) from Wikidata / Open Library.
+  release or publication date (`releaseDate`), or closing date (`closed`) from Wikidata / Open Library; with keys,
+  US where to watch (`watchOn`: `stream`, `rent`, `buy`, `free`, `network`, `link`), US `releases` (theatrical,
+  digital, physical), `inTheatres` and the TMDB `collection` from TMDB, and `devStatus`, `platforms`,
+  `platformReleases` from IGDB. Type `LiveStatus` in `packages/core/src/types.ts`.
 - `watch`: the live-watch rule per linked thing: `what` (`tv`, `release`, `publish`, `closure`, `none`), `source`,
   `key` (the id the source knows), `ref` (TVmaze id), `next_check` (null once stopped), `stop` (why), `misses`,
   `replan` (1 when its card, rows or answer changed). See `packages/core/src/watch.ts`.

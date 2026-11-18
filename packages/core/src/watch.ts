@@ -10,15 +10,24 @@ import type { Entity, LiveStatus, Status } from "./types.js";
  *
  * | Linked thing                   | Watches                               | Source       | Stops when                          |
  * | ------------------------------ | ------------------------------------- | ------------ | ----------------------------------- |
- * | Show (IMDb id)                 | status, seasons, next episode         | TVmaze       | ended over a year ago, or dropped   |
- * | Movie, game not yet out        | release date                          | Wikidata     | released, or watched / played       |
+ * | Show (IMDb id)                 | seasons, next episode, where to watch | TVmaze, TMDB | dropped                             |
+ * | Movie (IMDb id), with TMDB     | theatres, streaming, sequels          | TMDB         | watched, or dropped                 |
+ * | Game (IGDB slug), with IGDB    | development status, dates, platforms  | IGDB         | played, cancelled, or dropped       |
+ * | Movie, game not yet out        | release date (no TMDB / IGDB key)     | Wikidata     | released, or watched / played       |
  * | Book not yet out               | first publication date                | Open Library | published, or read                  |
  * | Place that can close (Wikidata)| closing date                          | Wikidata     | closed, or visited                  |
  * | Anything else                  | nothing                               | —            | at once                             |
  */
 
-export type WatchWhat = "tv" | "release" | "publish" | "closure" | "none";
-export type WatchSource = "tvmaze" | "wikidata" | "openlibrary";
+export type WatchWhat = "tv" | "movie" | "game" | "release" | "publish" | "closure" | "none";
+export type WatchSource = "tvmaze" | "tmdb" | "igdb" | "wikidata" | "openlibrary";
+
+/** Sources that need Sid's keys, and whether the Worker has them (see `docs/SETUP.md`). */
+export interface KeyedSources {
+  tmdb: boolean;
+  igdb: boolean;
+}
+const NO_KEYS: KeyedSources = { tmdb: false, igdb: false };
 
 /** Why a linked thing is no longer watched. */
 export type StopReason =
@@ -30,7 +39,8 @@ export type StopReason =
   | "nothing-to-watch" // a kind of thing that doesn't change (a natural place, a recipe...)
   | "released" // movie or game is out
   | "published" // book is out
-  | "ended" // show ended over a year ago
+  | "ended" // show ended over a year ago (no longer used: ended shows are kept for where to watch)
+  | "cancelled" // game cancelled
   | "closed" // place closed for good
   | "unknown-at-source"; // the source said three times that it doesn't know this id
 
@@ -85,18 +95,22 @@ const stopped = (what: WatchWhat, stop: StopReason): WatchPlan => ({ what, sourc
  * What a linked thing needs. `e` is the thing as shown (Sid's review answer applied, see `applyReview`).
  * Decided without any outside request: things that can't change stop here and cost nothing.
  */
-export function watchRule(e: Entity, owner: OwnerState, now = Date.now()): WatchPlan {
+export function watchRule(e: Entity, owner: OwnerState, now = Date.now(), keys: KeyedSources = NO_KEYS): WatchPlan {
   const thisYear = new Date(now).getUTCFullYear();
   const what: WatchWhat =
     e.category === "show"
       ? "tv"
-      : e.category === "movie" || e.category === "game"
-        ? "release"
-        : e.category === "book"
-          ? "publish"
-          : CLOSABLE.has(e.category)
-            ? "closure"
-            : "none";
+      : e.category === "movie" && keys.tmdb && e.imdb
+        ? "movie"
+        : e.category === "game" && keys.igdb && e.igdb
+          ? "game"
+          : e.category === "movie" || e.category === "game"
+            ? "release"
+            : e.category === "book"
+              ? "publish"
+              : CLOSABLE.has(e.category)
+                ? "closure"
+                : "none";
   if (owner === "gone") return stopped(what, "removed");
   if (owner === "dropped") return stopped(what, "dropped");
   if (what === "none") return stopped(what, "nothing-to-watch");
@@ -105,6 +119,11 @@ export function watchRule(e: Entity, owner: OwnerState, now = Date.now()): Watch
     case "tv":
       // A finished show can still come back, so "done" keeps watching it.
       return e.imdb ? { what, source: "tvmaze", key: e.imdb, stop: null } : stopped(what, "no-source");
+    case "movie":
+      // Streaming changes for old movies too, so any movie Sid hasn't seen is watched.
+      return owner === "done" ? stopped(what, "done") : { what, source: "tmdb", key: e.imdb!, stop: null };
+    case "game":
+      return owner === "done" ? stopped(what, "done") : { what, source: "igdb", key: e.igdb!, stop: null };
     case "release":
       if (owner === "done") return stopped(what, "done");
       if (e.year && e.year < thisYear) return stopped(what, "released");
@@ -172,11 +191,25 @@ export function afterCheck(what: WatchWhat, outcome: CheckOutcome, misses: numbe
       }
       if (f.status === "Running") return go(3);
       if (f.status === "Ended") {
+        // Nothing new will air, but where it streams still changes.
         const last = f.lastEpisode?.date;
-        if (last && daysUntil(last, now) < -365) return stop("ended");
-        return go(30);
+        return go(last && daysUntil(last, now) < -365 ? 60 : 30);
       }
       return go(7); // To Be Determined, In Development: news can come any week
+    }
+    case "movie": {
+      const theatres = f.releases?.theatrical;
+      if (f.inTheatres) return go(7); // streaming dates come soon after
+      if (theatres && !hasPassed(theatres, now)) return go(daysUntil(theatres, now) <= 60 ? 7 : 30);
+      if (!f.watchOn?.stream.length) return go(14); // out, but not streaming yet
+      return go(30);
+    }
+    case "game": {
+      const s = (f.devStatus ?? "").toLowerCase();
+      if (s.includes("cancel")) return stop("cancelled");
+      if (s === "released" || s === "full release") return go(90); // new platforms, remasters
+      const d = f.releaseDate;
+      return go(d && !hasPassed(d, now) && daysUntil(d, now) <= 60 ? 7 : 30);
     }
     case "release":
     case "publish": {
@@ -192,9 +225,15 @@ export function afterCheck(what: WatchWhat, outcome: CheckOutcome, misses: numbe
   }
 }
 
-/** One TVmaze show = 1 request when its TVmaze id is known, 2 otherwise. Wikidata: 50 ids per request. */
-export function requestsFor(source: WatchSource, knownRef: boolean): number {
-  return source === "tvmaze" && !knownRef ? 2 : 1;
+/**
+ * Most outside requests one check can take. TVmaze: 1 with its id known, else 2; plus 2 for
+ * TMDB's where-to-watch (1 once the TMDB id is known). TMDB movie: find, movie, collection.
+ * Wikidata and IGDB answer up to 50 per request.
+ */
+export function requestsFor(source: WatchSource, knownRef: boolean, keys: KeyedSources = NO_KEYS): number {
+  if (source === "tvmaze") return (knownRef ? 1 : 2) + (keys.tmdb ? (knownRef ? 1 : 2) : 0);
+  if (source === "tmdb") return knownRef ? 2 : 3;
+  return 1;
 }
 
 /** Readable text for a stop reason (for the API summary and later the card). */
@@ -208,6 +247,7 @@ export const STOP_LABELS: Record<StopReason, string> = {
   released: "Released",
   published: "Published",
   ended: "Ended",
+  cancelled: "Cancelled",
   closed: "Closed",
   "unknown-at-source": "Source doesn't know it",
 };

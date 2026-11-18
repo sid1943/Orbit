@@ -72,18 +72,26 @@ The app decides for itself what each linked thing needs; there is nothing to set
 `watchRule()` in `packages/core/src/watch.ts`, the next step after each check is `afterCheck()`, and the
 scheduler is `apps/api/src/jobs/live-watch.ts`.
 
-| Linked thing (sure links only)                                               | Watches                   | Source                                    | How often                                                            | Stops when                          |
-| ---------------------------------------------------------------------------- | ------------------------- | ----------------------------------------- | -------------------------------------------------------------------- | ----------------------------------- |
-| Show with an IMDb id                                                         | status, seasons, episodes | TVmaze                                    | day after the next episode (1–7 days); running 3 days; ended 30 days | ended over a year ago, dropped      |
-| Movie or game from this year on                                              | release date              | Wikidata                                  | weekly within 60 days of the date, else monthly                      | released, watched / played, dropped |
-| Book from this year on                                                       | first publication date    | Open Library (Wikidata without a work id) | same                                                                 | published, read, dropped            |
-| Place that can close (eatery, museum, ballpark, building) with a Wikidata id | closing date              | Wikidata                                  | every 90 days                                                        | closed, visited, dropped            |
-| Anything else, or no sure link                                               | nothing                   | —                                         | —                                                                    | at once, with no request            |
+| Linked thing (sure links only)                                               | Watches                                                                                           | Source                                    | How often                                                                                | Stops when                          |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------- |
+| Show with an IMDb id                                                         | status, seasons, episodes, network; US where to watch (TMDB key)                                  | TVmaze, TMDB                              | day after the next episode (1–7 days); running 3 days; ended 30 days, 60 after a year    | dropped                             |
+| Movie with an IMDb id (TMDB key)                                             | US theatres / digital / physical dates, in theatres, US stream / rent / buy, collection (sequels) | TMDB                                      | weekly in theatres or within 60 days of the date; 14 days until it streams; else monthly | watched, dropped                    |
+| Game with an IGDB slug (IGDB keys)                                           | development status, release per platform, platforms                                               | IGDB (50 per request)                     | weekly within 60 days of the date; in development monthly; released every 90 days        | played, cancelled, dropped          |
+| Movie or game from this year on, without keys                                | release date                                                                                      | Wikidata                                  | weekly within 60 days of the date, else monthly                                          | released, watched / played, dropped |
+| Book from this year on                                                       | first publication date                                                                            | Open Library (Wikidata without a work id) | same                                                                                     | published, read, dropped            |
+| Place that can close (eatery, museum, ballpark, building) with a Wikidata id | closing date                                                                                      | Wikidata                                  | every 90 days                                                                            | closed, visited, dropped            |
+| Anything else, or no sure link                                               | nothing                                                                                           | —                                         | —                                                                                        | at once, with no request            |
 
 - What points at a linked thing decides with it: the liveliest card or checklist row wins (open, then done,
   then dropped). Archived and deleted cards don't count; a thing nothing points at stops.
 - Older movies, games and books (year before this one) stop at once: nothing to ask.
-- A finished show keeps being watched (a new season matters); a dropped one stops.
+- A finished show keeps being watched (a new season matters, and where it streams changes); a dropped one stops.
+- Keys are config (Worker secrets `TMDB_TOKEN`, `IGDB_CLIENT_ID`, `IGDB_CLIENT_SECRET`; `.dev.vars` locally). TMDB
+  checks are capped at 8 per run (its answers are big, and the free plan allows 10 ms of CPU). The Twitch token for
+  IGDB is kept in `job_state` and renewed a day before it ends. TMDB ids and TVmaze ids are kept in `watch.ref`.
+- TMDB posters fill in covers only where a linked thing has none. Streaming offers are JustWatch data and must be
+  credited where shown.
+- Books also get a Goodreads search link (title and author); Goodreads has no API any more.
 - When a card, a row, a review answer or the linked thing changes, its rule is worked out again on the next run.
   If the source and id stay the same, it keeps its date, so editing a card doesn't trigger a check.
 - Errors are retried in 6 hours; three "unknown id" answers stop the watch.

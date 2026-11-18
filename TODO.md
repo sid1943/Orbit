@@ -9,6 +9,8 @@
 - [x] Connections from Wikidata: series (with order), sequels, based on / adaptations, franchise; Wikidata ids for books from Open Library
 - [x] Live watch: one rule per linked thing (what, how often, when to stop) and one scheduler within the cron budget; TVmaze, Wikidata, Open Library (job LV)
 - [x] Dead-link check for pasted links (job LV)
+- [x] Live watch with keys: TMDB (movies: theatres, streaming, sequels; shows: where to watch), IGDB (games: development, dates, platforms); Goodreads search links for books (job LV)
+- [ ] Places: history (Wikipedia), opening hours and fees (OpenStreetMap), photos, weather before a trip (job LV, waiting for Sid)
 - [x] `apps/api`: Worker + D1 schema, items / entities / reviews / prefs routes, token auth
 - [x] Cron every 10 minutes: link new cards, back-fill old ones, refresh shows
 - [x] Export file → SQL loader

@@ -66,6 +66,29 @@ const fakeWeb: Fetch = async (url, init) => {
         ],
       },
     });
+  if (url.includes("themoviedb.org/3/find/tt0000001")) return json({ movie_results: [], tv_results: [{ id: 7 }] });
+  if (url.includes("themoviedb.org/3/find/tt0000005")) return json({ movie_results: [{ id: 55 }], tv_results: [] });
+  if (url.includes("themoviedb.org/3/tv/7/watch/providers"))
+    return json({ results: { US: { flatrate: [{ provider_name: "Stream Co" }] } } });
+  if (url.includes("themoviedb.org/3/movie/55?"))
+    return json({
+      belongs_to_collection: { id: 9 },
+      release_dates: {
+        results: [{ iso_3166_1: "US", release_dates: [{ type: 3, release_date: "1999-03-31T00:00:00.000Z" }] }],
+      },
+      "watch/providers": { results: { US: { rent: [{ provider_name: "Rent Co" }] } } },
+    });
+  if (url.includes("themoviedb.org/3/collection/9"))
+    return json({
+      id: 9,
+      name: "Old Collection",
+      parts: [
+        { id: 55, title: "Old one", release_date: "1999-03-31" },
+        { id: 56, title: "Old one 2" },
+      ],
+    });
+  if (url.includes("id.twitch.tv/oauth2/token")) return json({ access_token: "twitch-token", expires_in: 5_000_000 });
+  if (url.includes("api.igdb.com/v4/games")) return json([{ slug: "harbor-game", game_status: { status: "Beta" } }]);
   if (url.startsWith("https://ok.example")) return json(null, 200);
   if (url.startsWith("https://gone.example")) return json(null, 404);
   return json(null, 404);
@@ -126,7 +149,7 @@ describe("live watch", () => {
       { entity_id: "old", what: "release", stop: "released", ref: null },
       { entity_id: "orphan", what: "tv", stop: "removed", ref: null },
       { entity_id: "seen", what: "release", stop: "done", ref: null },
-      { entity_id: "show", what: "tv", stop: null, ref: "42" },
+      { entity_id: "show", what: "tv", stop: null, ref: '{"tvmaze":42}' },
       { entity_id: "soon", what: "release", stop: null, ref: null },
     ]);
     // One TVmaze show (lookup + show) and one Wikidata query for the movie not out yet.
@@ -186,6 +209,52 @@ describe("live watch", () => {
     // A tiny budget still plans (no outside requests); the checks wait, and so do connections.
     expect(r.connections).toBeNull();
     expect(r.watch.planned).toBe(5);
+  });
+});
+
+describe("with TMDB and IGDB keys", () => {
+  beforeEach(async () => {
+    env = { ...env, TMDB_TOKEN: "made-up", IGDB_CLIENT_ID: "made-up-id", IGDB_CLIENT_SECRET: "made-up-secret" };
+    await seed(
+      [
+        card({ entityId: "show" }),
+        card({ id: "m", kind: "Movie", entityId: "old" }),
+        card({ id: "g", kind: "Game", entityId: "game" }),
+      ],
+      [
+        thing({ id: "show", imdb: "tt0000001" }),
+        thing({ id: "old", category: "movie", imdb: "tt0000005", year: 1999 }),
+        thing({ id: "game", category: "game", igdb: "harbor-game", year: 2027 }),
+      ],
+    );
+  });
+
+  it("adds where to watch, follows old movies on TMDB with their collection, and games on IGDB", async () => {
+    await run(T0);
+    const live = Object.fromEntries(
+      (await rows<{ entity_id: string; data: string }>(`SELECT entity_id, data FROM live`)).map((l) => [
+        l.entity_id,
+        JSON.parse(l.data) as Record<string, unknown>,
+      ]),
+    );
+    expect(live.show?.watchOn).toMatchObject({ country: "US", stream: ["Stream Co"] });
+    expect(live.old).toMatchObject({
+      source: "tmdb",
+      releases: { theatrical: "1999-03-31" },
+      watchOn: { rent: ["Rent Co"] },
+      collection: { name: "Old Collection" },
+    });
+    expect(live.game).toMatchObject({ source: "igdb", devStatus: "Beta" });
+    expect(await rows(`SELECT entity_id, ref FROM watch WHERE ref IS NOT NULL ORDER BY entity_id`)).toEqual([
+      { entity_id: "old", ref: '{"tmdb":55}' },
+      { entity_id: "show", ref: '{"tvmaze":42,"tmdb":7}' },
+    ]);
+    // The Twitch token is kept for later runs.
+    expect(await rows(`SELECT key FROM job_state WHERE key = 'igdb_token'`)).toEqual([{ key: "igdb_token" }]);
+    calls = [];
+    await run(T0 + 8 * DAY);
+    expect(calls.some((c) => c.includes("id.twitch.tv"))).toBe(false);
+    expect(calls.some((c) => c.includes("/find/"))).toBe(false);
   });
 });
 

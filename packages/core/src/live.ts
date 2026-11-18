@@ -12,6 +12,8 @@ interface TvmShow {
   id: number;
   status?: string;
   image?: { medium?: string; original?: string } | null;
+  network?: { name?: string } | null;
+  webChannel?: { name?: string } | null;
   _embedded?: {
     nextepisode?: { airdate?: string; name?: string; season?: number; number?: number };
     previousepisode?: { airdate?: string; season?: number; number?: number };
@@ -55,6 +57,7 @@ export async function tvmazeStatus(
   const seasons = (s._embedded?.seasons ?? []).filter((x) => x.premiereDate && x.premiereDate <= today).length;
   const next = s._embedded?.nextepisode;
   const prev = s._embedded?.previousepisode;
+  const network = s.webChannel?.name ?? s.network?.name;
   return {
     tvmazeId: s.id,
     ...(s.image?.medium ? { coverUrl: s.image.medium } : {}),
@@ -77,6 +80,7 @@ export async function tvmazeStatus(
             ...(prev.number ? { number: prev.number } : {}),
           }
         : null,
+      ...(network ? { watchOn: { country: "US", stream: [], rent: [], buy: [], network } } : {}),
       checkedAt: now,
     },
   };

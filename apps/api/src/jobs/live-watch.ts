@@ -1,6 +1,15 @@
 import {
+  IGDB_BATCH,
   WIKIDATA_BATCH,
   afterCheck,
+  igdbGames,
+  tmdbCollection,
+  tmdbFind,
+  tmdbMovie,
+  tmdbTvWatch,
+  tokenUsable,
+  twitchToken,
+  type TwitchToken,
   openLibraryPublished,
   ownerState,
   requestsFor,
@@ -14,7 +23,7 @@ import {
   type WatchWhat,
 } from "@orbit/core";
 import { IN_JSON, withReview, type EntityReviewRow } from "../db/statements.js";
-import type { Env } from "../env.js";
+import { keyedSources, type Env } from "../env.js";
 import { type Budget, LINK_RESERVE } from "./shared.js";
 
 /**
@@ -27,6 +36,23 @@ import { type Budget, LINK_RESERVE } from "./shared.js";
 const PLAN_PER_RUN = 200;
 /** Due checks looked at per run. */
 const DUE_PER_RUN = 120;
+/** TMDB answers are big (every country's dates and offers); a few per run keeps within 10 ms of CPU. */
+const TMDB_PER_RUN = 8;
+
+/** Ids a source gave us, kept in `watch.ref` so the next check skips the lookup. */
+interface Refs {
+  tvmaze?: number;
+  tmdb?: number;
+}
+const readRefs = (ref: string | null): Refs => {
+  if (!ref) return {};
+  try {
+    const r = JSON.parse(ref) as unknown;
+    return typeof r === "number" ? { tvmaze: r } : (r as Refs);
+  } catch {
+    return {};
+  }
+};
 
 /** The time of the last run's start, kept in `job_state` (see `CHANGES` in jobs/index.ts). */
 export const SINCE = `COALESCE((SELECT CAST(value AS INTEGER) FROM job_state WHERE key = 'changes_since'), 0)`;
@@ -129,6 +155,7 @@ export async function planWatch(env: Env, budget: Budget, now = Date.now()): Pro
     .bind(PLAN_PER_RUN)
     .all<PlanRow>();
   if (!rows.length) return 0;
+  const keys = keyedSources(env);
   budget.db();
   const { results: owners } = await env.DB.prepare(OWNERS)
     .bind(JSON.stringify(rows.map((r) => r.id)))
@@ -145,7 +172,7 @@ export async function planWatch(env: Env, budget: Budget, now = Date.now()): Pro
     byEntity.set(o.eid, list);
   }
   const plans = rows.map((r) => {
-    const plan = watchRule(withReview(r), ownerState(byEntity.get(r.id) ?? []), now);
+    const plan = watchRule(withReview(r), ownerState(byEntity.get(r.id) ?? []), now, keys);
     return { id: r.id, ...plan, next: plan.stop ? null : now };
   });
   budget.db();
@@ -168,7 +195,7 @@ export async function checkDue(env: Env, budget: Budget, now = Date.now()): Prom
     .all<DueRow>();
   if (!due.length) return none;
 
-  const outcomes = new Map<string, CheckOutcome & { ref?: string; cover?: string }>();
+  const outcomes = new Map<string, CheckOutcome & { ref?: string; cover?: string; coverSource?: string }>();
   const canSpend = (n: number) => budget.left - keep >= n;
 
   // Wikidata first: one request answers up to 50.
@@ -198,20 +225,95 @@ export async function checkDue(env: Env, budget: Budget, now = Date.now()): Prom
     }
   }
 
+  // IGDB: one request answers up to 50 games, with a token kept between runs.
+  const games = due.filter((d) => d.source === "igdb");
+  let newToken: TwitchToken | null = null;
+  if (games.length && env.IGDB_CLIENT_ID && env.IGDB_CLIENT_SECRET && canSpend(2)) {
+    budget.db();
+    const saved = await env.DB.prepare(`SELECT value FROM job_state WHERE key = 'igdb_token'`).first<string>("value");
+    let token: TwitchToken | null = saved ? (JSON.parse(saved) as TwitchToken) : null;
+    try {
+      if (!tokenUsable(token, now)) {
+        token = newToken = await twitchToken(budget.fetch, env.IGDB_CLIENT_ID, env.IGDB_CLIENT_SECRET, now);
+      }
+      for (let i = 0; i < games.length && canSpend(1); i += IGDB_BATCH) {
+        const batch = games.slice(i, i + IGDB_BATCH);
+        try {
+          const found = await igdbGames(
+            budget.fetch,
+            env.IGDB_CLIENT_ID,
+            token!.token,
+            batch.map((d) => d.key),
+            now,
+          );
+          for (const d of batch) {
+            const f = found.get(d.key);
+            outcomes.set(d.entity_id, f ? { found: f } : { unknown: true });
+          }
+        } catch (err) {
+          for (const d of batch) outcomes.set(d.entity_id, { error: String(err) });
+        }
+      }
+    } catch (err) {
+      for (const d of games) outcomes.set(d.entity_id, { error: String(err) });
+    }
+  }
+
   // Then one by one, in the order they fell due.
+  const keys = keyedSources(env);
+  let tmdbChecks = 0;
   for (const d of due) {
-    if (d.source === "wikidata") continue;
-    const cost = requestsFor(d.source, !!d.ref);
+    if (d.source === "wikidata" || d.source === "igdb") continue;
+    const refs = readRefs(d.ref);
+    const cost = requestsFor(d.source, d.source === "tmdb" ? !!refs.tmdb : !!refs.tvmaze, keys);
     if (!canSpend(cost)) continue; // a cheaper one further down may still fit
     try {
       if (d.source === "tvmaze") {
-        const r = await tvmazeStatus(budget.fetch, d.key, now, d.ref ? Number(d.ref) : undefined);
-        outcomes.set(
-          d.entity_id,
-          r
-            ? { found: r.live, ref: String(r.tvmazeId), ...(r.coverUrl ? { cover: r.coverUrl } : {}) }
-            : { unknown: true },
-        );
+        const r = await tvmazeStatus(budget.fetch, d.key, now, refs.tvmaze);
+        if (!r) {
+          outcomes.set(d.entity_id, { unknown: true });
+          continue;
+        }
+        const next: Refs = { ...refs, tvmaze: r.tvmazeId };
+        let live = r.live;
+        if (env.TMDB_TOKEN && tmdbChecks < TMDB_PER_RUN) {
+          tmdbChecks++;
+          try {
+            next.tmdb ??= (await tmdbFind(budget.fetch, env.TMDB_TOKEN, d.key)).tv;
+            const watchOn = next.tmdb ? await tmdbTvWatch(budget.fetch, env.TMDB_TOKEN, next.tmdb) : undefined;
+            if (watchOn)
+              live = {
+                ...live,
+                watchOn: { ...watchOn, ...(live.watchOn?.network ? { network: live.watchOn.network } : {}) },
+              };
+          } catch {
+            // TVmaze's answer still counts; where to watch is filled in next time.
+          }
+        }
+        outcomes.set(d.entity_id, {
+          found: live,
+          ref: JSON.stringify(next),
+          ...(r.coverUrl ? { cover: r.coverUrl } : {}),
+        });
+      } else if (d.source === "tmdb") {
+        if (!env.TMDB_TOKEN || tmdbChecks >= TMDB_PER_RUN) continue;
+        tmdbChecks++;
+        const id = refs.tmdb ?? (await tmdbFind(budget.fetch, env.TMDB_TOKEN, d.key)).movie;
+        const m = id ? await tmdbMovie(budget.fetch, env.TMDB_TOKEN, id, now) : null;
+        if (!m) {
+          outcomes.set(d.entity_id, { unknown: true });
+          continue;
+        }
+        let live = m.live;
+        if (m.collectionId && canSpend(1)) {
+          const c = await tmdbCollection(budget.fetch, env.TMDB_TOKEN, m.collectionId).catch(() => null);
+          if (c) live = { ...live, collection: c };
+        }
+        outcomes.set(d.entity_id, {
+          found: live,
+          ref: JSON.stringify({ tmdb: id }),
+          ...(m.posterUrl ? { cover: m.posterUrl, coverSource: "tmdb" } : {}),
+        });
       } else {
         const r = await openLibraryPublished(budget.fetch, d.key);
         outcomes.set(d.entity_id, r ? { found: { source: "openlibrary", ...r, checkedAt: now } } : { unknown: true });
@@ -238,11 +340,17 @@ export async function checkDue(env: Env, budget: Budget, now = Date.now()): Prom
       const status: LiveStatus = { entityId: d.entity_id, ...o.found };
       live.push({ id: d.entity_id, source: status.source, data: JSON.stringify(status), next: n.next });
     }
-    if (o.cover) covers.push({ id: d.entity_id, url: o.cover, source: "tvmaze" });
+    if (o.cover) covers.push({ id: d.entity_id, url: o.cover, source: o.coverSource ?? "tvmaze" });
   }
   const stmts = [env.DB.prepare(SAVE_CHECKS).bind(JSON.stringify(checks), now)];
   if (live.length) stmts.push(env.DB.prepare(SAVE_LIVE).bind(JSON.stringify(live), now));
   if (covers.length) stmts.push(env.DB.prepare(SAVE_COVERS).bind(JSON.stringify(covers), now));
+  if (newToken)
+    stmts.push(
+      env.DB.prepare(
+        `INSERT INTO job_state (key, value) VALUES ('igdb_token', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      ).bind(JSON.stringify(newToken)),
+    );
   budget.db();
   await env.DB.batch(stmts);
   return { checked: checks.length, stopped, failed, waiting: due.length - checks.length };

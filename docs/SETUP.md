@@ -34,6 +34,26 @@ manager can make one). It's stored by Cloudflare, never in this repository.
 npx wrangler secret put API_TOKEN
 ```
 
+### Keys for movies, shows and games (optional)
+
+Live watch uses two free services that need your own keys. They are config, stored by Cloudflare as
+secrets, never in this repository. Without them, movies and games fall back to Wikidata release dates.
+
+- **TMDB** (movies: US theatres, streaming, sequels; shows: where to watch): your TMDB account →
+  Settings → API → "API Read Access Token" (the long one, not the short API key).
+- **IGDB** (games: development status, dates, platforms): a Twitch developer app
+  (dev.twitch.tv → Your Console → Applications → Register, category "Application Integration"),
+  then its **Client ID** and a **Client Secret** ("New Secret").
+
+```bash
+npx wrangler secret put TMDB_TOKEN
+npx wrangler secret put IGDB_CLIENT_ID
+npx wrangler secret put IGDB_CLIENT_SECRET
+```
+
+Streaming offers come from JustWatch through TMDB: wherever the app shows them it must say
+"Streaming data from JustWatch" and credit TMDB.
+
 ## 4. Put the API online
 
 ```bash
@@ -84,6 +104,7 @@ npx wrangler d1 execute orbit --remote --command "SELECT kind, COUNT(*) FROM ite
 ```bash
 cd apps/api
 echo "API_TOKEN=local-password" > .dev.vars
+# optional keys, one per line in the same file: TMDB_TOKEN=…, IGDB_CLIENT_ID=…, IGDB_CLIENT_SECRET=…
 npx wrangler d1 migrations apply orbit --local
 npx wrangler d1 execute orbit --local --file data/seed.sql
 npx wrangler dev --test-scheduled
