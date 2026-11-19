@@ -135,6 +135,9 @@ All notable changes to Orbit are listed here. The format follows
 
 ### Changed
 
+- Map: hovering a topic now opens a lens that pushes the topics around it apart, so their names can be read; the
+  hovered name sits on a solid tag and topics outside the lens fade back. The lens holds still while the pointer moves
+  inside it, so the neighbours it moved can be hovered in turn.
 - Near you rows show "~40 mi" for a place measured to a far city's center, mark done places, and have a Map link;
   "+ N things to do in …" opens Near me at 25 mi. A device location is now labelled with the nearest city.
 

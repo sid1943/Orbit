@@ -258,3 +258,25 @@ export function graphBounds(g: TopicGraph): { minX: number; minY: number; maxX: 
   }
   return { minX, minY, maxX, maxY };
 }
+
+/**
+ * Where a point sits under a magnifying lens centred on `c`: points inside the lens (an ellipse `rx` wide and `ry`
+ * tall, wider because names are wide) are pushed out from the centre, the closest ones the most, while the lens edge
+ * and everything beyond it stay put. `power` is how strong the lens is (0: no change), `t` how open it is (0–1).
+ */
+export function lensPoint(
+  p: { x: number; y: number },
+  c: { x: number; y: number },
+  rx: number,
+  ry: number,
+  power: number,
+  t: number,
+): { x: number; y: number } {
+  const dx = (p.x - c.x) / rx,
+    dy = (p.y - c.y) / ry;
+  const d = Math.hypot(dx, dy);
+  if (d >= 1 || d === 0 || t <= 0) return { x: p.x, y: p.y };
+  const k = power * t;
+  const scale = (k + 1) / (k * d + 1);
+  return { x: c.x + (p.x - c.x) * scale, y: c.y + (p.y - c.y) * scale };
+}
