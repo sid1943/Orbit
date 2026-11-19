@@ -135,6 +135,9 @@ All notable changes to Orbit are listed here. The format follows
 
 ### Changed
 
+- Center Base's switch: **Coming up** (`?soon=1`, every dated card, soonest first) and **In season** (`?season=1`,
+  every card good this month) are sides of their own; Today keeps To-do, with In progress, Closest to finished and
+  Recently changed inside it, and Pick one today. Topics moved under the Map; Near you left Today (Near me covers it).
 - Map: hovering a topic now opens a lens that pushes the topics around it apart, so their names can be read; the
   hovered name sits on a solid tag and topics outside the lens fade back. The lens holds still while the pointer moves
   inside it, so the neighbours it moved can be hovered in turn.

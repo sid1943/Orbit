@@ -1015,3 +1015,26 @@ a.chip:hover {
 .map-picked-x:hover {
   color: var(--ink);
 }
+
+/* Parts inside To-do on Center Base's Today: In progress, Closest to finished, Recently changed */
+.todo-part {
+  margin-top: 22px;
+}
+
+.todo-part-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.todo-part-head h3 {
+  margin: 0;
+  font-size: calc(16px * var(--fz));
+}
+
+.todo-part-head .note {
+  color: var(--muted);
+  font-size: calc(13px * var(--fz));
+}
