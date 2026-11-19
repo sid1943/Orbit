@@ -12,6 +12,7 @@ import { ProgressBar } from "../components/progress-bar.js";
 import { Segmented } from "../components/segmented.js";
 import { Section } from "../components/section.js";
 import { TodoSection } from "../components/todo-section.js";
+import { TopicMapView } from "../components/topic-map-view.js";
 import { TopicCloud } from "../components/topic-cloud.js";
 import { shortDate } from "../lib/dates.js";
 import { todaySections } from "../lib/today-sections.js";
@@ -20,9 +21,9 @@ import { TODAY_VIEWS, readTodayView, todayViewParams } from "../lib/today-view.j
 const MONTH = () => new Date().toLocaleDateString(undefined, { month: "long" });
 
 /**
- * Home, and where Back always goes: kind tiles, then a switch between Today's own sections, All cards (every
- * card with filters, `?all=1`) and Near me (places by distance, `?near=1`). Each side keeps its filters in the
- * address.
+ * Center Base, the home page and where Back always goes: kind tiles, then a switch between Today's own
+ * sections, All cards (every card with filters, `?all=1`), Near me (places by distance, `?near=1`) and Map
+ * (topics as a network, `?map=1`). Each side keeps its filters in the address.
  */
 export function Today() {
   const items = useItemSummaries();
@@ -49,7 +50,15 @@ export function Today() {
         />
       </div>
 
-      {view === "all" ? <AllCardsView /> : view === "near" ? <NearMeView /> : <TodaySections s={s} />}
+      {view === "all" ? (
+        <AllCardsView />
+      ) : view === "near" ? (
+        <NearMeView />
+      ) : view === "map" ? (
+        <TopicMapView />
+      ) : (
+        <TodaySections s={s} />
+      )}
     </div>
   );
 }

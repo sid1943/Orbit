@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { matchPath, useLocation, useNavigate, useRoutes, type Location, type RouteObject } from "react-router";
 import { CardOverlay } from "./card-overlay.js";
 import { isTyping } from "../lib/keys.js";
@@ -29,6 +29,11 @@ export function Layout({ pages }: { pages: RouteObject[] }) {
   const page = useRoutes(pages, shown);
   const { pathname } = shown;
   useAppearance();
+  // A new page starts at the top; a card opening over it, or a filter changing in the address, doesn't move it.
+  const scroller = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    scroller.current?.scrollTo({ top: 0 });
+  }, [pathname]);
   // The rail remembers the page it was opened on, so moving to another page closes it.
   const [openOn, setOpenOn] = useState<string | null>(null);
   const railOpen = openOn === pathname;
@@ -58,7 +63,9 @@ export function Layout({ pages }: { pages: RouteObject[] }) {
           <TopBar isHome={pathname === "/"} onMenu={() => setOpenOn(pathname)} onNew={() => setAdding(true)} />
           <SearchBar />
           <ApiStatus />
-          <div className="scroll">{page}</div>
+          <div className="scroll" ref={scroller}>
+            {page}
+          </div>
         </main>
         {card?.params.id && (
           <CardOverlay

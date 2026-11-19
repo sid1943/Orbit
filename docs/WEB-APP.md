@@ -20,7 +20,7 @@ can put a sign-in (Google, email code) in front of both the app and the API (fre
 
 ## Layout
 
-- **Left rail**: the Orbit brand (goes home), views (Today, Map, Review), and Settings.
+- **Left rail**: the Orbit brand (goes home), views (Center Base, Review), and Settings.
   Kinds are not listed in the rail; they are tiles on the home page.
 - **Top bar, on every page**: greeting ("Good evening, Sid", from the profile name), date, location,
   and the New button. The page title sits in a strip under the search bar.
@@ -31,11 +31,11 @@ can put a sign-in (Google, email code) in front of both the app and the API (fre
 
 | Page           | Route                | What's on it                                                                                                                                                                                                                                                |
 | -------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Today (home)   | `/`                  | Greeting, date, location with "Use my location"; search; big kind tiles (each opens its kind page); Near you; Coming up; In season now; In progress; To-do (add, tick off, grouped by quest); Closest to finished; Pick one today; Recently changed; Topics |
+| Center Base    | `/`                  | Greeting, date, location with "Use my location"; search; big kind tiles (each opens its kind page); Near you; Coming up; In season now; In progress; To-do (add, tick off, grouped by quest); Closest to finished; Pick one today; Recently changed; Topics |
 | All cards      | `/?all=1`            | The "All cards" side of Today's switch: every card, with Filters (status, kind, topic, distance, when, archived, group, sort) in the address. `/all` redirects here                                                                                         |
 | Kind page      | `/kind/:kind`        | One kind's cards, with the same Filters (no kind or group choice)                                                                                                                                                                                           |
 | Search results | `/search?q=`         | Ranked, title matches first, using `matcher()` from core                                                                                                                                                                                                    |
-| Map            | `/map`               | Topics drawn as a network (drag, zoom, click a topic), with Big topics in a side panel                                                                                                                                                                      |
+| Map            | `/?map=1`            | The fourth side of Center Base's switch: the 90 biggest topics as a network (drag, zoom, hover, click a topic), Big topics in a side panel. `/map` redirects here                                                                                           |
 | Near me        | `/?near=1`           | The third side of Today's switch: places by distance, 5, 25, 100, 500 mi or Any; show done; category chips; exact places, then city groups. `/near` redirects here                                                                                          |
 | Review links   | `/review`            | Link guesses waiting for an answer: category chips (hidden when 0), Correct, Wrong (asks what it is), Delete                                                                                                                                                |
 | Topic          | `/topic/:name`       | Everything sharing one topic: kind chips, status bar, connected topics, item list                                                                                                                                                                           |

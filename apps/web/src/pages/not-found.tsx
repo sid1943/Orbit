@@ -6,7 +6,7 @@ export function NotFound() {
     <>
       <PageBar title="Not found" />
       <div className="pad">
-        Nothing lives at this address. <Link to="/">Go to Today</Link>
+        Nothing lives at this address. <Link to="/">Go to Center Base</Link>
       </div>
     </>
   );

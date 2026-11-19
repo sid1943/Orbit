@@ -1,8 +1,7 @@
 import { Link, NavLink } from "react-router";
 
 const VIEWS = [
-  { to: "/", label: "Today", end: true },
-  { to: "/map", label: "Map", end: false },
+  { to: "/", label: "Center Base", end: true },
   { to: "/review", label: "Review", end: false },
 ] as const;
 

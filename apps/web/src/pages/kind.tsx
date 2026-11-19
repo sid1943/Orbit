@@ -47,3 +47,8 @@ export function EverythingRedirect() {
 export function NearMeRedirect() {
   return <Navigate to={todayViewPath("near", useLocation().search)} replace />;
 }
+
+/** The old Map page (`/map`): now Center Base's Map view. */
+export function MapRedirect() {
+  return <Navigate to={todayViewPath("map", useLocation().search)} replace />;
+}
