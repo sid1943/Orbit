@@ -11,6 +11,7 @@ import {
   deleteRow,
   editRow,
   hiddenFor,
+  isTrelloUrl,
   linkedCardIds,
   localDay,
   moveRow,
@@ -22,6 +23,8 @@ import {
   textParts,
   thingLinks,
   toggleRow,
+  trelloCardFinder,
+  trelloCardParts,
   usefulLinks,
   type Checklist,
   type Entity,
@@ -65,6 +68,7 @@ describe("links", () => {
   it("lists standard links first, then the card's, with readable names and no repeats", () => {
     const out = usefulLinks(
       {
+        id: "c1",
         notes: "",
         links: [{ label: "https://www.imdb.com/title/tt0000001/", url: "https://www.imdb.com/title/tt0000001/" }],
         attachments: [{ label: "https://example.com/some-guide", url: "https://example.com/some-guide" }],
@@ -78,7 +82,7 @@ describe("links", () => {
 
   it("leaves out hidden links and standard links already in the notes", () => {
     const out = usefulLinks(
-      { notes: "see https://www.imdb.com/title/tt0000001/", links: [], attachments: [] },
+      { id: "c1", notes: "see https://www.imdb.com/title/tt0000001/", links: [], attachments: [] },
       movie,
       new Set(["https://en.wikipedia.org/wiki/Harbor_Lights_(film)"]),
     );
@@ -189,5 +193,62 @@ describe("connections", () => {
     const out = relatedByTopics(cards[0]!, cards);
     expect(out.map((r) => r.card.id)).toEqual(["c", "b", "d"]);
     expect(out[0]?.topics).toEqual(["rare"]);
+  });
+});
+
+describe("old Trello links", () => {
+  const find = trelloCardFinder([
+    { id: "AbC123xy", title: "Harbor Lights" },
+    { id: "it_2", title: "Sea Stories (2001)" },
+    { id: "gone", title: "Gone", deleted: true },
+  ]);
+
+  it("finds the Orbit card by Trello id, then by title", () => {
+    expect(isTrelloUrl("https://trello.com/b/xyz/board")).toBe(true);
+    expect(isTrelloUrl("https://example.com/trello.com")).toBe(false);
+    expect(trelloCardParts("https://trello.com/c/AbC123xy/12-harbor-lights")).toEqual({
+      shortId: "AbC123xy",
+      slug: "harbor-lights",
+    });
+    expect(find("https://trello.com/c/AbC123xy")).toEqual({ id: "AbC123xy", title: "Harbor Lights" });
+    expect(find("https://trello.com/c/zzzz/7-sea-stories-2001")).toEqual({ id: "it_2", title: "Sea Stories (2001)" });
+    expect(find("https://trello.com/c/zzzz/7-gone")).toBeNull();
+    expect(find("https://trello.com/b/xyz/board")).toBeNull();
+  });
+
+  it("turns Trello links into card links and drops the rest", () => {
+    const out = usefulLinks(
+      {
+        id: "me",
+        notes: "",
+        links: [{ label: "x", url: "https://trello.com/c/AbC123xy/1-harbor-lights" }],
+        attachments: [
+          { label: "JnHH3kCd", url: "https://trello.com/c/JnHH3kCd" },
+          { label: "Board", url: "https://trello.com/b/xyz/board" },
+          { label: "again", url: "https://trello.com/c/AbC123xy" },
+        ],
+      },
+      null,
+      new Set(),
+      find,
+    );
+    expect(out).toEqual([{ label: "Harbor Lights", url: "/item/AbC123xy", host: "Orbit", cardId: "AbC123xy" }]);
+  });
+
+  it("does the same inside text", () => {
+    expect(
+      textParts(
+        "See https://trello.com/c/AbC123xy/1-x and [old](https://trello.com/c/none) and https://trello.com/b/q.",
+        undefined,
+        find,
+      ),
+    ).toEqual([
+      { t: "text", text: "See " },
+      { t: "card", title: "Harbor Lights", id: "AbC123xy" },
+      { t: "text", text: " and " },
+      { t: "text", text: "old" },
+      { t: "text", text: " and " },
+      { t: "text", text: "." },
+    ]);
   });
 });

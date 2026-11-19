@@ -544,3 +544,15 @@
   align-self: flex-start;
   max-width: 100%;
 }
+
+/* A useful link that opens another Orbit card (an old Trello card link) */
+.ulinks a.card-link b::after {
+  content: " →";
+}
+
+.card-back {
+  max-width: 40ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

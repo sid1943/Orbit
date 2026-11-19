@@ -47,8 +47,11 @@ export function CardHeader({
   save,
   onDelete,
   onClose,
+  back,
 }: {
   item: Item;
+  /** The card this one was opened from: Back returns to it. */
+  back?: { title: string; go: () => void };
   kinds: readonly string[];
   save: (fields: ItemEditFields) => void;
   onDelete: () => void;
@@ -59,6 +62,11 @@ export function CardHeader({
   return (
     <header className="card-head">
       <div className="card-line1">
+        {back && (
+          <button type="button" className="btn small card-back" onClick={back.go} title={`Back to ${back.title}`}>
+            ← {back.title}
+          </button>
+        )}
         <KindChip kind={item.kind} />
         <select
           className="btn small"
