@@ -89,6 +89,9 @@ All notable changes to Orbit are listed here. The format follows
 - Review moved onto Center Base's switch: **Review · N** appears only while link guesses wait for an answer
   (`confidence: "review"` and not answered); it lists them. Answering them is still job W5. Review left the left
   menu; `/review` redirects. `usePendingReview()`.
+- Map: hovering a topic makes it bounce (it springs bigger and settles, its name bold); its related topics gather
+  only when you click it, with a bar ("#Coast · 2 related · Open topic →", ×). Clicking it again opens the topic;
+  clicking another topic moves the ring there; clicking empty space, Esc or × lets go.
 - Map: every topic's name shows in full at every zoom, with a halo; topics keep their names' width apart (forces,
   then a pass that separates any that still touch); the map fits the box until you move or zoom. Hovering a topic
   pulls its connected topics into a ring around it, wide enough for the two widest names side by side, and fades
