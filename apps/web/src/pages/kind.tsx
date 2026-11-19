@@ -5,6 +5,7 @@ import { AllCardsView } from "../components/all-cards-view.js";
 import { KindTiles } from "../components/kind-tiles.js";
 import { PageBar } from "../components/page-bar.js";
 import { kindFromSlug } from "../lib/kinds.js";
+import { todayViewPath } from "../lib/today-view.js";
 import { NotFound } from "./not-found.js";
 
 /** "Movie" → "Movies", "Show" → "Shows"; kinds already ending in s stay as they are. */
@@ -39,8 +40,10 @@ export function KindPage() {
 
 /** The old Everything page (`/all`): now Today's All cards view, keeping any filters in the address. */
 export function EverythingRedirect() {
-  const { search } = useLocation();
-  const p = new URLSearchParams(search);
-  p.set("all", "1");
-  return <Navigate to={`/?${p.toString()}`} replace />;
+  return <Navigate to={todayViewPath("all", useLocation().search)} replace />;
+}
+
+/** The old Near me page (`/near`): now Today's Near me view, keeping distance, Show done and category. */
+export function NearMeRedirect() {
+  return <Navigate to={todayViewPath("near", useLocation().search)} replace />;
 }

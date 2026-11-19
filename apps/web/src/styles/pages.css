@@ -795,3 +795,24 @@ a.chip:hover {
     width: 100%;
   }
 }
+
+/* Near me as a side of Today's switch */
+.near-view {
+  margin-top: 14px;
+}
+
+.near-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.near-view .near-list .row {
+  padding: 10px 14px;
+}
+
+.near-view .near-city-head {
+  padding: 14px 2px 6px;
+}

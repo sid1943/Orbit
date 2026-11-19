@@ -6,6 +6,7 @@ import { AllCardsView } from "../components/all-cards-view.js";
 import { ItemCard } from "../components/item-card.js";
 import { ItemRow } from "../components/item-row.js";
 import { KindTiles } from "../components/kind-tiles.js";
+import { NearMeView } from "../components/near-me-view.js";
 import { NearYouSection } from "../components/near-you-section.js";
 import { ProgressBar } from "../components/progress-bar.js";
 import { Segmented } from "../components/segmented.js";
@@ -14,22 +15,19 @@ import { TodoSection } from "../components/todo-section.js";
 import { TopicCloud } from "../components/topic-cloud.js";
 import { shortDate } from "../lib/dates.js";
 import { todaySections } from "../lib/today-sections.js";
+import { TODAY_VIEWS, readTodayView, todayViewParams } from "../lib/today-view.js";
 
 const MONTH = () => new Date().toLocaleDateString(undefined, { month: "long" });
 
-const VIEWS = [
-  { value: "today", label: "Today" },
-  { value: "all", label: "All cards" },
-] as const;
-
 /**
- * Home, and where Back always goes: kind tiles, then what matters today. The "All cards" switch shows every
- * card with filters instead (`?all=1`, with the filters in the address too).
+ * Home, and where Back always goes: kind tiles, then a switch between Today's own sections, All cards (every
+ * card with filters, `?all=1`) and Near me (places by distance, `?near=1`). Each side keeps its filters in the
+ * address.
  */
 export function Today() {
   const items = useItemSummaries();
   const [params, setParams] = useSearchParams();
-  const showAll = params.get("all") === "1";
+  const view = readTodayView(params);
   const s = useMemo(() => (items.data ? todaySections(items.data) : null), [items.data]);
 
   if (!items.data || !s) {
@@ -45,13 +43,13 @@ export function Today() {
       <div className="today-switch">
         <Segmented
           label="Show"
-          value={showAll ? "all" : "today"}
-          options={VIEWS}
-          onChange={(v) => setParams(v === "all" ? { all: "1" } : {}, { replace: true })}
+          value={view}
+          options={TODAY_VIEWS}
+          onChange={(v) => setParams(todayViewParams(v), { replace: true })}
         />
       </div>
 
-      {showAll ? <AllCardsView /> : <TodaySections s={s} />}
+      {view === "all" ? <AllCardsView /> : view === "near" ? <NearMeView /> : <TodaySections s={s} />}
     </div>
   );
 }

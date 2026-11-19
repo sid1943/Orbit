@@ -41,7 +41,7 @@ export function NearYouSection() {
   }
 
   const towns = near?.towns.map((t) => (
-    <Link key={t.city} className="btn small" to="/near?within=25">
+    <Link key={t.city} className="btn small" to="/?near=1&within=25">
       + {t.count} thing{t.count > 1 ? "s" : ""} to do in {t.city} →
     </Link>
   ));
@@ -51,7 +51,7 @@ export function NearYouSection() {
       title="Near you"
       note={!near ? "finding places…" : near.close.length ? "closest things you haven't done" : "nothing within 100 mi"}
       action={
-        <Link className="btn small" to="/near">
+        <Link className="btn small" to="/?near=1">
           All nearby →
         </Link>
       }
