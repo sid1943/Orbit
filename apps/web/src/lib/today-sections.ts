@@ -3,7 +3,7 @@ import {
   closestToFinished,
   dailyPick,
   daysUntil,
-  inSeason,
+  inSeasonOnly,
   timeInfo,
   type SyncItem,
   type TimeInfo,
@@ -38,7 +38,7 @@ const PICK_KINDS = new Set(["Movie", "Show", "Book", "Experience", "Place"]);
 
 /**
  * Everything Center Base's Today, Coming up and In season sides show from the sync list, with the same rules as the
- * first Orbit (Coming up: every open card with a next date, soonest first; In season: every one good this month).
+ * first Orbit (Coming up: every open card with a next date, soonest first; In season: every one good this month that has no exact day, so no card is in both).
  */
 export function todaySections(all: readonly SyncItem[], now = new Date()): TodaySections {
   const live = all.filter((i) => !i.deleted && !i.archived);
@@ -49,9 +49,10 @@ export function todaySections(all: readonly SyncItem[], now = new Date()): Today
     const when = timeInfo(item, now);
     if (when) dated.push({ item, when, days: when.next ? daysUntil(when.next, now) : null });
   }
-  // Coming up and In season are sides of their own, so each lists all of its cards (a card can be in both).
+  // Each lists all of its cards, and they never cross: a card with an exact day is Coming up; In season only has
+  // cards that name a month or season without a day.
   const comingUp = dated.filter((d) => d.days !== null).sort((a, b) => a.days! - b.days!);
-  const seasonal = dated.filter((d) => inSeason(d.when, now));
+  const seasonal = dated.filter((d) => inSeasonOnly(d.when, now));
 
   const doing = live.filter((i) => i.status === "doing").sort(byStatusThenRecent);
 

@@ -1,4 +1,4 @@
-import { KINDS, daysUntil, inSeason, timeInfo, type PlaceRow, type SyncItem, type TopicCount } from "@orbit/core";
+import { KINDS, daysUntil, inSeasonOnly, timeInfo, type PlaceRow, type SyncItem, type TopicCount } from "@orbit/core";
 import { listItems, parseGroup, parseStatus, type GroupBy, type StatusFilter } from "./list.js";
 import { RADII, type Radius } from "./near-me.js";
 import { placesOnCards } from "./near-you.js";
@@ -117,7 +117,7 @@ function whenMatches(card: SyncItem, when: When, now: Date): boolean {
   const ti = timeInfo(card, now);
   if (!ti) return false;
   if (when === "dated") return true;
-  if (when === "season") return inSeason(ti, now);
+  if (when === "season") return inSeasonOnly(ti, now);
   return ti.next !== null && daysUntil(ti.next, now) <= SOON_DAYS;
 }
 

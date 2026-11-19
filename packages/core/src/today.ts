@@ -160,6 +160,12 @@ export function timeInfo(card: { props: Record<string, string> }, now = new Date
 export const inSeason = (ti: TimeInfo | null, now = new Date()): boolean =>
   !!ti && ti.months.size > 0 && ti.months.size < 12 && ti.months.has(now.getMonth());
 
+/**
+ * In season and with no exact day: what "In season" lists. A card with an exact day ("Saturday after Thanksgiving")
+ * belongs to "Coming up" instead, so the two never show the same card.
+ */
+export const inSeasonOnly = (ti: TimeInfo | null, now = new Date()): boolean => inSeason(ti, now) && !ti!.next;
+
 /** "today", "tomorrow" or "in 12 days". */
 export const relativeDays = (n: number): string => (n === 0 ? "today" : n === 1 ? "tomorrow" : `in ${n} days`);
 

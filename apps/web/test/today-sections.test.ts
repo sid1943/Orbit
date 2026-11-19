@@ -23,6 +23,15 @@ describe("todaySections", () => {
     const s = todaySections(cards, NOW);
     expect(s.comingUp.map((d) => [d.item.id, d.days])).toEqual([["e1", 18]]);
     expect(s.inSeason.map((d) => d.item.id)).toEqual(["e2"]);
+    // An exact day this month is Coming up only, never also In season.
+    const game = syncItem({
+      id: "g1",
+      title: "Rivalry game",
+      props: { "Preferable Time": "Saturday after Thanksgiving" },
+    });
+    const both = todaySections([game], NOW);
+    expect(both.comingUp.map((d) => d.item.id)).toEqual(["g1"]);
+    expect(both.inSeason).toEqual([]);
     const far = todaySections(
       [syncItem({ id: "f1", kind: "Experience", title: "Spring fair", props: { "Preferable Time": "May 2" } })],
       NOW,
