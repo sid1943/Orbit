@@ -53,7 +53,8 @@ alongside with `add`). The result carries `reviewed` with the answer. Deleting t
 - `enrich_queue`: cards waiting to be linked (`mode` new or backfill, retries with back-off).
 - `removed`: ids of cards deleted for good, so `GET /api/sync` can tell other devices to drop them.
 - `works`, `relations`, `connect_state`: connections between things (see below).
-- `lookup_state`: when an extra id was last looked up per linked thing and kind (`goodreads`), and when to try again.
+- `lookup_state`: when an extra id was last looked up per linked thing and kind (`goodreads`; `rematch` for the second look
+  at unmatched books and movies; `wd-title` for Wikidata ids found by title and author), and when to try again.
 
 ## Connections
 

@@ -15,3 +15,4 @@ export * from "./kinds.js";
 export * from "./card.js";
 export * from "./connections.js";
 export * from "./goodreads.js";
+export * from "./rematch.js";
