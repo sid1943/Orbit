@@ -2,9 +2,8 @@ import { formatMiles } from "@orbit/core";
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { useItemSummaries, usePlaces, usePrefs } from "../api/queries.js";
-import { NearbyRow } from "../components/nearby-row.js";
-import { PageBar } from "../components/page-bar.js";
-import { Segmented } from "../components/segmented.js";
+import { NearbyRow } from "./nearby-row.js";
+import { Segmented } from "./segmented.js";
 import { useOpenLocation } from "../lib/location-panel.js";
 import { RADIUS_OPTIONS, nearMe, parseRadius, type Radius } from "../lib/near-me.js";
 import type { NearbyOnCard } from "../lib/near-you.js";
@@ -13,10 +12,11 @@ const PAGE = 150;
 const rowKey = (p: NearbyOnCard) => `${p.place.itemId}:${p.place.checklist ?? ""}:${p.place.row ?? ""}`;
 
 /**
- * Near me (`/near`): places on your lists by distance from where you are. Distance, Show done and the category
- * chip live in the address. Places with an exact spot come first, then places known only by their city.
+ * Near me, the third side of Today's switch (`/?near=1`): places on your lists by distance from where you are.
+ * Distance, Show done and the category chip live in the address. Places with an exact spot come first, then
+ * places known only by their city. (It was its own page at `/near`, which now redirects here.)
  */
-export function NearMe() {
+export function NearMeView() {
   const [params, setParams] = useSearchParams();
   const radius = parseRadius(params.get("within"));
   const showDone = params.get("done") === "1";
@@ -63,8 +63,10 @@ export function NearMe() {
       : undefined;
 
   return (
-    <>
-      <PageBar title="Near me" sub={sub}>
+    <div className="near-view">
+      <div className="near-bar">
+        <span className="muted near-sub">{sub}</span>
+        <span className="spacer" />
         <Segmented<Radius>
           label="Distance"
           value={radius}
@@ -81,9 +83,9 @@ export function NearMe() {
             Show done
           </button>
         </div>
-      </PageBar>
+      </div>
       {!here ? (
-        <div className="pad">
+        <div>
           <div className="prompt">
             Orbit sorts the places on your lists by distance once it knows where you are.
             <button type="button" className="btn primary" onClick={() => openLocation()}>
@@ -92,16 +94,16 @@ export function NearMe() {
           </div>
         </div>
       ) : places.isError ? (
-        <div className="pad">
+        <div>
           <p className="error" role="alert">
             Couldn&apos;t load the places on your lists.
           </p>
         </div>
       ) : !near ? (
-        <div className="pad muted">Finding places…</div>
+        <div className="muted">Finding places…</div>
       ) : (
         <>
-          <div className="pad near-facets" role="group" aria-label="Category">
+          <div className="near-facets" role="group" aria-label="Category">
             <button
               type="button"
               className={`chip${near.category === null ? " on" : ""}`}
@@ -167,6 +169,6 @@ export function NearMe() {
           )}
         </>
       )}
-    </>
+    </div>
   );
 }

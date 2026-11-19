@@ -20,7 +20,7 @@ can put a sign-in (Google, email code) in front of both the app and the API (fre
 
 ## Layout
 
-- **Left rail**: the Orbit brand (goes home), views (Today, Map, Near me, Review), and Settings.
+- **Left rail**: the Orbit brand (goes home), views (Today, Map, Review), and Settings.
   Kinds are not listed in the rail; they are tiles on the home page.
 - **Top bar, on every page**: greeting ("Good evening, Sid", from the profile name), date, location,
   and the New button. The page title sits in a strip under the search bar.
@@ -36,7 +36,7 @@ can put a sign-in (Google, email code) in front of both the app and the API (fre
 | Kind page      | `/kind/:kind`        | One kind's cards, with the same Filters (no kind or group choice)                                                                                                                                                                                           |
 | Search results | `/search?q=`         | Ranked, title matches first, using `matcher()` from core                                                                                                                                                                                                    |
 | Map            | `/map`               | Topics drawn as a network (drag, zoom, click a topic), with Big topics in a side panel                                                                                                                                                                      |
-| Near me        | `/near`              | Places by distance: 5, 25, 100, 500 mi or Any; show done; category chips (all in the address: `within`, `done`, `cat`); exact places, then city groups; each row opens its card and has a Map link                                                          |
+| Near me        | `/?near=1`           | The third side of Today's switch: places by distance, 5, 25, 100, 500 mi or Any; show done; category chips; exact places, then city groups. `/near` redirects here                                                                                          |
 | Review links   | `/review`            | Link guesses waiting for an answer: category chips (hidden when 0), Correct, Wrong (asks what it is), Delete                                                                                                                                                |
 | Topic          | `/topic/:name`       | Everything sharing one topic: kind chips, status bar, connected topics, item list                                                                                                                                                                           |
 | Settings       | `/settings/:section` | Mac-style: categories on the left, settings on the right (see below)                                                                                                                                                                                        |

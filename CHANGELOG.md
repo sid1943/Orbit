@@ -86,6 +86,9 @@ All notable changes to Orbit are listed here. The format follows
 - "+" square tile after the kind tiles (Today and Everything) adds a kind: a dialog with a name (checked as you type:
   empty or taken names are refused) and a colour slider starting far from the other kinds. Kind tiles follow
   `useKinds()`, so a new kind shows at once with 0 cards; kind chips and groups use custom kinds' colours.
+- Near me is the third side of Today's switch (**Today / All cards / Near me**, `?near=1`), with the same distance,
+  Show done and category chips; it left the left menu, and `/near` links open it with their filters. Near you's
+  "All nearby" and "+ N things to do in …" open it too.
 - Today has a **Today / All cards** switch. All cards shows every card with a Filters button (filters only appear
   there): status, kind, topic, distance (5/25/100/500 mi to the closest place on a card or its lists), when (coming
   up, in season, has a date), show archived, grouping and sort (recent, A–Z, nearest), all kept in the address.

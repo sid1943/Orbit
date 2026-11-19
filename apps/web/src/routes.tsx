@@ -1,7 +1,6 @@
 import { createBrowserRouter, type RouteObject } from "react-router";
 import { Layout } from "./components/layout.js";
-import { NearMe } from "./pages/near-me.js";
-import { EverythingRedirect, KindPage } from "./pages/kind.js";
+import { EverythingRedirect, KindPage, NearMeRedirect } from "./pages/kind.js";
 import { NotFound } from "./pages/not-found.js";
 import { Planned } from "./pages/planned.js";
 import { Search } from "./pages/search.js";
@@ -13,7 +12,7 @@ export const PAGES = [
   {
     path: "/",
     title: "Today",
-    what: "Kind tiles; Today or All cards (every card with filters); Near you, Coming up, In season, In progress, To-do, Closest to finished, Pick one, Recently changed, Topics",
+    what: "Kind tiles; a switch: Today, All cards (every card with filters) or Near me (places by distance); Near you, Coming up, In season, In progress, To-do, Closest to finished, Pick one, Recently changed, Topics",
     element: <Today />,
   },
   {
@@ -41,8 +40,8 @@ export const PAGES = [
   {
     path: "/near",
     title: "Near me",
-    what: "Places on your lists by distance: 5, 25, 100, 500 mi or Any; Show done; category chips; city groups",
-    element: <NearMe />,
+    what: "Old Near me address: opens Today's Near me view with its distance, Show done and category",
+    element: <NearMeRedirect />,
   },
   { path: "/map", title: "Map", what: "Topics as a network", element: <Planned title="Map" step={7} /> },
   {
