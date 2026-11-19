@@ -5,10 +5,8 @@ import {
   daysUntil,
   inSeason,
   timeInfo,
-  topicCounts,
   type SyncItem,
   type TimeInfo,
-  type TopicCount,
 } from "@orbit/core";
 
 export interface Dated {
@@ -33,15 +31,14 @@ export interface TodaySections {
   closest: SyncItem[];
   picks: SyncItem[];
   recent: SyncItem[];
-  topics: TopicCount[];
 }
 
 /** Kinds "Pick one today" chooses from. */
 const PICK_KINDS = new Set(["Movie", "Show", "Book", "Experience", "Place"]);
 
 /**
- * Everything the Today page shows from the sync list, with the same rules as the first Orbit.
- * Near you comes from the places list instead (`near-you.ts`).
+ * Everything Center Base's Today, Coming up and In season sides show from the sync list, with the same rules as the
+ * first Orbit (Coming up: every open card with a next date, soonest first; In season: every one good this month).
  */
 export function todaySections(all: readonly SyncItem[], now = new Date()): TodaySections {
   const live = all.filter((i) => !i.deleted && !i.archived);
@@ -52,10 +49,9 @@ export function todaySections(all: readonly SyncItem[], now = new Date()): Today
     const when = timeInfo(item, now);
     if (when) dated.push({ item, when, days: when.next ? daysUntil(when.next, now) : null });
   }
-  const comingAll = dated.filter((d) => d.days !== null && d.days <= 120).sort((a, b) => a.days! - b.days!);
-  const comingUp = comingAll.slice(0, 8);
-  const shown = new Set(comingUp.map((d) => d.item.id));
-  const seasonal = dated.filter((d) => inSeason(d.when, now) && !shown.has(d.item.id)).slice(0, 10);
+  // Coming up and In season are sides of their own, so each lists all of its cards (a card can be in both).
+  const comingUp = dated.filter((d) => d.days !== null).sort((a, b) => a.days! - b.days!);
+  const seasonal = dated.filter((d) => inSeason(d.when, now));
 
   const doing = live.filter((i) => i.status === "doing").sort(byStatusThenRecent);
 
@@ -90,8 +86,5 @@ export function todaySections(all: readonly SyncItem[], now = new Date()): Today
     closest: closestToFinished(live, 9),
     picks,
     recent: [...live].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 8),
-    topics: topicCounts(live)
-      .filter((t) => t.count >= 8)
-      .slice(0, 40),
   };
 }

@@ -39,6 +39,7 @@
 - [ ] Card panel: Fix links button (build step 5), cover and TV status (build step 8)
 - [x] Map view with big topics (on Center Base's switch) and Topic pages; Near you
 - [x] Map: hover lens spreads the names around a topic so they can be read
+- [x] Center Base: Coming up and In season as sides; In progress, Closest to finished, Recently changed inside To-do; Topics on the Map; Near you left Today
 - [ ] Review queue: answering link guesses (W5). Its place is done: a side of Center Base's switch, shown only while guesses wait
 - [x] Settings (appearance, fonts, sizes, location, lists, data, guide, about) and the app map
 - [x] Settings travel in the export (`ui`, `here`) and load into `prefs` (`appearance`, `profile`, `location`)

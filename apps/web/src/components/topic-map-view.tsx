@@ -1,4 +1,4 @@
-import { kindHue, type KindInfo } from "@orbit/core";
+import { kindHue, topicCounts, type KindInfo } from "@orbit/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useItemSummaries, useKinds } from "../api/queries.js";
@@ -11,6 +11,8 @@ import {
   topicGraph,
   type TopicGraph,
 } from "../lib/topic-map.js";
+import { Section } from "./section.js";
+import { TopicCloud } from "./topic-cloud.js";
 
 const FRAMES = 260;
 /** Frames the ring of related topics takes to open or close. */
@@ -184,6 +186,16 @@ export function TopicMapView() {
   const unpick = useRef<() => void>(() => {});
   const graph = useMemo(() => (items.data ? topicGraph(items.data) : null), [items.data]);
   const big = useMemo(() => (items.data ? bigTopics(items.data) : []), [items.data]);
+  // The Topics cloud (was on Today): every topic on 8 or more open cards.
+  const cloud = useMemo(
+    () =>
+      items.data
+        ? topicCounts(items.data.filter((i) => !i.deleted && !i.archived))
+            .filter((t) => t.count >= 8)
+            .slice(0, 40)
+        : [],
+    [items.data],
+  );
 
   useEffect(() => {
     const cv = canvas.current;
@@ -430,6 +442,11 @@ export function TopicMapView() {
           ))}
         </aside>
       </div>
+      {cloud.length > 0 && (
+        <Section title="Topics" note="click one to see everything that shares it, across every kind">
+          <TopicCloud topics={cloud} />
+        </Section>
+      )}
     </div>
   );
 }
