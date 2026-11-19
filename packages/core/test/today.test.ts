@@ -7,6 +7,7 @@ import {
   distanceMiles,
   formatMiles,
   inSeason,
+  inSeasonOnly,
   monthsOf,
   nextStatus,
   parseTodo,
@@ -52,6 +53,14 @@ describe("timeInfo and inSeason", () => {
     expect(inSeason(ti, NOW)).toBe(true);
     expect(inSeason(timeInfo({ props: { "Preferable Time": "Summer" } }, NOW), NOW)).toBe(false);
     expect(inSeason(timeInfo({ props: { "Preferable Time": "Anytime" } }, NOW), NOW)).toBe(false);
+  });
+  it("leaves cards with an exact day out of In season (they are Coming up)", () => {
+    const dated = timeInfo({ props: { "Preferable Time": "Saturday after Thanksgiving" } }, NOW);
+    expect(inSeason(dated, NOW)).toBe(true);
+    expect(inSeasonOnly(dated, NOW)).toBe(false);
+    expect(inSeasonOnly(timeInfo({ props: { "Preferable Time": "Fall" } }, NOW), NOW)).toBe(true);
+    expect(inSeasonOnly(timeInfo({ props: { "Preferable Time": "November" } }, NOW), NOW)).toBe(true);
+    expect(inSeasonOnly(null, NOW)).toBe(false);
   });
   it("counts days", () => {
     expect(daysUntil(new Date(2026, 10, 18), NOW)).toBe(1);

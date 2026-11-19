@@ -146,6 +146,9 @@ All notable changes to Orbit are listed here. The format follows
 
 ### Fixed
 
+- Coming up and In season no longer show the same card: a card with an exact day (e.g. a game on the Saturday after
+  Thanksgiving) is Coming up only; In season (the side and All cards' "In season" filter) lists cards that name a
+  month or season without a day (core `inSeasonOnly()`).
 - Connections: "series" that aren't one (a "list of …" item, or a show's episodes) no longer show; more book and comic
   types are recognised. `npm run connect` waits for the API when the Mac's updater restarts it instead of stopping.
   Things with no Wikidata id are tried again monthly instead of every three months.
