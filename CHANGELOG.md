@@ -123,6 +123,14 @@ All notable changes to Orbit are listed here. The format follows
   card, edit in place), Checklists (search across rows and their linked things, progress, tick, add, edit, move up and
   down or to another checklist, delete, rename or delete a checklist, first 40 rows then Show all) and Comments; side
   column with topics, due date, details, When (months and season) and connected cards. One column on phones.
+- Web app: a checklist row that points at another card shows that card's standard link (IMDb, Goodreads, …) next to
+  its "→ Movie" button, so every row reads the same; `GET /api/items/:id/full` now also returns the linked things of the
+  cards its rows point at.
+- Web app: a card opened from another card has Back to it in its header ("← <card>"); Back from there keeps going
+  back card by card.
+- Trello is gone from the card: old Trello card links (in Useful links, notes, comments and checklist rows) open the
+  Orbit card they became, by its id or title; other Trello links are left out (core `isTrelloUrl`, `trelloCardFinder`).
+  Nothing in the saved data is changed.
 - Web app: a card opens over the page you were on, as in Orbit today: `/item/:id` stays its address (links,
   reloads and Back work), the page behind keeps its place, and the card closes with ×, Escape or a click on the
   backdrop, back to that page. Opened straight from its address, the card sits over Today. The page behind can't be

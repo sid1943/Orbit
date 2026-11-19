@@ -49,12 +49,16 @@ export const parse = <T>(row: { data: string } | null): T | null => (row ? (JSON
 /** `id IN (${IN_JSON})` with the ids bound as one JSON list: one parameter however many ids. */
 export const IN_JSON = "SELECT value FROM json_each(?)";
 
-/** Ids of a card's linked thing and of every checklist row's linked thing (bind the card id as ?1). */
+/** Ids of a card's linked thing, every checklist row's, and those of the cards its rows point at (bind the card id as ?1). */
 export const CARD_ENTITY_IDS = `WITH ids(id) AS (
   SELECT entity_id FROM items WHERE id = ?1 AND entity_id IS NOT NULL
   UNION
   SELECT json_extract(r.value, '$.entityId') FROM items i, json_each(i.data, '$.checklists') c, json_each(c.value, '$.rows') r
   WHERE i.id = ?1 AND json_extract(r.value, '$.entityId') IS NOT NULL
+  UNION
+  SELECT ri.entity_id FROM items i, json_each(i.data, '$.checklists') c, json_each(c.value, '$.rows') r
+  JOIN items ri ON ri.id = json_extract(r.value, '$.ref')
+  WHERE i.id = ?1 AND ri.entity_id IS NOT NULL
 )`;
 
 /** A linked thing's row with its review answer, for `withReview`. */

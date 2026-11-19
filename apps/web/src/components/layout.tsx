@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { matchPath, useLocation, useNavigate, useRoutes, type Location, type RouteObject } from "react-router";
 import { CardOverlay } from "./card-overlay.js";
+import { nextTrail } from "../lib/card-trail.js";
 import { isTyping } from "../lib/keys.js";
 import { LocationPanelContext } from "../lib/location-panel.js";
 import { ApiStatus } from "./api-status.js";
@@ -26,6 +27,15 @@ export function Layout({ pages }: { pages: RouteObject[] }) {
   const [behind, setBehind] = useState<Location>(() => (card ? HOME : location));
   if (!card && behind !== location) setBehind(location);
   const shown = card ? behind : location;
+  // Cards opened one from another, so a card opened from a card has Back to it.
+  const cardId = card?.params.id ?? null;
+  const [trail, setTrail] = useState<string[]>(() => (cardId ? [cardId] : []));
+  const [trailAt, setTrailAt] = useState(location.key);
+  if (trailAt !== location.key) {
+    setTrailAt(location.key);
+    setTrail(nextTrail(trail, cardId));
+  }
+  const cameFrom = trail.length > 1 ? trail[trail.length - 2] : undefined;
   const page = useRoutes(pages, shown);
   const { pathname } = shown;
   useAppearance();
@@ -70,6 +80,8 @@ export function Layout({ pages }: { pages: RouteObject[] }) {
         {card?.params.id && (
           <CardOverlay
             id={card.params.id}
+            cameFrom={cameFrom}
+            onBack={() => void navigate(-1)}
             onClose={() => void navigate({ pathname: behind.pathname, search: behind.search, hash: behind.hash })}
           />
         )}

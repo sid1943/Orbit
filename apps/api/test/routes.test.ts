@@ -173,6 +173,18 @@ describe("GET /api/items/:id/full", () => {
     expect(body.reviews.map((r) => r.entityId).sort()).toEqual(["e1", "x:card-list", "x:p3"]);
   });
 
+  it("includes the linked things of the cards its rows point at", async () => {
+    await seed(
+      [
+        card({ id: "list", checklists: [{ name: "Films", rows: [{ text: "Harbor Lights", done: true, ref: "m1" }] }] }),
+        card({ id: "m1", entityId: "film" }),
+      ],
+      [thing({ id: "film", category: "movie", confidence: "high", imdb: "tt0000009" })],
+    );
+    const { body } = await get<{ entities: Entity[] }>("/api/items/list/full");
+    expect(body.entities.map((e) => e.id)).toEqual(["film"]);
+  });
+
   it("answers 404 for an unknown card", async () => {
     expect((await get("/api/items/nope/full")).status).toBe(404);
   });
