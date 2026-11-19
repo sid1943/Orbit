@@ -961,3 +961,25 @@ a.chip:hover {
 .topic-connected .sec-head h2 {
   font-size: calc(15px * var(--fz));
 }
+
+/* Review (Center Base's side while link guesses wait) */
+.review-view {
+  margin-top: 14px;
+}
+
+.review-note {
+  margin: 0 0 10px;
+}
+
+.review-row {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.review-row .chip {
+  margin-top: 2px;
+}
+
+.map-big-item .n {
+  flex: none;
+  white-space: nowrap;
+}

@@ -20,7 +20,7 @@ can put a sign-in (Google, email code) in front of both the app and the API (fre
 
 ## Layout
 
-- **Left rail**: the Orbit brand (goes home), views (Center Base, Review), and Settings.
+- **Left rail**: the Orbit brand (goes home), views (Center Base), and Settings.
   Kinds are not listed in the rail; they are tiles on the home page.
 - **Top bar, on every page**: greeting ("Good evening, Sid", from the profile name), date, location,
   and the New button. The page title sits in a strip under the search bar.
@@ -37,7 +37,7 @@ can put a sign-in (Google, email code) in front of both the app and the API (fre
 | Search results | `/search?q=`         | Ranked, title matches first, using `matcher()` from core                                                                                                                                                                                                    |
 | Map            | `/?map=1`            | The fourth side of Center Base's switch: the 90 biggest topics as a network (drag, zoom, hover, click a topic), Big topics in a side panel. `/map` redirects here                                                                                           |
 | Near me        | `/?near=1`           | The third side of Today's switch: places by distance, 5, 25, 100, 500 mi or Any; show done; category chips; exact places, then city groups. `/near` redirects here                                                                                          |
-| Review links   | `/review`            | Link guesses waiting for an answer: category chips (hidden when 0), Correct, Wrong (asks what it is), Delete                                                                                                                                                |
+| Review links   | `/?review=1`         | A side of Center Base's switch, shown only while link guesses wait (`confidence: "review"`, unanswered): the list; answering (Correct, Wrong, Delete) comes with W5. `/review` redirects here                                                               |
 | Topic          | `/topic/:name`       | Everything sharing one topic: kind chips, status bar, connected topics, item list                                                                                                                                                                           |
 | Settings       | `/settings/:section` | Mac-style: categories on the left, settings on the right (see below)                                                                                                                                                                                        |
 | App map        | `/settings/about`    | Index of every page and panel, generated from the route list                                                                                                                                                                                                |

@@ -1,7 +1,7 @@
 import { relativeDays } from "@orbit/core";
 import { useMemo } from "react";
 import { useSearchParams } from "react-router";
-import { useItemSummaries } from "../api/queries.js";
+import { useItemSummaries, usePendingReview } from "../api/queries.js";
 import { AllCardsView } from "../components/all-cards-view.js";
 import { ItemCard } from "../components/item-card.js";
 import { ItemRow } from "../components/item-row.js";
@@ -9,6 +9,7 @@ import { KindTiles } from "../components/kind-tiles.js";
 import { NearMeView } from "../components/near-me-view.js";
 import { NearYouSection } from "../components/near-you-section.js";
 import { ProgressBar } from "../components/progress-bar.js";
+import { ReviewView } from "../components/review-view.js";
 import { Segmented } from "../components/segmented.js";
 import { Section } from "../components/section.js";
 import { TodoSection } from "../components/todo-section.js";
@@ -16,19 +17,21 @@ import { TopicMapView } from "../components/topic-map-view.js";
 import { TopicCloud } from "../components/topic-cloud.js";
 import { shortDate } from "../lib/dates.js";
 import { todaySections } from "../lib/today-sections.js";
-import { TODAY_VIEWS, readTodayView, todayViewParams } from "../lib/today-view.js";
+import { readTodayView, todayViewParams, todayViews } from "../lib/today-view.js";
 
 const MONTH = () => new Date().toLocaleDateString(undefined, { month: "long" });
 
 /**
  * Center Base, the home page and where Back always goes: kind tiles, then a switch between Today's own
  * sections, All cards (every card with filters, `?all=1`), Near me (places by distance, `?near=1`) and Map
- * (topics as a network, `?map=1`). Each side keeps its filters in the address.
+ * (topics as a network, `?map=1`), plus Review (`?review=1`) only while link guesses wait for an answer. Each side
+ * keeps its filters in the address.
  */
 export function Today() {
   const items = useItemSummaries();
   const [params, setParams] = useSearchParams();
   const view = readTodayView(params);
+  const pending = usePendingReview().data?.length ?? 0;
   const s = useMemo(() => (items.data ? todaySections(items.data) : null), [items.data]);
 
   if (!items.data || !s) {
@@ -45,7 +48,7 @@ export function Today() {
         <Segmented
           label="Show"
           value={view}
-          options={TODAY_VIEWS}
+          options={todayViews(pending, view)}
           onChange={(v) => setParams(todayViewParams(v), { replace: true })}
         />
       </div>
@@ -56,6 +59,8 @@ export function Today() {
         <NearMeView />
       ) : view === "map" ? (
         <TopicMapView />
+      ) : view === "review" ? (
+        <ReviewView />
       ) : (
         <TodaySections s={s} />
       )}

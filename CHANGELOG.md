@@ -86,6 +86,13 @@ All notable changes to Orbit are listed here. The format follows
 - "+" square tile after the kind tiles (Today and Everything) adds a kind: a dialog with a name (checked as you type:
   empty or taken names are refused) and a colour slider starting far from the other kinds. Kind tiles follow
   `useKinds()`, so a new kind shows at once with 0 cards; kind chips and groups use custom kinds' colours.
+- Review moved onto Center Base's switch: **Review · N** appears only while link guesses wait for an answer
+  (`confidence: "review"` and not answered); it lists them. Answering them is still job W5. Review left the left
+  menu; `/review` redirects. `usePendingReview()`.
+- Map: every topic's name shows in full at every zoom, with a halo; topics keep their names' width apart (forces,
+  then a pass that separates any that still touch); the map fits the box until you move or zoom. Hovering a topic
+  pulls its connected topics into a ring around it, wide enough for the two widest names side by side, and fades
+  the rest. Big topics' counts no longer wrap.
 - The home page is now **Center Base** (left menu, Back, app map). Its switch reads **Today / All cards / Near me /
   Map**. Map (`?map=1`, build step 7) draws the 90 biggest topics as a network, as Orbit today did: circle size by
   cards, colour by the main kind, lines for topics sharing 2+ cards; drag, scroll to zoom, hover to light up
