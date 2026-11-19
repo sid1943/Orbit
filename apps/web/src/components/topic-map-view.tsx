@@ -2,13 +2,26 @@ import { kindHue, type KindInfo } from "@orbit/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useItemSummaries, useKinds } from "../api/queries.js";
-import { bigTopics, focusRing, graphBounds, layoutStep, topicGraph, type TopicGraph } from "../lib/topic-map.js";
+import {
+  bigTopics,
+  focusRing,
+  graphBounds,
+  layoutStep,
+  lensPoint,
+  topicGraph,
+  type TopicGraph,
+} from "../lib/topic-map.js";
 
 const FRAMES = 260;
 /** Frames the ring of related topics takes to open or close. */
 const FOCUS_FRAMES = 14;
 /** How much bigger a hovered topic grows (it springs past this and settles: the bounce). */
 const HOVER_GROW = 1.45;
+/** The hover lens, in screen pixels: how far it reaches (wider than tall, as names are wide), its strength, speed. */
+const LENS_X = 240;
+const LENS_Y = 160;
+const LENS_POWER = 2.4;
+const LENS_FRAMES = 10;
 
 type Point = { x: number; y: number };
 
@@ -30,19 +43,38 @@ interface View {
   focus: number;
   ring: Map<number, Point>;
   open: number;
+  /** The topic the lens should open on (-1: none), the one it is open on (or closing from), and how open (0–1). */
+  lensWant: number;
+  lensAt: number;
+  lens: number;
   w: number;
   h: number;
 }
 
 const css = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
-/** Where a topic is drawn: its place, moved toward its ring spot while a ring is open. */
-function at(g: TopicGraph, v: View, i: number): Point {
+/** Where a topic sits before the lens: its place, moved toward its ring spot while a ring is open. */
+function base(g: TopicGraph, v: View, i: number): Point {
   const n = g.nodes[i]!;
   const to = v.ring.get(i);
   if (!to || v.open <= 0) return n;
   const t = v.open * v.open * (3 - 2 * v.open);
   return { x: n.x + (to.x - n.x) * t, y: n.y + (to.y - n.y) * t };
+}
+
+/** Is a (world) point inside the open lens? */
+function inLens(g: TopicGraph, v: View, p: Point): boolean {
+  if (v.lensAt < 0 || v.lens <= 0) return false;
+  const c = base(g, v, v.lensAt);
+  return Math.hypot((p.x - c.x) / (LENS_X / v.scale), (p.y - c.y) / (LENS_Y / v.scale)) < 1;
+}
+
+/** Where a topic is drawn: pushed out of the way by the hover lens, so the names around the hovered topic have room. */
+function at(g: TopicGraph, v: View, i: number): Point {
+  const p = base(g, v, i);
+  if (v.lensAt < 0 || v.lens <= 0 || i === v.lensAt) return p;
+  const t = v.lens * v.lens * (3 - 2 * v.lens);
+  return lensPoint(p, base(g, v, v.lensAt), LENS_X / v.scale, LENS_Y / v.scale, LENS_POWER, t);
 }
 
 /** Fit every topic and its name in the box (until the user moves or zooms). */
@@ -73,8 +105,10 @@ function draw(ctx: CanvasRenderingContext2D, g: TopicGraph, v: View, kinds: read
 
   // While a ring is open, the clicked topic and its neighbours stand out and everything else steps back.
   const lit = v.focus >= 0 && v.open > 0 ? new Set([v.focus, ...v.ring.keys()]) : null;
-  const fade = (i: number) => (lit && !lit.has(i) ? 1 - 0.85 * v.open : 1);
   const pos = g.nodes.map((_, i) => at(g, v, i));
+  // While the lens is open, topics outside it step back a little so the ones inside are easy to read.
+  const outside = g.nodes.map((_, i) => v.lens > 0 && v.lensAt >= 0 && !inLens(g, v, base(g, v, i)));
+  const fade = (i: number) => (lit && !lit.has(i) ? 1 - 0.85 * v.open : 1) * (outside[i] ? 1 - 0.65 * v.lens : 1);
 
   for (const e of g.edges) {
     const a = pos[e.a]!,
@@ -89,7 +123,7 @@ function draw(ctx: CanvasRenderingContext2D, g: TopicGraph, v: View, kinds: read
     ctx.stroke();
   }
   // Circles first, then every name on top with a halo in the background colour, so names stay readable.
-  const rank = (i: number) => (i === v.hover ? 2 : lit?.has(i) ? 1 : 0);
+  const rank = (i: number) => (i === v.hover ? 3 : i === v.lensAt ? 2 : lit?.has(i) || !outside[i] ? 1 : 0);
   const order = g.nodes.map((_, i) => i).sort((a, b) => rank(a) - rank(b));
   for (const i of order) {
     const n = g.nodes[i]!,
@@ -114,6 +148,17 @@ function draw(ctx: CanvasRenderingContext2D, g: TopicGraph, v: View, kinds: read
     ctx.globalAlpha = fade(i);
     ctx.font = `${strong ? 700 : lit?.has(i) ? 600 : 500} ${size}px ${font}`;
     const y = p.y + n.r * v.grow[i]! + size;
+    if (i === v.hover) {
+      // The hovered name sits on a solid tag above everything else.
+      const w = ctx.measureText(n.name).width + size;
+      ctx.fillStyle = panel;
+      ctx.strokeStyle = colour(n.kind);
+      ctx.lineWidth = 1.5 / v.scale;
+      ctx.beginPath();
+      ctx.roundRect(p.x - w / 2, y - size * 1.05, w, size * 1.45, size * 0.5);
+      ctx.fill();
+      ctx.stroke();
+    }
     ctx.strokeStyle = panel;
     ctx.lineWidth = 4 / Math.max(v.scale, 0.55);
     ctx.strokeText(n.name, p.x, y);
@@ -125,7 +170,8 @@ function draw(ctx: CanvasRenderingContext2D, g: TopicGraph, v: View, kinds: read
 
 /**
  * Map, the fourth side of Center Base's switch (`?map=1`): the 90 biggest topics as a network, every name shown in
- * full. Hovering a topic makes it bounce; clicking it gathers its related topics in a ring around it (with a bar to
+ * full. Hovering a topic makes it bounce and opens a lens that pushes the topics around it apart, so their names
+ * can be read (moving within the lens keeps it still); clicking it gathers its related topics in a ring around it (with a bar to
  * open the topic); clicking it again opens it. Drag to move, scroll to zoom. Big topics sit in a side panel.
  */
 export function TopicMapView() {
@@ -155,6 +201,9 @@ export function TopicMapView() {
       focus: -1,
       ring: new Map(),
       open: 0,
+      lensWant: -1,
+      lensAt: -1,
+      lens: 0,
       w: 0,
       h: 0,
     };
@@ -203,6 +252,16 @@ export function TopicMapView() {
       if (v.open !== want) {
         v.open = want > v.open ? Math.min(1, v.open + 1 / FOCUS_FRAMES) : Math.max(0, v.open - 1 / FOCUS_FRAMES);
         busy = true;
+      }
+      // The lens opens on the hovered topic; moving to another topic outside it closes it first, then opens there.
+      const lensTo = v.lensWant >= 0 && v.lensWant === v.lensAt ? 1 : 0;
+      if (v.lens !== lensTo) {
+        v.lens = lensTo > v.lens ? Math.min(1, v.lens + 1 / LENS_FRAMES) : Math.max(0, v.lens - 1 / LENS_FRAMES);
+        busy = true;
+      }
+      if (v.lens === 0 && v.lensWant !== v.lensAt) {
+        v.lensAt = v.lensWant;
+        busy = busy || v.lensAt >= 0;
       }
       // Once the old ring has closed, open the one for the topic clicked now.
       if (v.open === 0 && v.picked !== v.focus) {
@@ -260,8 +319,12 @@ export function TopicMapView() {
         return;
       }
       const h = hit(e);
-      if (h !== v.hover) {
+      // Inside the open lens nothing moves, so the topics it pushed aside can be hovered and read in turn.
+      // Outside it, the lens follows the pointer to the topic under it (or closes over empty space).
+      const want = inLens(graph, v, toWorld(e)) ? v.lensAt : h;
+      if (h !== v.hover || want !== v.lensWant) {
         v.hover = h;
+        v.lensWant = want;
         cv.style.cursor = h >= 0 ? "pointer" : "grab";
         wake();
       }
@@ -269,6 +332,7 @@ export function TopicMapView() {
     const leave = () => {
       if (drag) return;
       v.hover = -1;
+      v.lensWant = -1;
       wake();
     };
     const up = (e: PointerEvent) => {
@@ -334,9 +398,9 @@ export function TopicMapView() {
   return (
     <div className="map-view">
       <p className="muted map-note">
-        Bigger circles hold more things. Lines join topics that appear on the same things. Click a topic to see what
-        it&apos;s related to; click it again to open it. Drag to move, scroll to zoom. Showing the {graph.nodes.length}{" "}
-        biggest topics.
+        Bigger circles hold more things. Lines join topics that appear on the same things. Hover to spread out the names
+        around a topic. Click a topic to see what it&apos;s related to; click it again to open it. Drag to move, scroll
+        to zoom. Showing the {graph.nodes.length} biggest topics.
       </p>
       <div className="map-split">
         <div className="map-canvas">

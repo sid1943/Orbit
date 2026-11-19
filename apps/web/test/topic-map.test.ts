@@ -4,6 +4,7 @@ import {
   focusRing,
   graphBounds,
   layoutStep,
+  lensPoint,
   topicGraph,
   topicPage,
   type TopicNode,
@@ -141,5 +142,24 @@ describe("no touching names", () => {
       const [j, q] = ring[(k + 1) % ring.length]!;
       expect(Math.hypot(p.x - q.x, p.y - q.y)).toBeGreaterThanOrEqual(g.nodes[i]!.room + g.nodes[j]!.room);
     }
+  });
+});
+
+describe("lensPoint", () => {
+  const c = { x: 0, y: 0 };
+  it("pushes close points out the most and leaves the edge and beyond alone", () => {
+    const near = lensPoint({ x: 10, y: 0 }, c, 100, 50, 3, 1);
+    const mid = lensPoint({ x: 50, y: 0 }, c, 100, 50, 3, 1);
+    expect(near.x).toBeCloseTo(10 * (4 / 1.3));
+    expect(near.x / 10).toBeGreaterThan(mid.x / 50);
+    expect(mid.x).toBeGreaterThan(50);
+    expect(lensPoint({ x: 100, y: 0 }, c, 100, 50, 3, 1)).toEqual({ x: 100, y: 0 });
+    expect(lensPoint({ x: 0, y: 60 }, c, 100, 50, 3, 1)).toEqual({ x: 0, y: 60 });
+  });
+  it("keeps the order of points (nothing jumps past another) and does nothing while closed", () => {
+    const xs = [5, 20, 40, 60, 80, 99].map((x) => lensPoint({ x, y: 0 }, c, 100, 50, 3, 1).x);
+    expect([...xs].sort((a, b) => a - b)).toEqual(xs);
+    expect(lensPoint({ x: 10, y: 5 }, c, 100, 50, 3, 0)).toEqual({ x: 10, y: 5 });
+    expect(lensPoint(c, c, 100, 50, 3, 1)).toEqual(c);
   });
 });
