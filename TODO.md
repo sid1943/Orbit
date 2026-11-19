@@ -31,12 +31,13 @@
 - [x] Home: greeting, date, location, kind tiles
 - [x] Home: search palette and the rest of Today (build step 2)
 - [x] Everything, kind pages (status filter, grouping) and search results
+- [x] Home renamed Center Base; Map as the fourth side of its switch
 - [x] Near me as the third side of Today's switch (left the menu)
 - [x] All cards on Today (switch) with Filters: status, kind, topic, distance, when, archived, group, sort; Everything removed from the menu
 - [x] Card panel (links, notes, checklists with search and row tools, comments, topics, due date, when, connections) and New item (build step 3)
 - [ ] Card panel: "Linked from" (cards whose refs point here) needs refs in the sync list (API chat)
 - [ ] Card panel: Fix links button (build step 5), cover and TV status (build step 8)
-- [ ] Map view with big topics, Near you
+- [x] Map view with big topics (on Center Base's switch) and Topic pages; Near you
 - [ ] Review queue
 - [x] Settings (appearance, fonts, sizes, location, lists, data, guide, about) and the app map
 - [x] Settings travel in the export (`ui`, `here`) and load into `prefs` (`appearance`, `profile`, `location`)

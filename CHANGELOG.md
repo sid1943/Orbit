@@ -86,6 +86,14 @@ All notable changes to Orbit are listed here. The format follows
 - "+" square tile after the kind tiles (Today and Everything) adds a kind: a dialog with a name (checked as you type:
   empty or taken names are refused) and a colour slider starting far from the other kinds. Kind tiles follow
   `useKinds()`, so a new kind shows at once with 0 cards; kind chips and groups use custom kinds' colours.
+- The home page is now **Center Base** (left menu, Back, app map). Its switch reads **Today / All cards / Near me /
+  Map**. Map (`?map=1`, build step 7) draws the 90 biggest topics as a network, as Orbit today did: circle size by
+  cards, colour by the main kind, lines for topics sharing 2+ cards; drag, scroll to zoom, hover to light up
+  neighbours, click to open the topic; Big topics in a side panel (below it on phones). Map left the menu; `/map`
+  redirects.
+- Topic pages (`/topic/:name`): kind chips, status filter (in the address), a status bar with counts, connected
+  topics and the cards. Every #topic chip in the app opens one.
+- A new page starts scrolled to the top (opening a card or changing a filter still keeps your place).
 - Near me is the third side of Today's switch (**Today / All cards / Near me**, `?near=1`), with the same distance,
   Show done and category chips; it left the left menu, and `/near` links open it with their filters. Near you's
   "All nearby" and "+ N things to do in …" open it too.

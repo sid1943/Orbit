@@ -1,24 +1,25 @@
 import { createBrowserRouter, type RouteObject } from "react-router";
 import { Layout } from "./components/layout.js";
-import { EverythingRedirect, KindPage, NearMeRedirect } from "./pages/kind.js";
+import { EverythingRedirect, KindPage, MapRedirect, NearMeRedirect } from "./pages/kind.js";
 import { NotFound } from "./pages/not-found.js";
 import { Planned } from "./pages/planned.js";
 import { Search } from "./pages/search.js";
 import { Settings } from "./pages/settings.js";
 import { Today } from "./pages/today.js";
+import { TopicPage } from "./pages/topic.js";
 
 /** Every page, in one list: the router uses it now, and Settings → About will show it as the app map. */
 export const PAGES = [
   {
     path: "/",
-    title: "Today",
-    what: "Kind tiles; a switch: Today, All cards (every card with filters) or Near me (places by distance); Near you, Coming up, In season, In progress, To-do, Closest to finished, Pick one, Recently changed, Topics",
+    title: "Center Base",
+    what: "The home page. Kind tiles; a switch: Today, All cards (every card with filters), Near me (places by distance) or Map (topics as a network); Near you, Coming up, In season, In progress, To-do, Closest to finished, Pick one, Recently changed, Topics",
     element: <Today />,
   },
   {
     path: "/all",
     title: "All cards",
-    what: "Old Everything address: opens Today's All cards view with its filters",
+    what: "Old Everything address: opens Center Base's All cards view with its filters",
     element: <EverythingRedirect />,
   },
   { path: "/kind/:kind", title: "Kind", what: "One kind's cards, with the All cards filters", element: <KindPage /> },
@@ -40,15 +41,20 @@ export const PAGES = [
   {
     path: "/near",
     title: "Near me",
-    what: "Old Near me address: opens Today's Near me view with its distance, Show done and category",
+    what: "Old Near me address: opens Center Base's Near me view with its distance, Show done and category",
     element: <NearMeRedirect />,
   },
-  { path: "/map", title: "Map", what: "Topics as a network", element: <Planned title="Map" step={7} /> },
+  {
+    path: "/map",
+    title: "Map",
+    what: "Old Map address: opens Center Base's Map view (topics as a network, Big topics)",
+    element: <MapRedirect />,
+  },
   {
     path: "/topic/:name",
     title: "Topic",
-    what: "Everything sharing one topic",
-    element: <Planned title="Topic" step={7} />,
+    what: "Everything sharing one topic: kind chips, status bar, connected topics, item list",
+    element: <TopicPage />,
   },
 ] as const;
 

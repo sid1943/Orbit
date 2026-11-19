@@ -27,7 +27,7 @@ export function TopBar({ isHome, onMenu, onNew }: { isHome: boolean; onMenu: () 
         ☰
       </button>
       {!isHome && (
-        <Link className="btn back-btn" to="/" title="Back to Today" aria-label="Back to Today">
+        <Link className="btn back-btn" to="/" title="Back to Center Base" aria-label="Back to Center Base">
           ← Back
         </Link>
       )}
