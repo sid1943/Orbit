@@ -1,12 +1,14 @@
 import { kindHue, type KindInfo } from "@orbit/core";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useItemSummaries, useKinds } from "../api/queries.js";
 import { bigTopics, focusRing, graphBounds, layoutStep, topicGraph, type TopicGraph } from "../lib/topic-map.js";
 
 const FRAMES = 260;
-/** Frames the hover ring takes to open or close. */
+/** Frames the ring of related topics takes to open or close. */
 const FOCUS_FRAMES = 14;
+/** How much bigger a hovered topic grows (it springs past this and settles: the bounce). */
+const HOVER_GROW = 1.45;
 
 type Point = { x: number; y: number };
 
@@ -17,7 +19,13 @@ interface View {
   scale: number;
   /** The user moved or zoomed: stop fitting the map to the box. */
   touched: boolean;
+  /** The topic under the pointer: it bounces. */
   hover: number;
+  /** Each topic's size (1 = normal) and how fast it is changing, for the bounce spring. */
+  grow: Float64Array;
+  speed: Float64Array;
+  /** The clicked topic, whose related topics should gather around it (-1: none). */
+  picked: number;
   /** The topic whose ring is showing (or closing), its neighbours' ring spots, and how open it is (0–1). */
   focus: number;
   ring: Map<number, Point>;
@@ -63,7 +71,7 @@ function draw(ctx: CanvasRenderingContext2D, g: TopicGraph, v: View, kinds: read
   ctx.translate(v.w / 2 + v.tx, v.h / 2 + v.ty);
   ctx.scale(v.scale, v.scale);
 
-  // While a ring is open, the hovered topic and its neighbours stand out and everything else steps back.
+  // While a ring is open, the clicked topic and its neighbours stand out and everything else steps back.
   const lit = v.focus >= 0 && v.open > 0 ? new Set([v.focus, ...v.ring.keys()]) : null;
   const fade = (i: number) => (lit && !lit.has(i) ? 1 - 0.85 * v.open : 1);
   const pos = g.nodes.map((_, i) => at(g, v, i));
@@ -81,14 +89,15 @@ function draw(ctx: CanvasRenderingContext2D, g: TopicGraph, v: View, kinds: read
     ctx.stroke();
   }
   // Circles first, then every name on top with a halo in the background colour, so names stay readable.
-  const order = g.nodes.map((_, i) => i).sort((a, b) => Number(lit?.has(a) ?? false) - Number(lit?.has(b) ?? false));
+  const rank = (i: number) => (i === v.hover ? 2 : lit?.has(i) ? 1 : 0);
+  const order = g.nodes.map((_, i) => i).sort((a, b) => rank(a) - rank(b));
   for (const i of order) {
     const n = g.nodes[i]!,
       p = pos[i]!;
     ctx.globalAlpha = fade(i);
     ctx.fillStyle = colour(n.kind);
     ctx.beginPath();
-    ctx.arc(p.x, p.y, n.r, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, n.r * v.grow[i]!, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = panel;
     ctx.lineWidth = 1.5 / v.scale;
@@ -101,10 +110,10 @@ function draw(ctx: CanvasRenderingContext2D, g: TopicGraph, v: View, kinds: read
   for (const i of order) {
     const n = g.nodes[i]!,
       p = pos[i]!;
-    const strong = i === v.focus && lit !== null;
+    const strong = (i === v.focus && lit !== null) || i === v.hover;
     ctx.globalAlpha = fade(i);
     ctx.font = `${strong ? 700 : lit?.has(i) ? 600 : 500} ${size}px ${font}`;
-    const y = p.y + n.r + size;
+    const y = p.y + n.r * v.grow[i]! + size;
     ctx.strokeStyle = panel;
     ctx.lineWidth = 4 / Math.max(v.scale, 0.55);
     ctx.strokeText(n.name, p.x, y);
@@ -116,14 +125,17 @@ function draw(ctx: CanvasRenderingContext2D, g: TopicGraph, v: View, kinds: read
 
 /**
  * Map, the fourth side of Center Base's switch (`?map=1`): the 90 biggest topics as a network, every name shown in
- * full. Drag to move, scroll to zoom, hover a topic to pull its connected topics into a ring around it, click to open
- * the topic. Big topics sit in a side panel.
+ * full. Hovering a topic makes it bounce; clicking it gathers its related topics in a ring around it (with a bar to
+ * open the topic); clicking it again opens it. Drag to move, scroll to zoom. Big topics sit in a side panel.
  */
 export function TopicMapView() {
   const items = useItemSummaries();
   const kinds = useKinds().data;
   const navigate = useNavigate();
   const canvas = useRef<HTMLCanvasElement>(null);
+  // The clicked topic, for the bar over the map; the canvas code sets it, and the bar's × asks it to let go.
+  const [picked, setPicked] = useState<{ key: string; name: string; related: number } | null>(null);
+  const unpick = useRef<() => void>(() => {});
   const graph = useMemo(() => (items.data ? topicGraph(items.data) : null), [items.data]);
   const big = useMemo(() => (items.data ? bigTopics(items.data) : []), [items.data]);
 
@@ -137,6 +149,9 @@ export function TopicMapView() {
       scale: 1,
       touched: false,
       hover: -1,
+      grow: new Float64Array(graph.nodes.length).fill(1),
+      speed: new Float64Array(graph.nodes.length),
+      picked: -1,
       focus: -1,
       ring: new Map(),
       open: 0,
@@ -157,7 +172,7 @@ export function TopicMapView() {
       fit(graph, v);
       redraw();
     };
-    // One loop runs while the layout settles or the hover ring opens or closes, then stops.
+    // One loop runs while the layout settles, a topic bounces, or the ring opens or closes; then it stops.
     const tick = () => {
       raf = 0;
       if (stopped) return;
@@ -169,14 +184,29 @@ export function TopicMapView() {
         busy = true;
         if (v.focus >= 0) v.ring = focusRing(graph, v.focus);
       }
-      const want = v.hover >= 0 && v.hover === v.focus ? 1 : 0;
+      // The bounce: each topic springs toward its size (bigger under the pointer), overshoots a little, settles.
+      for (let i = 0; i < graph.nodes.length; i++) {
+        const target = i === v.hover ? HOVER_GROW : 1;
+        const s0 = v.grow[i]!,
+          sp0 = v.speed[i]!;
+        if (Math.abs(target - s0) < 0.002 && Math.abs(sp0) < 0.002) {
+          v.grow[i] = target;
+          v.speed[i] = 0;
+          continue;
+        }
+        const sp = (sp0 + (target - s0) * 0.25) * 0.72;
+        v.speed[i] = sp;
+        v.grow[i] = s0 + sp;
+        busy = true;
+      }
+      const want = v.picked >= 0 && v.picked === v.focus ? 1 : 0;
       if (v.open !== want) {
         v.open = want > v.open ? Math.min(1, v.open + 1 / FOCUS_FRAMES) : Math.max(0, v.open - 1 / FOCUS_FRAMES);
         busy = true;
       }
-      // Once the old ring has closed, open the one for the topic now under the pointer.
-      if (v.open === 0 && v.hover !== v.focus) {
-        v.focus = v.hover;
+      // Once the old ring has closed, open the one for the topic clicked now.
+      if (v.open === 0 && v.picked !== v.focus) {
+        v.focus = v.picked;
         v.ring = v.focus >= 0 ? focusRing(graph, v.focus) : new Map();
         busy = busy || v.focus >= 0;
       }
@@ -230,10 +260,8 @@ export function TopicMapView() {
         return;
       }
       const h = hit(e);
-      // Staying over the open ring's topic or one of its neighbours keeps the ring open.
-      const keep = h >= 0 && v.focus >= 0 && (h === v.focus || v.ring.has(h)) ? v.focus : h;
-      if (keep !== v.hover) {
-        v.hover = keep;
+      if (h !== v.hover) {
+        v.hover = h;
         cv.style.cursor = h >= 0 ? "pointer" : "grab";
         wake();
       }
@@ -248,9 +276,22 @@ export function TopicMapView() {
       drag = null;
       if (was && !moved) {
         const h = hit(e);
-        if (h >= 0) navigate(`/topic/${encodeURIComponent(graph.nodes[h]!.key)}`);
+        // Click a topic: gather its related topics. Click it again: open it. Click empty space: let go.
+        if (h >= 0 && h === v.picked) navigate(`/topic/${encodeURIComponent(graph.nodes[h]!.key)}`);
+        else pick(h);
       }
     };
+    const pick = (i: number) => {
+      v.picked = i;
+      const n = i >= 0 ? graph.nodes[i]! : null;
+      setPicked(n ? { key: n.key, name: n.name, related: focusRing(graph, i).size } : null);
+      wake();
+    };
+    unpick.current = () => pick(-1);
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && v.picked >= 0) pick(-1);
+    };
+    window.addEventListener("keydown", key);
     const wheel = (e: WheelEvent) => {
       e.preventDefault();
       v.touched = true;
@@ -272,6 +313,8 @@ export function TopicMapView() {
     cv.addEventListener("wheel", wheel, { passive: false });
     return () => {
       stopped = true;
+      window.removeEventListener("keydown", key);
+      unpick.current = () => {};
       cancelAnimationFrame(raf);
       resize.disconnect();
       cv.removeEventListener("pointerdown", down);
@@ -291,12 +334,27 @@ export function TopicMapView() {
   return (
     <div className="map-view">
       <p className="muted map-note">
-        Bigger circles hold more things. Lines join topics that appear on the same things. Drag to move, scroll to zoom,
-        click a topic to open it. Showing the {graph.nodes.length} biggest topics.
+        Bigger circles hold more things. Lines join topics that appear on the same things. Click a topic to see what
+        it&apos;s related to; click it again to open it. Drag to move, scroll to zoom. Showing the {graph.nodes.length}{" "}
+        biggest topics.
       </p>
       <div className="map-split">
         <div className="map-canvas">
           <canvas ref={canvas} aria-label="Topic map" role="img" />
+          {picked && (
+            <div className="map-picked" role="status">
+              <b>#{picked.name}</b>
+              <span className="muted">
+                {picked.related ? `${picked.related} related` : "nothing related on the map"}
+              </span>
+              <Link className="btn small primary" to={`/topic/${encodeURIComponent(picked.key)}`}>
+                Open topic →
+              </Link>
+              <button type="button" className="map-picked-x" aria-label="Close" onClick={() => unpick.current()}>
+                ×
+              </button>
+            </div>
+          )}
         </div>
         <aside className="map-big" aria-label="Big topics">
           <div className="map-big-head">Big topics</div>
