@@ -52,3 +52,8 @@ export function NearMeRedirect() {
 export function MapRedirect() {
   return <Navigate to={todayViewPath("map", useLocation().search)} replace />;
 }
+
+/** The old Review page (`/review`): now the Review side of Center Base's switch. */
+export function ReviewRedirect() {
+  return <Navigate to={todayViewPath("review", useLocation().search)} replace />;
+}

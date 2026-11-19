@@ -199,6 +199,9 @@ export function createApiClient(config: ApiConfig) {
       }
       return out;
     },
+    /** Link guesses waiting for an answer (`confidence: "review"`, not answered yet), newest first. */
+    pendingReview: async (): Promise<Entity[]> =>
+      (await request<{ entities: Entity[] }>("/entities?confidence=review&pending=1")).entities,
     listReviews: async (): Promise<Review[]> => (await request<{ reviews: Review[] }>("/reviews")).reviews,
     /** Every kind in order: the standard ones, then Sid's own, each with its card count. */
     listKinds: async (): Promise<KindEntry[]> => (await request<{ kinds: KindEntry[] }>("/kinds")).kinds,

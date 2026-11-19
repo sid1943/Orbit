@@ -13,6 +13,8 @@ export interface TopicNode {
   kind: string;
   /** Circle radius, before zoom. */
   r: number;
+  /** Room the topic needs so its whole name fits without touching its neighbours' (half the label width). */
+  room: number;
   x: number;
   y: number;
   vx: number;
@@ -33,6 +35,9 @@ export interface TopicGraph {
 }
 
 const live = (items: readonly SyncItem[]) => items.filter((i) => !i.deleted && !i.archived);
+
+/** Half a name's width at 12 px (about 6.6 px a letter), or the circle if that's wider, plus a little air. */
+export const labelRoom = (name: string, r: number): number => Math.max(r, (name.length * 6.6) / 2) + 8;
 
 /** The map's topics and the lines between them. Starts on a spiral so the layout settles the same way each time. */
 export function topicGraph(items: readonly SyncItem[], max = 90): TopicGraph {
@@ -65,6 +70,7 @@ export function topicGraph(items: readonly SyncItem[], max = 90): TopicGraph {
       count: t.count,
       kind,
       r: 4 + Math.sqrt(t.count) * 1.6,
+      room: labelRoom(t.name, 4 + Math.sqrt(t.count) * 1.6),
       x: Math.cos(angle) * radius,
       y: Math.sin(angle) * radius,
       vx: 0,
@@ -95,7 +101,8 @@ export function layoutStep(g: TopicGraph, alpha: number): void {
         dy = a.y - b.y;
       const d2 = dx * dx + dy * dy + 0.01,
         d = Math.sqrt(d2);
-      const min = a.r + b.r + 14;
+      // Topics keep apart by their names' width, so every name can show in full.
+      const min = a.room + b.room;
       let f = 2400 / d2;
       if (d < min) f += (min - d) * 0.08;
       dx /= d;
@@ -123,6 +130,34 @@ export function layoutStep(g: TopicGraph, alpha: number): void {
     a.x += a.vx * alpha;
     a.y += a.vy * alpha;
   }
+  separate(g);
+}
+
+/** Moves any two topics that still overlap apart, so no two names touch (forces alone leave a few in dense spots). */
+function separate(g: TopicGraph): void {
+  const { nodes } = g;
+  for (let i = 0; i < nodes.length; i++)
+    for (let j = i + 1; j < nodes.length; j++) {
+      const a = nodes[i]!,
+        b = nodes[j]!;
+      // Names sit under the circles, so topics side by side need their names' room; stacked ones need less.
+      const dx = b.x - a.x;
+      let dy = b.y - a.y;
+      const across = Math.abs(dx) / (a.room + b.room),
+        down = Math.abs(dy) / (a.r + b.r + 26);
+      if (across >= 1 || down >= 1) continue;
+      // Push along whichever way is the shorter way out.
+      if (1 - across < 1 - down) {
+        const push = ((a.room + b.room - Math.abs(dx)) / 2) * (dx < 0 ? -1 : 1) || (a.room + b.room) / 2;
+        a.x -= push;
+        b.x += push;
+      } else {
+        dy = dy || 0.01;
+        const push = ((a.r + b.r + 26 - Math.abs(dy)) / 2) * (dy < 0 ? -1 : 1);
+        a.y -= push;
+        b.y += push;
+      }
+    }
 }
 
 /** Topics for the Big topics panel: on 6 or more cards, biggest first, at most 40. */
@@ -172,4 +207,54 @@ export function topicPage(
       .filter((c) => (!kind || c.kind === kind) && (status === "all" || c.status === status))
       .sort(byStatusThenRecent),
   };
+}
+
+/**
+ * Where to draw each topic while one is hovered: its connected topics on a ring around it, wide enough for every
+ * name, so the hovered topic's neighbourhood is readable. Topics not in the map keep their place.
+ */
+export function focusRing(g: TopicGraph, index: number): Map<number, { x: number; y: number }> {
+  const center = g.nodes[index];
+  const out = new Map<number, { x: number; y: number }>();
+  if (!center) return out;
+  const near = [...new Set(g.edges.flatMap((e) => (e.a === index ? [e.b] : e.b === index ? [e.a] : [])))].sort(
+    (a, b) => g.nodes[b]!.count - g.nodes[a]!.count,
+  );
+  if (!near.length) return out;
+  // Alternate long and short names around the ring, then make it wide enough that the two widest neighbours
+  // side by side (at the top or bottom, where names sit next to each other) don't touch.
+  const byRoom = [...near].sort((a, b) => g.nodes[b]!.room - g.nodes[a]!.room);
+  const ordered: number[] = [];
+  while (byRoom.length) {
+    ordered.push(byRoom.shift()!);
+    if (byRoom.length) ordered.push(byRoom.pop()!);
+  }
+  near.splice(0, near.length, ...ordered);
+  const step = Math.sin(Math.PI / Math.max(near.length, 2));
+  let need = 0;
+  near.forEach((i, k) => {
+    const next = near[(k + 1) % near.length]!;
+    need = Math.max(need, (g.nodes[i]!.room + g.nodes[next]!.room + 6) / (2 * step));
+  });
+  const radius = Math.max(center.room + 60, need);
+  near.forEach((i, k) => {
+    const angle = -Math.PI / 2 + (k / near.length) * 2 * Math.PI;
+    out.set(i, { x: center.x + Math.cos(angle) * radius, y: center.y + Math.sin(angle) * radius });
+  });
+  return out;
+}
+
+/** The box around every topic and its name, for fitting the map in view. */
+export function graphBounds(g: TopicGraph): { minX: number; minY: number; maxX: number; maxY: number } {
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity;
+  for (const n of g.nodes) {
+    minX = Math.min(minX, n.x - n.room);
+    maxX = Math.max(maxX, n.x + n.room);
+    minY = Math.min(minY, n.y - n.r);
+    maxY = Math.max(maxY, n.y + n.r + 18);
+  }
+  return { minX, minY, maxX, maxY };
 }

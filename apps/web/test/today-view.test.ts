@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readTodayView, todayViewParams, todayViewPath } from "../src/lib/today-view.js";
+import { readTodayView, todayViewParams, todayViewPath, todayViews } from "../src/lib/today-view.js";
 
 describe("Today's view switch", () => {
   it("reads the side from the address", () => {
@@ -19,5 +19,15 @@ describe("Today's view switch", () => {
     expect(todayViewPath("all", "?status=doing")).toBe("/?all=1&status=doing");
     expect(todayViewPath("all", "")).toBe("/?all=1");
     expect(todayViewPath("map", "")).toBe("/?map=1");
+  });
+});
+
+describe("Review on the switch", () => {
+  it("shows Review only while guesses are waiting (or while it's open)", () => {
+    expect(todayViews(0, "today").map((v) => v.value)).toEqual(["today", "all", "near", "map"]);
+    expect(todayViews(3, "today").at(-1)).toEqual({ value: "review", label: "Review · 3" });
+    expect(todayViews(0, "review").at(-1)).toEqual({ value: "review", label: "Review" });
+    expect(readTodayView(new URLSearchParams("review=1"))).toBe("review");
+    expect(todayViewPath("review", "")).toBe("/?review=1");
   });
 });

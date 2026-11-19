@@ -47,6 +47,7 @@ export const keys = {
   places: ["places"] as const,
   kinds: ["kinds"] as const,
   prefs: ["prefs"] as const,
+  pendingReview: ["review", "pending"] as const,
 };
 
 export const useHealth = () => {
@@ -170,6 +171,15 @@ export const useConnections = (id: string | undefined) => {
 };
 
 /** Answer a link guess (`decision`), or undo the answer (`null`). Refreshes the card and the list. */
+/**
+ * Link guesses waiting for Sid's answer: what Review shows, and why the Review side of Center Base's switch
+ * appears at all (only when there is at least one).
+ */
+export const usePendingReview = () => {
+  const api = useApi();
+  return useQuery({ queryKey: keys.pendingReview, queryFn: api.pendingReview, staleTime: 60_000 });
+};
+
 export function useReview() {
   const api = useApi();
   const qc = useQueryClient();
@@ -183,6 +193,7 @@ export function useReview() {
         qc.invalidateQueries({ queryKey: ["item"] }),
         qc.invalidateQueries({ queryKey: keys.sync }),
         qc.invalidateQueries({ queryKey: keys.places }),
+        qc.invalidateQueries({ queryKey: keys.pendingReview }),
       ]),
   });
 }

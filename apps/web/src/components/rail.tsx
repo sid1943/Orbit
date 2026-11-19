@@ -1,9 +1,6 @@
 import { Link, NavLink } from "react-router";
 
-const VIEWS = [
-  { to: "/", label: "Center Base", end: true },
-  { to: "/review", label: "Review", end: false },
-] as const;
+const VIEWS = [{ to: "/", label: "Center Base", end: true }] as const;
 
 /** Views only. Kinds are tiles on the home page, not rail entries. */
 export function Rail({ open, inert = false }: { open: boolean; inert?: boolean }) {

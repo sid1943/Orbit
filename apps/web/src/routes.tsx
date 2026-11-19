@@ -1,8 +1,7 @@
 import { createBrowserRouter, type RouteObject } from "react-router";
 import { Layout } from "./components/layout.js";
-import { EverythingRedirect, KindPage, MapRedirect, NearMeRedirect } from "./pages/kind.js";
+import { EverythingRedirect, KindPage, MapRedirect, NearMeRedirect, ReviewRedirect } from "./pages/kind.js";
 import { NotFound } from "./pages/not-found.js";
-import { Planned } from "./pages/planned.js";
 import { Search } from "./pages/search.js";
 import { Settings } from "./pages/settings.js";
 import { Today } from "./pages/today.js";
@@ -13,7 +12,7 @@ export const PAGES = [
   {
     path: "/",
     title: "Center Base",
-    what: "The home page. Kind tiles; a switch: Today, All cards (every card with filters), Near me (places by distance) or Map (topics as a network); Near you, Coming up, In season, In progress, To-do, Closest to finished, Pick one, Recently changed, Topics",
+    what: "The home page. Kind tiles; a switch: Today, All cards (every card with filters), Near me (places by distance) or Map (topics as a network), plus Review while link guesses wait; Near you, Coming up, In season, In progress, To-do, Closest to finished, Pick one, Recently changed, Topics",
     element: <Today />,
   },
   {
@@ -35,8 +34,8 @@ export const PAGES = [
   {
     path: "/review",
     title: "Review links",
-    what: "Link guesses waiting for an answer",
-    element: <Planned title="Review links" step={5} />,
+    what: "Old Review address: opens Center Base's Review side (link guesses waiting for an answer)",
+    element: <ReviewRedirect />,
   },
   {
     path: "/near",
