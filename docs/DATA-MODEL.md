@@ -22,6 +22,9 @@ Defined in `packages/core/src/types.ts`. The database keeps each record whole as
 | `comments`               | `date`, `text`                                                                                                     |
 | `checklists`             | `name` and `rows`; each row has `text`, `done`, and optionally `ref` (another card) or `entityId` (a linked thing) |
 
+Titles, row text and linked things' names have no leading Markdown bullet: the import drops "* ", "- ", "+ " or
+"• " (`stripBullet()`), and migration `0006_strip_bullets` cleaned the cards saved before that.
+
 ## Entity: a linked thing
 
 A movie, show, book, game or place in the real world, with its standard ids: `imdb`, `openLibrary`,

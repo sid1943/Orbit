@@ -1,6 +1,7 @@
 import { type AppearancePref, parseAppearance } from "./appearance.js";
 import { type CustomKind, parseCustomKinds } from "./kinds.js";
 import { type LocationPref, type Prefs, parseLocation } from "./prefs.js";
+import { stripBullet } from "./text.js";
 import type { Checklist, Confidence, Entity, Item, Review, ReviewDecision, Status } from "./types.js";
 import { STATUSES } from "./types.js";
 
@@ -112,7 +113,7 @@ export const ENTITY_FIELDS = [
 export function mapEntity(id: string, r: RawEntity, now: number): Entity {
   const e: Entity = {
     id,
-    name: str(r.n) ?? id,
+    name: stripBullet(str(r.n) ?? id),
     category: str(r.cat) ?? "card",
     confidence: (str(r.conf) ?? "none") as Confidence,
     updatedAt: num(r.updatedAt) ?? now,
@@ -131,12 +132,17 @@ export function mapItem(r: RawItem, now: number): Item {
   const status: Status = (STATUSES as readonly string[]).includes(r.s) ? (r.s as Status) : "todo";
   const checklists: Checklist[] = (r.cl ?? []).map((c) => ({
     name: c.n,
-    rows: c.i.map(([text, done, ref, eid]) => ({ text, done: !!done, ref: ref ?? null, entityId: eid ?? null })),
+    rows: c.i.map(([text, done, ref, eid]) => ({
+      text: stripBullet(text),
+      done: !!done,
+      ref: ref ?? null,
+      entityId: eid ?? null,
+    })),
   }));
   return {
     id: r.id,
     kind: KIND_RENAMES[r.k] ?? r.k,
-    title: r.t,
+    title: stripBullet(r.t),
     status,
     tags: r.tg ?? [],
     source: r.src ?? "",
