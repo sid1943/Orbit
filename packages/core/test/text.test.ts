@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matcher, normalize, readableLink, slug } from "../src/index.js";
+import { matcher, normalize, readableLink, slug, stripBullet } from "../src/index.js";
 
 describe("matcher", () => {
   it("matches at the start of words, not in the middle", () => {
@@ -39,5 +39,24 @@ describe("slug and normalize", () => {
 
   it("drops accents and punctuation", () => {
     expect(normalize("Amélie & Co.")).toBe("amelie and co");
+  });
+});
+
+describe("stripBullet", () => {
+  it("drops a leading list marker", () => {
+    expect(stripBullet("* Fort Ord")).toBe("Fort Ord");
+    expect(stripBullet("- Blade Runner (1982)")).toBe("Blade Runner (1982)");
+    expect(stripBullet("  +  Muir Woods")).toBe("Muir Woods");
+    expect(stripBullet("• Cabrillo")).toBe("Cabrillo");
+    expect(stripBullet("- **The Road** – Cormac McCarthy")).toBe("**The Road** – Cormac McCarthy");
+  });
+
+  it("leaves bold, rules, numbers and a lone marker alone", () => {
+    expect(stripBullet("**National Monument**")).toBe("**National Monument**");
+    expect(stripBullet("---")).toBe("---");
+    expect(stripBullet("-5 degrees")).toBe("-5 degrees");
+    expect(stripBullet("500. BALLBLAZER")).toBe("500. BALLBLAZER");
+    expect(stripBullet("* ")).toBe("* ");
+    expect(stripBullet("Sand - to - Snow")).toBe("Sand - to - Snow");
   });
 });

@@ -45,6 +45,7 @@
 - [x] Settings travel in the export (`ui`, `here`) and load into `prefs` (`appearance`, `profile`, `location`)
 - [x] Location panel: use my location, type a city, paste a map link, pick a city (build step 6)
 - [x] Near me: places by distance (5, 25, 100, 500 mi, Any), show done, category chips, city groups (build step 6)
+- [x] Names without the Trello bullet ("* Fort Ord" → "Fort Ord"): on import, and migration `0006_strip_bullets` for saved cards
 - [ ] Card panel: show connections from `useConnections()` ("Part of Dune · 1 of 6 · next: Dune Messiah", tap to add) (Card chat)
 - [ ] Watch connections for news (new book in a series, sequel announced) (Live chat, job LV)
 - [ ] Covers on cards; TV status ("Season 3 out", "next episode Fri")

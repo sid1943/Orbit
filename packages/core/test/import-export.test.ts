@@ -11,11 +11,23 @@ const sample = {
       t: "Run a 10K",
       k: "Health",
       s: "todo",
-      cl: [{ n: "Season", i: [["Season 1", 1, null, "e1"]] }],
+      cl: [
+        {
+          n: "Season",
+          i: [
+            ["Season 1", 1, null, "e1"],
+            ["* Fort Ord", 0],
+            ["**National Monument**", 0],
+          ],
+        },
+      ],
       due: "2026-12-01T00:00:00Z",
     },
   ],
-  ent: { e1: { n: "Dune", cat: "book", conf: "high", ol: "OL893415W", yr: 1965 } },
+  ent: {
+    e1: { n: "Dune", cat: "book", conf: "high", ol: "OL893415W", yr: 1965 },
+    e5: { n: "- Muir Woods", cat: "place", conf: "none" },
+  },
   reviews: {
     e1: "yes",
     e2: { d: "fix", url: "https://x.y", add: true },
@@ -31,6 +43,15 @@ describe("importOrbitExport", () => {
     expect(r.items[0]?.kind).toBe("To-do");
     expect(r.items[0]?.due).toBe("2026-12-01");
     expect(r.items[0]?.checklists[0]?.rows[0]?.entityId).toBe("e1");
+  });
+
+  it("drops Markdown bullets from row text and names", () => {
+    expect(r.items[0]?.checklists[0]?.rows.map((x) => x.text)).toEqual([
+      "Season 1",
+      "Fort Ord",
+      "**National Monument**",
+    ]);
+    expect(r.entities[1]?.name).toBe("Muir Woods");
   });
 
   it("maps linked things", () => {

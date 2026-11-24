@@ -83,3 +83,9 @@ export function readableLink(url: string, given?: string): { label: string; host
   };
   return { label: pick(), host };
 }
+
+/**
+ * Drops a leading Markdown list marker ("* ", "- ", "+ " or "• ") from a name. Trello checklists written
+ * as bullets ("* Fort Ord") came in with the marker kept. Bold ("**x**") and rules ("---") are left alone.
+ */
+export const stripBullet = (s: string): string => s.replace(/^\s*[*+•-][ \t]+(?=\S)/u, "");

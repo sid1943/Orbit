@@ -154,6 +154,9 @@ All notable changes to Orbit are listed here. The format follows
 
 ### Fixed
 
+- Names imported from Trello checklists written as bullets showed the marker ("* Fort Ord", "- Blade Runner (1982)").
+  The import now drops a leading "* ", "- ", "+ " or "• " from row text, card titles and linked things' names (core
+  `stripBullet()`), and migration `0006_strip_bullets` cleans the cards already saved. Bold headings and "---" stay.
 - Connections: "series" that aren't one (a "list of …" item, or a show's episodes) no longer show; more book and comic
   types are recognised. `npm run connect` waits for the API when the Mac's updater restarts it instead of stopping.
   Things with no Wikidata id are tried again monthly instead of every three months.
