@@ -6,6 +6,8 @@
 - [x] `packages/core`: data model, search rules, link building, export import
 - [x] Enricher rules: Wikidata (IMDb, IGDB), Open Library, map links, links already in notes
 - [x] TV status from TVmaze
+- [x] Goodreads for every book: the book's page when Wikidata or Open Library has its Goodreads id, a search otherwise
+- [ ] Second search for books and movies with no match (title and author on Wikidata) (Data chat)
 - [x] Connections from Wikidata: series (with order), sequels, based on / adaptations, franchise; Wikidata ids for books from Open Library
 - [x] Live watch: one rule per linked thing (what, how often, when to stop) and one scheduler within the cron budget; TVmaze, Wikidata, Open Library (job LV)
 - [x] Dead-link check for pasted links (job LV)
@@ -33,15 +35,21 @@
 - [x] Home: greeting, date, location, kind tiles
 - [x] Home: search palette and the rest of Today (build step 2)
 - [x] Everything, kind pages (status filter, grouping) and search results
+- [x] Home renamed Center Base; Map as the fourth side of its switch
+- [x] Near me as the third side of Today's switch (left the menu)
+- [x] All cards on Today (switch) with Filters: status, kind, topic, distance, when, archived, group, sort; Everything removed from the menu
 - [x] Card panel (links, notes, checklists with search and row tools, comments, topics, due date, when, connections) and New item (build step 3)
 - [ ] Card panel: "Linked from" (cards whose refs point here) needs refs in the sync list (API chat)
 - [ ] Card panel: Fix links button (build step 5), cover and TV status (build step 8)
-- [ ] Map view with big topics, Near you
-- [ ] Review queue
+- [x] Map view with big topics (on Center Base's switch) and Topic pages; Near you
+- [x] Map: hover lens spreads the names around a topic so they can be read
+- [x] Center Base: Coming up and In season as sides; In progress, Closest to finished, Recently changed inside To-do; Topics on the Map; Near you left Today
+- [ ] Review queue: answering link guesses (W5). Its place is done: a side of Center Base's switch, shown only while guesses wait
 - [x] Settings (appearance, fonts, sizes, location, lists, data, guide, about) and the app map
 - [x] Settings travel in the export (`ui`, `here`) and load into `prefs` (`appearance`, `profile`, `location`)
 - [x] Location panel: use my location, type a city, paste a map link, pick a city (build step 6)
 - [x] Near me: places by distance (5, 25, 100, 500 mi, Any), show done, category chips, city groups (build step 6)
+- [x] Names without the Trello bullet ("* Fort Ord" → "Fort Ord"): on import, and migration `0006_strip_bullets` for saved cards
 - [ ] Card panel: show connections from `useConnections()` ("Part of Dune · 1 of 6 · next: Dune Messiah", tap to add) (Card chat)
 - [ ] Watch connections for news (new book in a series, sequel announced) (Live chat, job LV)
 - [ ] Covers on cards; TV status ("Season 3 out", "next episode Fri"), release dates, closed places, dead links (`/api/live`, `/api/watch/links`; W8 and the Card chat)

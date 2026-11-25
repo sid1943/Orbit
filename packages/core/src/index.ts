@@ -18,3 +18,4 @@ export * from "./watch.js";
 export * from "./link-check.js";
 export * from "./tmdb.js";
 export * from "./igdb.js";
+export * from "./goodreads.js";

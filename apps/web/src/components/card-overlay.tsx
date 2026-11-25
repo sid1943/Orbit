@@ -19,11 +19,19 @@ import { CardHeader } from "./card-header.js";
 import { CardNotes } from "./card-notes.js";
 import { CardSide } from "./card-side.js";
 import { UsefulLinks } from "./useful-links.js";
-import { useCardFinder } from "../lib/card-finder.js";
+import { useCardFinder, useTrelloCards } from "../lib/card-finder.js";
 import { isTyping } from "../lib/keys.js";
 
 /** Everything on one card, laid out as the big centered card. */
-function CardPanel({ full, close }: { full: FullItem; close: () => void }) {
+function CardPanel({
+  full,
+  close,
+  back,
+}: {
+  full: FullItem;
+  close: () => void;
+  back?: { title: string; go: () => void };
+}) {
   const { item, entities, reviews } = full;
   const edit = useEditCard(item.id);
   const del = useDeleteItem();
@@ -36,8 +44,13 @@ function CardPanel({ full, close }: { full: FullItem; close: () => void }) {
 
   const save = (fields: ItemEditFields) => edit.mutate(fields);
   const thing = item.entityId ? (byId.get(item.entityId) ?? null) : null;
-  const links = usefulLinks(item, thing, hiddenFor(reviews, thing?.id ?? cardKey(item.id)));
-  const thingOf = (row: ChecklistRow): Entity | null => (row.entityId ? (byId.get(row.entityId) ?? null) : null);
+  const cardForUrl = useTrelloCards();
+  const links = usefulLinks(item, thing, hiddenFor(reviews, thing?.id ?? cardKey(item.id)), cardForUrl);
+  // A row's own linked thing, else that of the card it points at, so a row shows IMDb and its card both.
+  const thingOf = (row: ChecklistRow): Entity | null => {
+    const id = row.entityId ?? (row.ref ? byCard.get(row.ref)?.entityId : null);
+    return id ? (byId.get(id) ?? null) : null;
+  };
   const linksOf = (e: Entity) => thingLinks(e, hiddenFor(reviews, e.id));
 
   const linksTo = linkedCardIds(item, findCard)
@@ -68,6 +81,7 @@ function CardPanel({ full, close }: { full: FullItem; close: () => void }) {
         kinds={kinds}
         save={save}
         onClose={close}
+        back={back}
         onDelete={() => del.mutate(item.id, { onSuccess: close })}
       />
       <div className="card-body">
@@ -126,13 +140,26 @@ function Overlay({ label, close, children }: { label: string; close: () => void;
  * A card (`/item/:id`), opened over the page you were on, as in Orbit today. The page behind stays as
  * it was; `onClose` goes back to it.
  */
-export function CardOverlay({ id, onClose }: { id: string; onClose: () => void }) {
+export function CardOverlay({
+  id,
+  cameFrom,
+  onBack,
+  onClose,
+}: {
+  id: string;
+  /** The card this one was opened from, if any: the header then has Back to it. */
+  cameFrom?: string;
+  onBack: () => void;
+  onClose: () => void;
+}) {
   const full = useFullItem(id);
+  const from = useItemSummaries().data?.find((c) => c.id === cameFrom);
+  const back = from ? { title: from.title, go: onBack } : undefined;
 
   if (full.data && !full.data.item.deleted)
     return (
       <Overlay label={full.data.item.title} close={onClose}>
-        <CardPanel key={full.data.item.id} full={full.data} close={onClose} />
+        <CardPanel key={full.data.item.id} full={full.data} close={onClose} back={back} />
       </Overlay>
     );
   return (

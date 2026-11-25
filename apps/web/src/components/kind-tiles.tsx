@@ -27,7 +27,7 @@ export function KindTiles({
         {kindTiles(items, kinds).map(({ kind, count }) => (
           <Link
             key={kind}
-            to={current === kind ? "/all" : `/kind/${kindSlug(kind)}`}
+            to={current === kind ? "/?all=1" : `/kind/${kindSlug(kind)}`}
             className={`kind-tile${current === kind ? " on" : ""}`}
             aria-current={current === kind ? "page" : undefined}
             style={kindStyle(kind, kinds)}

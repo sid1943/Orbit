@@ -19,10 +19,15 @@ describe("todaySections", () => {
     syncItem({ id: "a1", title: "Archived", archived: true, status: "doing" }),
   ];
 
-  it("splits dated things into coming up and in season", () => {
+  it("lists every dated thing in Coming up and every seasonal one in In season", () => {
     const s = todaySections(cards, NOW);
     expect(s.comingUp.map((d) => [d.item.id, d.days])).toEqual([["e1", 18]]);
     expect(s.inSeason.map((d) => d.item.id)).toEqual(["e2"]);
+    const far = todaySections(
+      [syncItem({ id: "f1", kind: "Experience", title: "Spring fair", props: { "Preferable Time": "May 2" } })],
+      NOW,
+    );
+    expect(far.comingUp.map((d) => d.item.id)).toEqual(["f1"]);
   });
 
   it("groups open to-dos by quest, biggest group first, due dates first", () => {

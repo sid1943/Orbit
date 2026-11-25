@@ -139,16 +139,20 @@ scripts/mac-background.sh logs        # Ctrl+C to stop following
 scripts/mac-background.sh uninstall   # stop and remove; your local data is kept
 ```
 
-It adds three LaunchAgents (`com.orbit.api`, `com.orbit.web`, `com.orbit.updater`) to `~/Library/LaunchAgents`,
+It adds four LaunchAgents (`com.orbit.api`, `com.orbit.web`, `com.orbit.updater`, `com.orbit.sync`) to `~/Library/LaunchAgents`,
 with logs in `~/Library/Logs/orbit`. They pause while the Mac sleeps. If you change Node versions, run
 `scripts/mac-background.sh restart`.
 
-The updater also keeps the code current. Every 10 minutes it checks GitHub, and when `main` has new commits it
-pulls them, runs `npm install` and the local database migrations if those changed, and restarts the API if its
-code changed (the web app reloads by itself). So after a pull request is merged, the Mac has it within about
-10 minutes, with nothing to type. It only does this when your copy is on `main` with no uncommitted edits and
-no commits of its own; otherwise it leaves the copy alone and says why in `~/Library/Logs/orbit/updater.log`.
-Run it by hand with `scripts/mac-background.sh update`.
+The sync agent keeps the code current. Every 15 seconds it asks GitHub whether `main` moved (`git ls-remote`, a
+few hundred bytes, nothing downloaded otherwise). When it has, it pulls the new commits, runs `npm install` and the
+local database migrations if those changed, and restarts the API if its code changed. The web app reloads by
+itself, so a merged pull request shows up in the open page within about 15 seconds, with nothing to type. It only
+does this when your copy is on `main` with no uncommitted edits and no commits of its own; otherwise it leaves the
+copy alone and says why, once, in `~/Library/Logs/orbit/sync.log`. Run it by hand with
+`scripts/mac-background.sh sync`.
+
+The 10-minute updater runs the API's scheduled job and also pulls, as a fallback. On a Mac set up before the sync
+agent existed, the updater installs the sync agent by itself on its next run.
 
 How the hosted web app signs in (the API token, or Cloudflare Access) is decided before it goes online.
 

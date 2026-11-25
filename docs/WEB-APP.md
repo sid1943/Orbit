@@ -20,7 +20,7 @@ can put a sign-in (Google, email code) in front of both the app and the API (fre
 
 ## Layout
 
-- **Left rail**: the Orbit brand (goes home), views (Today, Everything, Map, Near me, Review), and Settings.
+- **Left rail**: the Orbit brand (goes home), views (Center Base), and Settings.
   Kinds are not listed in the rail; they are tiles on the home page.
 - **Top bar, on every page**: greeting ("Good evening, Sid", from the profile name), date, location,
   and the New button. The page title sits in a strip under the search bar.
@@ -29,22 +29,24 @@ can put a sign-in (Google, email code) in front of both the app and the API (fre
 
 ## Pages
 
-| Page           | Route                | What's on it                                                                                                                                                                                                                                                |
-| -------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Today (home)   | `/`                  | Greeting, date, location with "Use my location"; search; big kind tiles (each opens its kind page); Near you; Coming up; In season now; In progress; To-do (add, tick off, grouped by quest); Closest to finished; Pick one today; Recently changed; Topics |
-| Everything     | `/all`               | Kind tiles; status filter (All, To do, Doing, Done, Dropped); group by flat, kind or status; rows with tags, progress, distance                                                                                                                             |
-| Kind page      | `/kind/:kind`        | The Everything list for one kind                                                                                                                                                                                                                            |
-| Search results | `/search?q=`         | Ranked, title matches first, using `matcher()` from core                                                                                                                                                                                                    |
-| Map            | `/map`               | Topics drawn as a network (drag, zoom, click a topic), with Big topics in a side panel                                                                                                                                                                      |
-| Near me        | `/near`              | Places by distance: 5, 25, 100, 500 mi or Any; show done; category chips (all in the address: `within`, `done`, `cat`); exact places, then city groups; each row opens its card and has a Map link                                                          |
-| Review links   | `/review`            | Link guesses waiting for an answer: category chips (hidden when 0), Correct, Wrong (asks what it is), Delete                                                                                                                                                |
-| Topic          | `/topic/:name`       | Everything sharing one topic: kind chips, status bar, connected topics, item list                                                                                                                                                                           |
-| Settings       | `/settings/:section` | Mac-style: categories on the left, settings on the right (see below)                                                                                                                                                                                        |
-| App map        | `/settings/about`    | Index of every page and panel, generated from the route list                                                                                                                                                                                                |
+| Page           | Route                | What's on it                                                                                                                                                                                                                                                                                                            |
+| -------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Center Base    | `/`                  | Greeting, date, location with "Use my location"; search; big kind tiles (each opens its kind page); a switch: Today / Coming up / In season / All cards / Near me / Map (/ Review). Today: To-do (add, tick off, grouped by quest) with In progress, Closest to finished and Recently changed inside it; Pick one today |
+| Coming up      | `/?soon=1`           | Every open card with a next date (from "Preferable Time"), soonest first                                                                                                                                                                                                                                                |
+| In season      | `/?season=1`         | Every open card that is good to do this month                                                                                                                                                                                                                                                                           |
+| All cards      | `/?all=1`            | The "All cards" side of Today's switch: every card, with Filters (status, kind, topic, distance, when, archived, group, sort) in the address. `/all` redirects here                                                                                                                                                     |
+| Kind page      | `/kind/:kind`        | One kind's cards, with the same Filters (no kind or group choice)                                                                                                                                                                                                                                                       |
+| Search results | `/search?q=`         | Ranked, title matches first, using `matcher()` from core                                                                                                                                                                                                                                                                |
+| Map            | `/?map=1`            | The fourth side of Center Base's switch: the 90 biggest topics as a network (drag, zoom; hover bounces a topic and opens a lens that spreads the names around it, click gathers its related topics, click again opens it), Big topics in a side panel, the Topics cloud under the map. `/map` redirects here            |
+| Near me        | `/?near=1`           | The third side of Today's switch: places by distance, 5, 25, 100, 500 mi or Any; show done; category chips; exact places, then city groups. `/near` redirects here                                                                                                                                                      |
+| Review links   | `/?review=1`         | A side of Center Base's switch, shown only while link guesses wait (`confidence: "review"`, unanswered): the list; answering (Correct, Wrong, Delete) comes with W5. `/review` redirects here                                                                                                                           |
+| Topic          | `/topic/:name`       | Everything sharing one topic: kind chips, status bar, connected topics, item list                                                                                                                                                                                                                                       |
+| Settings       | `/settings/:section` | Mac-style: categories on the left, settings on the right (see below)                                                                                                                                                                                                                                                    |
+| App map        | `/settings/about`    | Index of every page and panel, generated from the route list                                                                                                                                                                                                                                                            |
 
 ### Where pages get their data
 
-Every list page works from one cached list, `useSync()` (`GET /api/sync`): Today, Everything, kind pages,
+Every list page works from one cached list, `useSync()` (`GET /api/sync`): Today (and All cards), kind pages,
 search, Topic and Map. Near you and Near me use `usePlaces()` (`GET /api/places`): every card and
 checklist row linked to a place, sorted with `placesByDistance()` and joined to the sync list by `itemId`. Refreshes fetch only what changed. The card panel
 uses `useFullItem(id)` (`GET /api/items/:id/full`): the card, every linked thing on its checklists, TV status,
@@ -52,7 +54,9 @@ covers and review answers, with no limit on list size. Review links and Fix link
 `GET /api/entities?confidence=review&pending=1` and `useReview()`. After editing a card, put it into the list
 with `upsertSyncItem()` from core rather than refetching everything. The card panel is drawn by `Layout` over the
 last page that wasn't a card (`components/card-overlay.tsx`): the router has one `*` route, and `Layout` renders the
-pages itself with `useRoutes(pages, pageBehind)`. The card panel saves through `useEditCard(id)`,
+pages itself with `useRoutes(pages, pageBehind)`. A card opened from another card has Back
+to it (`lib/card-trail.ts`). Old Trello links are never shown: card links open the Orbit card they became
+(`trelloCardFinder()` from core, `useTrelloCards()`), the rest are left out. The card panel saves through `useEditCard(id)`,
 which sends whole fields (the whole checklist list, say) worked out with the edit rules in `packages/core/src/card.ts`,
 shows the change at once in the card and the lists, and goes back if saving fails.
 
@@ -63,7 +67,7 @@ Client calls `updateKind`, `reorderKinds` and `deleteKind` are there for renamin
 deleting (a Settings section later).
 
 Today's sections are worked out in `apps/web/src/lib/today-sections.ts` with the rules in `packages/core/src/today.ts`
-(the same as Orbit today). Near you uses the places list (`usePlaces()`, rows and cards) through `apps/web/src/lib/near-you.ts`; Near me through `apps/web/src/lib/near-me.ts` (`nearMe()`). The Location panel (`components/location-dialog.tsx`) is drawn by `Layout`; open it anywhere with `useOpenLocation()` from `lib/location-panel.ts`. Typed input is read with `readLocationInput()` from core `location.ts`. Coming up and In season read the card's "Preferable Time" detail.
+(the same as Orbit today). Near me through `apps/web/src/lib/near-me.ts` (`nearMe()`). The Location panel (`components/location-dialog.tsx`) is drawn by `Layout`; open it anywhere with `useOpenLocation()` from `lib/location-panel.ts`. Typed input is read with `readLocationInput()` from core `location.ts`. Coming up and In season read the card's "Preferable Time" detail.
 
 ## Panels and dialogs
 
@@ -107,7 +111,7 @@ Fonts load from Google Fonts only when chosen. Settings are saved through `PUT /
 ## Build order
 
 1. Scaffold `apps/web` (Vite, React, Router, Query), connect to the API, the layout (rail, top bar).
-2. Today and Everything, with kind pages and search.
+2. Today (with All cards), kind pages and search.
 3. The card panel, then New item.
 4. Settings (appearance first) and the app map.
 5. Review links and Fix links.

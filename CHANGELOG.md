@@ -8,6 +8,13 @@ All notable changes to Orbit are listed here. The format follows
 
 ### Added
 
+- Mac: merged changes arrive within about 15 seconds. A new `com.orbit.sync` agent checks GitHub every 15 seconds
+  (`git ls-remote`, no download) and pulls only when `main` moved; the 10-minute updater keeps the scheduled job,
+  pulls as a fallback, and installs the sync agent on Macs set up before it. "Skipped" reasons are logged once.
+
+- Books link to Goodreads instead of Open Library: the book's own page when Wikidata (work id) or Open Library (edition
+  id) records its Goodreads id, a Goodreads search for the title and author otherwise. The connections job looks the ids
+  up (100 books a run; migration `0005_lookups`) and `npm run connect` reports how many books have a Goodreads page.
 - Near me (`/near`, build step 6): every place on your lists by distance, as in Orbit today: 5, 25, 100, 500 mi or
   Any, Show done and category chips (all kept in the address), places with an exact spot first, then places known
   only by their city, grouped by city. Each place opens its card and has a Map link. The rail shows your city.
@@ -92,6 +99,31 @@ All notable changes to Orbit are listed here. The format follows
 - "+" square tile after the kind tiles (Today and Everything) adds a kind: a dialog with a name (checked as you type:
   empty or taken names are refused) and a colour slider starting far from the other kinds. Kind tiles follow
   `useKinds()`, so a new kind shows at once with 0 cards; kind chips and groups use custom kinds' colours.
+- Review moved onto Center Base's switch: **Review · N** appears only while link guesses wait for an answer
+  (`confidence: "review"` and not answered); it lists them. Answering them is still job W5. Review left the left
+  menu; `/review` redirects. `usePendingReview()`.
+- Map: hovering a topic makes it bounce (it springs bigger and settles, its name bold); its related topics gather
+  only when you click it, with a bar ("#Coast · 2 related · Open topic →", ×). Clicking it again opens the topic;
+  clicking another topic moves the ring there; clicking empty space, Esc or × lets go.
+- Map: every topic's name shows in full at every zoom, with a halo; topics keep their names' width apart (forces,
+  then a pass that separates any that still touch); the map fits the box until you move or zoom. Hovering a topic
+  pulls its connected topics into a ring around it, wide enough for the two widest names side by side, and fades
+  the rest. Big topics' counts no longer wrap.
+- The home page is now **Center Base** (left menu, Back, app map). Its switch reads **Today / All cards / Near me /
+  Map**. Map (`?map=1`, build step 7) draws the 90 biggest topics as a network, as Orbit today did: circle size by
+  cards, colour by the main kind, lines for topics sharing 2+ cards; drag, scroll to zoom, hover to light up
+  neighbours, click to open the topic; Big topics in a side panel (below it on phones). Map left the menu; `/map`
+  redirects.
+- Topic pages (`/topic/:name`): kind chips, status filter (in the address), a status bar with counts, connected
+  topics and the cards. Every #topic chip in the app opens one.
+- A new page starts scrolled to the top (opening a card or changing a filter still keeps your place).
+- Near me is the third side of Today's switch (**Today / All cards / Near me**, `?near=1`), with the same distance,
+  Show done and category chips; it left the left menu, and `/near` links open it with their filters. Near you's
+  "All nearby" and "+ N things to do in …" open it too.
+- Today has a **Today / All cards** switch. All cards shows every card with a Filters button (filters only appear
+  there): status, kind, topic, distance (5/25/100/500 mi to the closest place on a card or its lists), when (coming
+  up, in season, has a date), show archived, grouping and sort (recent, A–Z, nearest), all kept in the address.
+  Kind pages use the same Filters. "Everything" left the menu; `/all` links open All cards with their filters.
 - Kind tiles show their count (and the add tile its "+") centred in the tile, under the name.
 - Kind tiles (Today, Everything, kind pages) are square, keep one size that follows the text-size setting, and wrap
   onto more rows as kinds are added; three across on phones.
@@ -104,6 +136,14 @@ All notable changes to Orbit are listed here. The format follows
   card, edit in place), Checklists (search across rows and their linked things, progress, tick, add, edit, move up and
   down or to another checklist, delete, rename or delete a checklist, first 40 rows then Show all) and Comments; side
   column with topics, due date, details, When (months and season) and connected cards. One column on phones.
+- Web app: a checklist row that points at another card shows that card's standard link (IMDb, Goodreads, …) next to
+  its "→ Movie" button, so every row reads the same; `GET /api/items/:id/full` now also returns the linked things of the
+  cards its rows point at.
+- Web app: a card opened from another card has Back to it in its header ("← <card>"); Back from there keeps going
+  back card by card.
+- Trello is gone from the card: old Trello card links (in Useful links, notes, comments and checklist rows) open the
+  Orbit card they became, by its id or title; other Trello links are left out (core `isTrelloUrl`, `trelloCardFinder`).
+  Nothing in the saved data is changed.
 - Web app: a card opens over the page you were on, as in Orbit today: `/item/:id` stays its address (links,
   reloads and Back work), the page behind keeps its place, and the card closes with ×, Escape or a click on the
   backdrop, back to that page. Opened straight from its address, the card sits over Today. The page behind can't be
@@ -116,6 +156,12 @@ All notable changes to Orbit are listed here. The format follows
 
 ### Changed
 
+- Center Base's switch: **Coming up** (`?soon=1`, every dated card, soonest first) and **In season** (`?season=1`,
+  every card good this month) are sides of their own; Today keeps To-do, with In progress, Closest to finished and
+  Recently changed inside it, and Pick one today. Topics moved under the Map; Near you left Today (Near me covers it).
+- Map: hovering a topic now opens a lens that pushes the topics around it apart, so their names can be read; the
+  hovered name sits on a solid tag and topics outside the lens fade back. The lens holds still while the pointer moves
+  inside it, so the neighbours it moved can be hovered in turn.
 - Near you rows show "~40 mi" for a place measured to a far city's center, mark done places, and have a Map link;
   "+ N things to do in …" opens Near me at 25 mi. A device location is now labelled with the nearest city.
 
@@ -124,6 +170,14 @@ All notable changes to Orbit are listed here. The format follows
 - The cron counted outside requests and database calls as two budgets of 50, but the free plan allows
   50 subrequests in all. All jobs now share one budget of 48, and the enrich queue stops before a card
   that wouldn't fit instead of failing it half-way.
+- Names imported from Trello checklists written as bullets showed the marker ("* Fort Ord", "- Blade Runner (1982)").
+  The import now drops a leading "* ", "- ", "+ " or "• " from row text, card titles and linked things' names (core
+  `stripBullet()`), and migration `0006_strip_bullets` cleans the cards already saved. Bold headings and "---" stay.
+- Connections: "series" that aren't one (a "list of …" item, or a show's episodes) no longer show; more book and comic
+  types are recognised. `npm run connect` waits for the API when the Mac's updater restarts it instead of stopping.
+  Things with no Wikidata id are tried again monthly instead of every three months.
+- A stray accent line next to the chosen button in button rows (the focus ring was clipped); it now sits inside.
+
 - `useAddKind()` refused every new name ("there is already a kind called …"): it checked the name after
   adding it to the list. It now checks first, then shows the new kind.
 

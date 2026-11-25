@@ -8,7 +8,18 @@ import { kindStyle } from "./kind-chip.js";
 const PAGE = 200;
 
 /** A long list of cards, flat or grouped, shown 200 at a time. */
-export function ItemList({ items, group, empty }: { items: readonly SyncItem[]; group: GroupBy; empty: ReactNode }) {
+export function ItemList({
+  items,
+  group,
+  empty,
+  miles,
+}: {
+  items: readonly SyncItem[];
+  group: GroupBy;
+  empty: ReactNode;
+  /** Miles to each card's closest place, shown on its row. */
+  miles?: ReadonlyMap<string, number>;
+}) {
   const [limit, setLimit] = useState(PAGE);
   const kinds = useKinds().data;
   if (!items.length) return <div className="empty">{empty}</div>;
@@ -32,7 +43,7 @@ export function ItemList({ items, group, empty }: { items: readonly SyncItem[]; 
           )}
           <div className="rows">
             {g.shown.map((i) => (
-              <ItemRow key={i.id} item={i} />
+              <ItemRow key={i.id} item={i} {...(miles?.has(i.id) ? { miles: miles.get(i.id)! } : {})} />
             ))}
           </div>
         </div>

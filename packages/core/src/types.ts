@@ -133,6 +133,10 @@ export interface Entity {
   igdb?: string;
   /** Open Library work id (OL...W) for books */
   openLibrary?: string;
+  /** Goodreads work id (Wikidata P8383): the link opens the work's best-known edition */
+  goodreads?: string;
+  /** Goodreads book (edition) id, when there's no work id (Open Library or Wikidata P2969) */
+  goodreadsBook?: string;
   author?: string;
   year?: number;
   wikipedia?: string;

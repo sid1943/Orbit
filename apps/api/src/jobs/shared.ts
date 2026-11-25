@@ -23,11 +23,11 @@ export const ENRICH_CAP = 24;
 export const LINK_RESERVE = 4;
 
 /**
- * What a connections run may spend: up to 6 D1 calls (counted up front) and its Wikidata requests
+ * What a connections run may spend: up to 8 D1 calls (counted up front) and its Wikidata requests
  * (counted as they go). It only starts when this much is left besides the link check's share.
  */
-export const CONNECT_DB_CALLS = 6;
-export const CONNECT_COST = 16;
+export const CONNECT_DB_CALLS = 8;
+export const CONNECT_COST = 18;
 
 /** No outside request waits longer than this. */
 const TIMEOUT_MS = 10_000;

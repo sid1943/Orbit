@@ -1,13 +1,17 @@
 import { textParts } from "@orbit/core";
 import { Link } from "react-router";
-import { useCardFinder } from "../lib/card-finder.js";
+import { useCardFinder, useTrelloCards } from "../lib/card-finder.js";
 
-/** Notes or a comment: web addresses shown by readable names, [[Exact title]] opens that card. */
+/**
+ * Notes, a comment or a checklist row: web addresses shown by readable names, [[Exact title]] and old
+ * Trello card links open the Orbit card; other Trello links are left out.
+ */
 export function RichText({ text }: { text: string }) {
   const findCard = useCardFinder();
+  const cardForUrl = useTrelloCards();
   return (
     <>
-      {textParts(text, findCard).map((p, i) => {
+      {textParts(text, findCard, cardForUrl).map((p, i) => {
         switch (p.t) {
           case "text":
             return <span key={i}>{p.text}</span>;

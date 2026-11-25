@@ -1,13 +1,16 @@
 import { parseTodo } from "@orbit/core";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { useCreateItem } from "../api/queries.js";
 import type { TodoGroup } from "../lib/today-sections.js";
 import { ItemRow } from "./item-row.js";
 import { Section } from "./section.js";
 
-/** To-do on Today: add one (with #Quest), tick them off, grouped by quest. */
-export function TodoSection({ groups, count }: { groups: TodoGroup[]; count: number }) {
+/**
+ * To-do on Center Base's Today: add one (with #Quest), tick them off, grouped by quest. `children` go inside it,
+ * after the quests (Today puts In progress, Closest to finished and Recently changed there, as `TodoPart`s).
+ */
+export function TodoSection({ groups, count, children }: { groups: TodoGroup[]; count: number; children?: ReactNode }) {
   const create = useCreateItem();
   const [text, setText] = useState("");
 
@@ -64,6 +67,21 @@ export function TodoSection({ groups, count }: { groups: TodoGroup[]; count: num
         </div>
       ))}
       {!count && <p className="muted">Nothing to do. Nice.</p>}
+      {children}
     </Section>
+  );
+}
+
+/** A part inside To-do (In progress, Closest to finished, Recently changed): a smaller heading and its list. */
+export function TodoPart({ title, note, children }: { title: string; note?: ReactNode; children: ReactNode }) {
+  const id = `todo-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  return (
+    <section className="todo-part" aria-labelledby={id}>
+      <div className="todo-part-head">
+        <h3 id={id}>{title}</h3>
+        {note && <span className="note">{note}</span>}
+      </div>
+      {children}
+    </section>
   );
 }
