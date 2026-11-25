@@ -8,6 +8,15 @@ All notable changes to Orbit are listed here. The format follows
 
 ### Added
 
+- City rule: every city Sid's places are in (and any added with `POST /api/cities`) gets suggestions in five groups:
+  Nature (waterfalls, mountains, parks, beaches, caves... within about two hours), Culture and history (museums,
+  landmarks, castles, temples, neighbourhoods...), Food and drink, Experiences (stadiums, theme parks, zoos,
+  theatres) and Orbit connections (movies, shows, books and games set or filmed there, people born there). No top N:
+  everything goes in unless it's wrong (closed, no English name, no Wikipedia article); Sid can hide the rest.
+  Each place has map, TripAdvisor and Wikipedia links, details from OpenStreetMap and Wikipedia (hours, fee,
+  website, phone, access, history, photo), and is marked as Sid's when a card or row of his already has it.
+  One step per cron run within the budget; redone every 90 days. `GET /api/cities`, `GET /api/cities/:key`,
+  core `city-guide.ts` and `place-details.ts`, job `jobs/city-guide.ts`, migration `0007_city_guides`.
 - Mac: merged changes arrive within about 15 seconds. A new `com.orbit.sync` agent checks GitHub every 15 seconds
   (`git ls-remote`, no download) and pulls only when `main` moved; the 10-minute updater keeps the scheduled job,
   pulls as a fallback, and installs the sync agent on Macs set up before it. "Skipped" reasons are logged once.

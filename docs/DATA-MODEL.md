@@ -66,6 +66,11 @@ alongside with `add`). The result carries `reviewed` with the answer. Deleting t
 - `enrich_queue`: cards waiting to be linked (`mode` new or backfill, retries with back-off).
 - `removed`: ids of cards deleted for good, so `GET /api/sync` can tell other devices to drop them.
 - `works`, `relations`, `connect_state`: connections between things (see below).
+- `cities`, `city_suggestions`, `place_details`: the city rule. `cities`: one row per city (`key` lower-case name,
+  `source` `places` or `added`, `qid`, `step` of `GUIDE_STEPS`, `next_check`, `done_at`, `error`, `failures`, `off`).
+  `city_suggestions`: per city and Wikidata id, `grp` (`nature`, `culture`, `food`, `experiences`, `connections`),
+  `data` (core `Suggestion` or `CityWork`), `fame`, `hidden` (Sid marked it wrong). `place_details`: per Wikidata
+  id, core `PlaceDetails` (hours, fee, website, phone, history, photo, wheelchair, dogs, closed), read every 90 days.
 - `lookup_state`: when an extra id was last looked up per linked thing and kind (`goodreads`), and when to try again.
 
 ## Connections

@@ -12,7 +12,11 @@
 - [x] Live watch: one rule per linked thing (what, how often, when to stop) and one scheduler within the cron budget; TVmaze, Wikidata, Open Library (job LV)
 - [x] Dead-link check for pasted links (job LV)
 - [x] Live watch with keys: TMDB (movies: theatres, streaming, sequels; shows: where to watch), IGDB (games: development, dates, platforms); Goodreads search links for books (job LV)
-- [ ] Places: history (Wikipedia), opening hours and fees (OpenStreetMap), photos, weather before a trip (job LV, waiting for Sid)
+- [x] City rule: every city in Sid's places gets Nature, Culture and history, Food and drink, Experiences and Orbit connections from Wikidata, no top N; links to map, TripAdvisor, Wikipedia (Rules Engine chat)
+- [x] Place details for suggested places: hours, fee, website, phone, access (OpenStreetMap), history and photo (Wikipedia) (Rules Engine chat)
+- [ ] Place details for Sid's own place cards that aren't city suggestions (match them to Wikidata first)
+- [ ] City card trip info: best season, weather (Open-Meteo), airport, getting around, where to stay (Wikivoyage)
+- [ ] Show city suggestions on the city's card, tap to add one as a place, hide a wrong one (Card chat)
 - [x] `apps/api`: Worker + D1 schema, items / entities / reviews / prefs routes, token auth
 - [x] Cron every 10 minutes: link new cards, back-fill old ones, refresh shows
 - [x] Export file → SQL loader
