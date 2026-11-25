@@ -59,9 +59,11 @@ together** (a `batch()` is one call), with 10 ms of CPU. All jobs share one `Bud
 2. New cards (enrich queue): at most 24, about 5 cards; Sid's new cards before the back-fill.
 3. Live watch: plan up to 200 new or changed linked things (3 calls, no outside requests), then check
    what is due (1 call to read, 1 to save).
-4. Connections (below), when 16 still fit besides the link check's share: 6 D1 calls counted up front,
+4. The city rule (below): live watch leaves it 9 (once a day 1 call to find cities, then one step of
+   one city, then details for up to 40 places).
+5. Connections (below), when 18 still fit besides the link check's share: 8 D1 calls counted up front,
    its Wikidata requests counted as they go.
-5. Dead-link check: up to 12 links, never fewer than 4 requests' worth.
+6. Dead-link check: up to 12 links, never fewer than 4 requests' worth.
 
 While the back-fill runs, live watch gets at least about 9 requests per run (1,300 a day); after it,
 about 35 (5,000 a day). One Wikidata request answers 50 linked things.
@@ -108,6 +110,29 @@ Standard links (IMDb, Open Library...) are built from ids and aren't checked. Ru
   can't tell; every 90 days); 404, 410, 5xx or no answer counts as gone.
 - **Dead only after three gone answers a week apart**, then no longer checked. Until then it is `unsure`.
 - A link taken off its card is forgotten, unless another card has it too.
+
+## The city rule
+
+When a city is in Orbit, the cron suggests everything worth doing there (Sid, 2026-11-24). Rules in
+`packages/core/src/city-guide.ts` and `place-details.ts`, job in `apps/api/src/jobs/city-guide.ts`.
+
+- **Which cities:** once a day, the cities Sid's places are in: a known city (`CITIES`) by name or within 40 miles,
+  or any other place name on at least 3 places. `POST /api/cities` adds one by hand.
+- **One step per run:** the city's Wikidata id (a city or town with that name within 25 km), then Nature,
+  Culture and history, Food and drink, Experiences (one Wikidata query each), then Orbit connections (movies,
+  shows, books and games set or filmed there, people born there with 25+ articles). A full pass is redone every
+  90 days; a failed step is retried after 6 hours, then a day, and skipped after the third failure.
+- **No top N:** every place of a listed kind goes in, within 30 km (in town) or 150 km (about two hours: nature,
+  castles, wineries, theme parks...). Left out as wrong: closed (dissolved, closing or end date passed), no
+  English name, no Wikipedia article in any language, and for kinds with many minor entries (bridges, churches,
+  lakes) fewer articles than that kind asks. Sid hides anything else that's wrong; it stays hidden.
+- **Details for every suggested place**, 40 a run, read again every 90 days: hours, fee, website, phone, wheelchair
+  and dog access from OpenStreetMap (Overpass, by the Wikidata id OSM keeps), and Wikipedia's lead and picture.
+  Visit length, best time and booking have no free source and stay empty.
+- **Links:** map, TripAdvisor (its page when Wikidata has the id, a search otherwise; link only), Wikipedia, website.
+- **Sid's own places:** a suggestion matching a card or checklist row about the city (by its telling words:
+  "Alum Rock Park" matches "Hike Alum Rock early") is shown as his, with that card and row, not as new.
+- Reddit and other sites are sources only when Sid asks (city editions, made in chat), not in the cron.
 
 ## Connections
 

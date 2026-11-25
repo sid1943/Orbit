@@ -160,30 +160,35 @@ How the hosted web app signs in (the API token, or Cloudflare Access) is decided
 
 All routes except `/api/health` need `Authorization: Bearer <API_TOKEN>`.
 
-| Route                                                        | What it does                                                              |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| `GET /api/health`                                            | Is it up                                                                  |
-| `GET /api/sync?since=&after=&limit=`                         | Every card in light form (see below)                                      |
-| `GET /api/items?kind=&status=&since=&limit=&offset=&full=1`  | List cards (light fields unless `full=1`)                                 |
-| `GET /api/items/:id`                                         | One card, complete                                                        |
-| `GET /api/items/:id/full`                                    | One card with its linked things, TV status, covers and review answers     |
-| `GET /api/places?since=`                                     | Every card and checklist row linked to a place (Near you, Near me)        |
-| `GET /api/kinds`, `POST /api/kinds`                          | Every kind in order with its card count; add a custom kind                |
-| `PATCH` / `DELETE /api/kinds/:name`, `PUT /api/kinds/order`  | Rename or recolour, delete (only with no cards), reorder custom kinds     |
-| `POST /api/items`                                            | Add a card (`kind`, `title` required); it is queued for linking           |
-| `PATCH /api/items/:id`                                       | Change fields                                                             |
-| `DELETE /api/items/:id`                                      | Move to deleted (`?hard=1` removes it for good)                           |
-| `GET /api/entities?ids=a,b` / `?confidence=review`           | Linked things, answers applied (`&pending=1`: unanswered only)            |
-| `GET /api/entities/:id`                                      | One linked thing with its TV status and cover                             |
-| `PATCH /api/entities/:id`                                    | Fix a link by hand (marked as set by you; the enricher leaves it alone)   |
-| `GET /api/live?ids=a,b`                                      | Live facts (TV status, release / closing dates) and covers                |
-| `GET /api/watch`                                             | Live watch and link check at a glance: watched, stopped (why), due        |
-| `GET /api/watch/links?item=<id>` / `?state=dead`             | A card's pasted links with their state; or every link in one state        |
-| `GET /api/reviews`, `PUT` / `DELETE /api/reviews/:key`       | Your answers to link guesses; `DELETE` undoes one                         |
-| `GET /api/prefs`, `PUT /api/prefs/:key`                      | Settings by key: `appearance`, `profile`, `location`, `lists`             |
-| `POST /api/enrich/run`                                       | Run the 10-minute jobs now (linking, live watch, link check, connections) |
-| `GET /api/connections/:itemId`                               | A card's series, sequels, source and adaptations, franchise (or null)     |
-| `GET /api/connections/progress`, `POST /api/connections/run` | How far gathering connections has got; gather one batch now               |
+| Route                                                        | What it does                                                               |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| `GET /api/health`                                            | Is it up                                                                   |
+| `GET /api/sync?since=&after=&limit=`                         | Every card in light form (see below)                                       |
+| `GET /api/items?kind=&status=&since=&limit=&offset=&full=1`  | List cards (light fields unless `full=1`)                                  |
+| `GET /api/items/:id`                                         | One card, complete                                                         |
+| `GET /api/items/:id/full`                                    | One card with its linked things, TV status, covers and review answers      |
+| `GET /api/places?since=`                                     | Every card and checklist row linked to a place (Near you, Near me)         |
+| `GET /api/kinds`, `POST /api/kinds`                          | Every kind in order with its card count; add a custom kind                 |
+| `PATCH` / `DELETE /api/kinds/:name`, `PUT /api/kinds/order`  | Rename or recolour, delete (only with no cards), reorder custom kinds      |
+| `POST /api/items`                                            | Add a card (`kind`, `title` required); it is queued for linking            |
+| `PATCH /api/items/:id`                                       | Change fields                                                              |
+| `DELETE /api/items/:id`                                      | Move to deleted (`?hard=1` removes it for good)                            |
+| `GET /api/entities?ids=a,b` / `?confidence=review`           | Linked things, answers applied (`&pending=1`: unanswered only)             |
+| `GET /api/entities/:id`                                      | One linked thing with its TV status and cover                              |
+| `PATCH /api/entities/:id`                                    | Fix a link by hand (marked as set by you; the enricher leaves it alone)    |
+| `GET /api/live?ids=a,b`                                      | Live facts (TV status, release / closing dates) and covers                 |
+| `GET /api/watch`                                             | Live watch and link check at a glance: watched, stopped (why), due         |
+| `GET /api/watch/links?item=<id>` / `?state=dead`             | A card's pasted links with their state; or every link in one state         |
+| `GET /api/reviews`, `PUT` / `DELETE /api/reviews/:key`       | Your answers to link guesses; `DELETE` undoes one                          |
+| `GET /api/prefs`, `PUT /api/prefs/:key`                      | Settings by key: `appearance`, `profile`, `location`, `lists`              |
+| `GET /api/cities`                                            | Cities the city rule covers, what it's doing, suggestions per group        |
+| `GET /api/cities/:key` (`?hidden=1`)                         | A city's suggestions by group: links, details, and Sid's card if he has it |
+| `POST /api/cities` `{name}` or `{name, lat, lng}`            | Add a city; its pass starts on the next run                                |
+| `PATCH /api/cities/:key` `{off}`                             | Turn a city off or back on                                                 |
+| `PATCH /api/cities/:key/suggestions/:qid` `{hidden}`         | Hide a wrong suggestion, or show it again                                  |
+| `POST /api/enrich/run`                                       | Run the 10-minute jobs now (linking, live watch, link check, connections)  |
+| `GET /api/connections/:itemId`                               | A card's series, sequels, source and adaptations, franchise (or null)      |
+| `GET /api/connections/progress`, `POST /api/connections/run` | How far gathering connections has got; gather one batch now                |
 
 Notes:
 

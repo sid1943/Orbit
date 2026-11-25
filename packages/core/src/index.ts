@@ -19,3 +19,5 @@ export * from "./link-check.js";
 export * from "./tmdb.js";
 export * from "./igdb.js";
 export * from "./goodreads.js";
+export * from "./city-guide.js";
+export * from "./place-details.js";

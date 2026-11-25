@@ -11,8 +11,9 @@ export const HOUR = 3_600_000;
  * 1. Changes since the last run (1 call): which linked things to re-plan, which pasted links to check.
  * 2. New cards (enrich queue): at most `ENRICH_CAP`, about 5 cards.
  * 3. Live watch: planning, then due checks (TVmaze, Wikidata, Open Library).
- * 4. Connections (jobs/connect-works.ts), when `CONNECT_COST` still fits beside the link check.
- * 5. Dead-link check, with at least `LINK_RESERVE` requests.
+ * 4. The city rule (jobs/city-guide.ts): live watch leaves it `CITY_RESERVE`.
+ * 5. Connections (jobs/connect-works.ts), when `CONNECT_COST` still fits beside the link check.
+ * 6. Dead-link check, with at least `LINK_RESERVE` requests.
  */
 export const CRON_BUDGET = 48;
 

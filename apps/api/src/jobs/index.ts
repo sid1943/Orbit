@@ -1,4 +1,5 @@
 import type { Env } from "../env.js";
+import { runCityGuide } from "./city-guide.js";
 import { connectWorks } from "./connect-works.js";
 import { runEnrichQueue } from "./enrich-queue.js";
 import { DROP_LINKS, FIND_LINKS, runLinkChecks } from "./link-check.js";
@@ -8,6 +9,7 @@ import { Budget, CONNECT_COST, CONNECT_DB_CALLS, LINK_RESERVE } from "./shared.j
 export { enqueue, runEnrichQueue } from "./enrich-queue.js";
 export { checkDue, planWatch, runLiveWatch } from "./live-watch.js";
 export { runLinkChecks } from "./link-check.js";
+export { citiesOf, runCityGuide } from "./city-guide.js";
 export { Budget } from "./shared.js";
 export { connectProgress, connectWorks } from "./connect-works.js";
 
@@ -32,6 +34,7 @@ export async function runScheduledJobs(env: Env, now = Date.now(), budget = new 
   await noteChanges(env, budget, now);
   const items = await runEnrichQueue(env, now, budget);
   const watch = await runLiveWatch(env, budget, now);
+  const cities = await runCityGuide(env, budget, now);
   // Connections are gathered when the run has room for them besides the link check's share.
   let connections = null;
   if (budget.has(CONNECT_COST + 2 + LINK_RESERVE)) {
@@ -39,5 +42,5 @@ export async function runScheduledJobs(env: Env, now = Date.now(), budget = new 
     connections = await connectWorks(env, now, budget.fetch);
   }
   const links = await runLinkChecks(env, budget, now);
-  return { items, watch, connections, links, budgetLeft: budget.left };
+  return { items, watch, cities, connections, links, budgetLeft: budget.left };
 }

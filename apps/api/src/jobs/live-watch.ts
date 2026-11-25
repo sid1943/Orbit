@@ -24,6 +24,7 @@ import {
 } from "@orbit/core";
 import { IN_JSON, withReview, type EntityReviewRow } from "../db/statements.js";
 import { keyedSources, type Env } from "../env.js";
+import { CITY_RESERVE } from "./city-guide.js";
 import { type Budget, LINK_RESERVE } from "./shared.js";
 
 /**
@@ -183,8 +184,8 @@ export async function planWatch(env: Env, budget: Budget, now = Date.now()): Pro
 /** Checks what is due, as far as the budget allows. 2 database calls plus the outside requests. */
 export async function checkDue(env: Env, budget: Budget, now = Date.now()): Promise<Omit<WatchRunResult, "planned">> {
   const none = { checked: 0, stopped: 0, failed: 0, waiting: 0 };
-  // Keep 1 call to save, and the dead-link check's share (its 2 calls and LINK_RESERVE requests).
-  const keep = 1 + 2 + LINK_RESERVE;
+  // Keep 1 call to save, the city rule's share, and the dead-link check's (its 2 calls and LINK_RESERVE requests).
+  const keep = 1 + CITY_RESERVE + 2 + LINK_RESERVE;
   if (!budget.has(1 + keep + 1)) return none;
   budget.db();
   const { results: due } = await env.DB.prepare(
