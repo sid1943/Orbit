@@ -177,7 +177,8 @@ export function groupQuery(c: CityCenter, group: CityGroup): string {
   const parts = [part(false), part(true)].filter(Boolean).join(" UNION ");
   return `SELECT ?item ?itemLabel ?class ?loc ?links ?article ?ta ?site ?img ?closed WHERE {
   ${parts}
-  ?item wikibase:sitelinks ?links . FILTER(?links > 0)
+  ?item wikibase:sitelinks ?links .
+  FILTER EXISTS { ?anyArticle schema:about ?item ; schema:isPartOf/wikibase:wikiGroup "wikipedia" . }
   OPTIONAL { ?article schema:about ?item ; schema:isPartOf <https://en.wikipedia.org/> . }
   OPTIONAL { ?item wdt:P3134 ?ta . }
   OPTIONAL { ?item wdt:P856 ?site . }

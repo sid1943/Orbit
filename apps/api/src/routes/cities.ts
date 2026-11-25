@@ -84,7 +84,7 @@ cities.post("/", async (c) => {
   const key = city.name.toLowerCase();
   await c.env.DB.prepare(
     `INSERT INTO cities (key, name, lat, lng, source, step, next_check) VALUES (?1, ?2, ?3, ?4, 'added', 0, ?5)
-    ON CONFLICT(key) DO UPDATE SET off = 0, step = 0, failures = 0, error = NULL, next_check = ?5`,
+    ON CONFLICT(key) DO UPDATE SET name = ?2, lat = ?3, lng = ?4, off = 0, step = 0, failures = 0, error = NULL, next_check = ?5`,
   )
     .bind(key, city.name, lat, lng, Date.now())
     .run();

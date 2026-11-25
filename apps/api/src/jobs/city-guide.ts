@@ -178,14 +178,14 @@ async function cityStep(env: Env, budget: Budget, now: number, out: CityRunResul
           : []
         : await findGroup(budget.fetch, center, step as CityGroup, now);
     budget.db();
-    // Replaces the group's list, keeping what Sid hid as hidden.
+    // Replaces the group's list. What Sid hid is kept even when it's missing from this answer, so it stays hidden if it comes back.
     await env.DB.batch([
       env.DB.prepare(
         `INSERT INTO city_suggestions (city, qid, grp, data, fame, seen_at)
         SELECT ?1, json_extract(value, '$.qid'), ?2, value, json_extract(value, '$.fame'), ?3 FROM json_each(?4) WHERE true
         ON CONFLICT(city, qid) DO UPDATE SET grp = excluded.grp, data = excluded.data, fame = excluded.fame, seen_at = excluded.seen_at`,
       ).bind(city.key, step, now, JSON.stringify(found)),
-      env.DB.prepare(`DELETE FROM city_suggestions WHERE city = ?1 AND grp = ?2 AND seen_at < ?3`).bind(
+      env.DB.prepare(`DELETE FROM city_suggestions WHERE city = ?1 AND grp = ?2 AND seen_at < ?3 AND hidden = 0`).bind(
         city.key,
         step,
         now,

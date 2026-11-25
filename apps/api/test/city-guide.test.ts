@@ -209,6 +209,14 @@ describe("cities routes", () => {
       env,
     );
     expect(res.status).toBe(201);
+    // Adding it again with a corrected center saves the new center.
+    await app.request(
+      "/api/cities",
+      { method: "POST", headers: auth, body: JSON.stringify({ name: "Nowhere", lat: 3, lng: 4 }) },
+      env,
+    );
+    const row = await env.DB.prepare(`SELECT lat, lng FROM cities WHERE key = 'nowhere'`).first();
+    expect(row).toEqual({ lat: 3, lng: 4 });
   });
 
   it("hides a wrong suggestion and turns a city off", async () => {
@@ -230,6 +238,25 @@ describe("cities routes", () => {
     await run(T0 + 2);
     city = await get("/api/cities/san%20jose%2C%20ca");
     expect(city.groups.nature.items).toHaveLength(1);
+
+    // Missing from one answer and back in the next, it is still hidden.
+    const onlySilver: Fetch = async (url, init) => {
+      const r = await fakeWeb(url, init);
+      if (!url.includes("wikidata") || !decodeURIComponent(init?.body ?? "").includes("wd:Q34038")) return r;
+      const all = (await r.json()) as { results: { bindings: Record<string, { value: string }>[] } };
+      const kept = all.results.bindings.filter((x) => x.item!.value.endsWith("Q100"));
+      return { ok: true, status: 200, json: async () => ({ results: { bindings: kept } }) };
+    };
+    await env.DB.prepare(`UPDATE cities SET step = 1, next_check = 0`).run();
+    await runCityGuide(env, new Budget(20, onlySilver), T0 + 2.5);
+    expect(await env.DB.prepare(`SELECT hidden FROM city_suggestions WHERE qid = 'Q101'`).first()).toEqual({
+      hidden: 1,
+    });
+    await env.DB.prepare(`UPDATE cities SET step = 1, next_check = 0`).run();
+    await run(T0 + 2.7);
+    expect(await env.DB.prepare(`SELECT hidden FROM city_suggestions WHERE qid = 'Q101'`).first()).toEqual({
+      hidden: 1,
+    });
 
     res = await app.request(
       "/api/cities/san%20jose%2C%20ca",

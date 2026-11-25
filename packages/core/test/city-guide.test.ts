@@ -37,6 +37,10 @@ describe("groupQuery", () => {
     expect(q).toContain("Point(-121.90000 37.30000)");
   });
 
+  it("asks for a Wikipedia article in any language, not just any sitelink", () => {
+    expect(groupQuery(C, "culture")).toContain('schema:isPartOf/wikibase:wikiGroup "wikipedia"');
+  });
+
   it("only uses its own group's classes", () => {
     const q = groupQuery(C, "food");
     expect(q).not.toContain("wd:Q34038");
