@@ -28,6 +28,19 @@ All notable changes to Orbit are listed here. The format follows
   they're in Orbit. Books get Wikidata ids from their Open Library ids. The cron gathers 50 per run;
   `npm run connect -w @orbit/api` does everything at once. `GET /api/connections/:itemId` and `useConnections()`
   give a card its connections; core `connections.ts`, migration `0003_connections`.
+- Live watch (job LV): the app decides what each linked thing needs (core `watch.ts`: what to watch, how
+  often, when to stop) and one scheduler (`jobs/live-watch.ts`) checks shows on TVmaze, release and closing
+  dates on Wikidata (50 per request) and publication dates on Open Library. Things that can't change stop
+  at once with no request. Replaces `jobs/refresh-shows.ts`; TVmaze ids are kept, so a show costs 1 request.
+- Live watch sources with keys (config: Worker secrets `TMDB_TOKEN`, `IGDB_CLIENT_ID`, `IGDB_CLIENT_SECRET`):
+  TMDB for movies (US theatres, digital and physical dates, US streaming / rent / buy, collection for sequels;
+  every unseen movie, since streaming changes) and where to watch shows; IGDB for games (development status,
+  release per platform, platforms; 50 per request). TMDB posters fill missing covers. Books get a Goodreads
+  search link.
+- Dead-link check for pasted links (Useful links, attachments, "Fix links"): dead only after three gone
+  answers a week apart; sites that refuse robots are "blocked", never dead.
+- `GET /api/watch` (what is watched, stopped and due) and `GET /api/watch/links` (a card's pasted links, or
+  every link in one state). Migration `0003_watch` (`watch`, `link_checks`, `job_state`).
 - Monorepo with npm workspaces: `packages/core` and `apps/api`.
 - Core: data model, search rule, standard links per kind, import of Orbit export files.
 - Linking: IMDb via Wikidata, Open Library, IGDB and map links; links already in a card's notes are used first; list cards are skipped; strict back-fill for old cards.
@@ -154,6 +167,9 @@ All notable changes to Orbit are listed here. The format follows
 
 ### Fixed
 
+- The cron counted outside requests and database calls as two budgets of 50, but the free plan allows
+  50 subrequests in all. All jobs now share one budget of 48, and the enrich queue stops before a card
+  that wouldn't fit instead of failing it half-way.
 - Names imported from Trello checklists written as bullets showed the marker ("* Fort Ord", "- Blade Runner (1982)").
   The import now drops a leading "* ", "- ", "+ " or "• " from row text, card titles and linked things' names (core
   `stripBullet()`), and migration `0006_strip_bullets` cleans the cards already saved. Bold headings and "---" stay.

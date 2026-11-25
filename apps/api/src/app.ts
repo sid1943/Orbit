@@ -12,6 +12,7 @@ import { places } from "./routes/places.js";
 import { prefs } from "./routes/prefs.js";
 import { reviews } from "./routes/reviews.js";
 import { sync } from "./routes/sync.js";
+import { watch } from "./routes/watch.js";
 
 export const VERSION = "0.1.0";
 
@@ -39,6 +40,7 @@ app.route("/reviews", reviews);
 app.route("/prefs", prefs);
 app.route("/enrich", enrich);
 app.route("/connections", connections);
+app.route("/watch", watch);
 
 app.notFound((c) => c.json({ error: "not found" }, 404));
 app.onError((err, c) => {

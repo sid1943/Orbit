@@ -9,6 +9,10 @@
 - [x] Goodreads for every book: the book's page when Wikidata or Open Library has its Goodreads id, a search otherwise
 - [ ] Second search for books and movies with no match (title and author on Wikidata) (Data chat)
 - [x] Connections from Wikidata: series (with order), sequels, based on / adaptations, franchise; Wikidata ids for books from Open Library
+- [x] Live watch: one rule per linked thing (what, how often, when to stop) and one scheduler within the cron budget; TVmaze, Wikidata, Open Library (job LV)
+- [x] Dead-link check for pasted links (job LV)
+- [x] Live watch with keys: TMDB (movies: theatres, streaming, sequels; shows: where to watch), IGDB (games: development, dates, platforms); Goodreads search links for books (job LV)
+- [ ] Places: history (Wikipedia), opening hours and fees (OpenStreetMap), photos, weather before a trip (job LV, waiting for Sid)
 - [x] `apps/api`: Worker + D1 schema, items / entities / reviews / prefs routes, token auth
 - [x] Cron every 10 minutes: link new cards, back-fill old ones, refresh shows
 - [x] Export file → SQL loader
@@ -48,7 +52,7 @@
 - [x] Names without the Trello bullet ("* Fort Ord" → "Fort Ord"): on import, and migration `0006_strip_bullets` for saved cards
 - [ ] Card panel: show connections from `useConnections()` ("Part of Dune · 1 of 6 · next: Dune Messiah", tap to add) (Card chat)
 - [ ] Watch connections for news (new book in a series, sequel announced) (Live chat, job LV)
-- [ ] Covers on cards; TV status ("Season 3 out", "next episode Fri")
+- [ ] Covers on cards; TV status ("Season 3 out", "next episode Fri"), release dates, closed places, dead links (`/api/live`, `/api/watch/links`; W8 and the Card chat)
 - [ ] Works offline for reading; installable on the phone home screen
 
 ## Step 3: After the web app matches the old Orbit

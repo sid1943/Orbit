@@ -7,6 +7,7 @@ import {
   seriesOf,
   worksByQid,
   type Entity,
+  type Fetch,
   type Relation,
 } from "@orbit/core";
 import { UPSERT_ENTITY, entityRow } from "../db/statements.js";
@@ -71,7 +72,7 @@ export interface ConnectResult {
  *    names and years of everything connected.
  * Adds no cards: the card shows connections and Sid adds what he wants.
  */
-export async function connectWorks(env: Env, now = Date.now()): Promise<ConnectResult> {
+export async function connectWorks(env: Env, now = Date.now(), fetch: Fetch = workerFetch): Promise<ConnectResult> {
   const out: ConnectResult = { mapped: 0, goodreads: 0, looked: 0, connected: 0, relations: 0, works: 0, failed: 0 };
   const db = env.DB;
 
@@ -95,12 +96,12 @@ export async function connectWorks(env: Env, now = Date.now()): Promise<ConnectR
       const titles = ents.filter((e) => !e.openLibrary && e.imdb);
       const [byOl, byImdb] = await Promise.all([
         qidsByExternalId(
-          workerFetch,
+          fetch,
           "P648",
           books.map((e) => e.openLibrary!),
         ),
         qidsByExternalId(
-          workerFetch,
+          fetch,
           "P345",
           titles.map((e) => e.imdb!),
         ),
@@ -125,7 +126,7 @@ export async function connectWorks(env: Env, now = Date.now()): Promise<ConnectR
   }
 
   // 2. Goodreads ids for books (after step 1, so books that just got a Wikidata id can use it).
-  await findGoodreads(env, now, out);
+  await findGoodreads(env, now, out, fetch);
 
   // 3. Connections for the linked things that are due.
   const { results: due } = await db
@@ -142,8 +143,8 @@ export async function connectWorks(env: Env, now = Date.now()): Promise<ConnectR
   if (!due.length) return out;
   const qids = [...new Set(due.map((d) => d.qid))];
   try {
-    const rels = await relationsOf(workerFetch, qids);
-    const members = await seriesMembers(workerFetch, seriesOf(rels));
+    const rels = await relationsOf(fetch, qids);
+    const members = await seriesMembers(fetch, seriesOf(rels));
     const all: Relation[] = [...rels, ...members];
     const wanted = [...new Set([...qids, ...all.flatMap((r) => [r.from, r.to])])];
     const { results: fresh } = await db
@@ -152,7 +153,7 @@ export async function connectWorks(env: Env, now = Date.now()): Promise<ConnectR
       .all<{ qid: string }>();
     const have = new Set(fresh.map((r) => r.qid));
     const works = await worksByQid(
-      workerFetch,
+      fetch,
       wanted.filter((q) => !have.has(q)),
     );
     await db.batch([
@@ -215,7 +216,7 @@ export async function connectProgress(env: Env, now = Date.now()) {
  * (books with a Wikidata id), then from Open Library (the rest). Books with neither keep a Goodreads
  * search link and are looked up again monthly.
  */
-async function findGoodreads(env: Env, now: number, out: ConnectResult): Promise<void> {
+async function findGoodreads(env: Env, now: number, out: ConnectResult, fetch: Fetch): Promise<void> {
   const db = env.DB;
   const { results } = await db
     .prepare(
@@ -234,12 +235,12 @@ async function findGoodreads(env: Env, now: number, out: ConnectResult): Promise
   out.looked += books.length;
   try {
     const byQid = await goodreadsByQid(
-      workerFetch,
+      fetch,
       books.flatMap((b) => (b.qid ? [b.qid] : [])),
     );
     const rest = books.filter((b) => !(b.qid && byQid.has(b.qid)) && b.openLibrary);
     const byOl = await goodreadsByOpenLibrary(
-      workerFetch,
+      fetch,
       rest.map((b) => b.openLibrary!),
     );
     const found: Entity[] = [];

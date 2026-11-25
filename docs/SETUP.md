@@ -34,6 +34,26 @@ manager can make one). It's stored by Cloudflare, never in this repository.
 npx wrangler secret put API_TOKEN
 ```
 
+### Keys for movies, shows and games (optional)
+
+Live watch uses two free services that need your own keys. They are config, stored by Cloudflare as
+secrets, never in this repository. Without them, movies and games fall back to Wikidata release dates.
+
+- **TMDB** (movies: US theatres, streaming, sequels; shows: where to watch): your TMDB account →
+  Settings → API → "API Read Access Token" (the long one, not the short API key).
+- **IGDB** (games: development status, dates, platforms): a Twitch developer app
+  (dev.twitch.tv → Your Console → Applications → Register, category "Application Integration"),
+  then its **Client ID** and a **Client Secret** ("New Secret").
+
+```bash
+npx wrangler secret put TMDB_TOKEN
+npx wrangler secret put IGDB_CLIENT_ID
+npx wrangler secret put IGDB_CLIENT_SECRET
+```
+
+Streaming offers come from JustWatch through TMDB: wherever the app shows them it must say
+"Streaming data from JustWatch" and credit TMDB.
+
 ## 4. Put the API online
 
 ```bash
@@ -66,6 +86,13 @@ Settings in the file (appearance, the greeting name and your location) are loade
 table. Files from before settings were added to the export simply have none. Add `--no-prefs` to keep
 the settings already in the database, for example after changing them in the web app.
 
+After loading the same export again, have every linked thing's watch worked out afresh (the load keeps
+old change times, so the cron wouldn't notice):
+
+```bash
+npx wrangler d1 execute orbit --remote --command "DELETE FROM job_state"
+```
+
 3. Check the counts:
 
 ```bash
@@ -77,6 +104,7 @@ npx wrangler d1 execute orbit --remote --command "SELECT kind, COUNT(*) FROM ite
 ```bash
 cd apps/api
 echo "API_TOKEN=local-password" > .dev.vars
+# optional keys, one per line in the same file: TMDB_TOKEN=…, IGDB_CLIENT_ID=…, IGDB_CLIENT_SECRET=…
 npx wrangler d1 migrations apply orbit --local
 npx wrangler d1 execute orbit --local --file data/seed.sql
 npx wrangler dev --test-scheduled
@@ -132,28 +160,30 @@ How the hosted web app signs in (the API token, or Cloudflare Access) is decided
 
 All routes except `/api/health` need `Authorization: Bearer <API_TOKEN>`.
 
-| Route                                                        | What it does                                                            |
-| ------------------------------------------------------------ | ----------------------------------------------------------------------- |
-| `GET /api/health`                                            | Is it up                                                                |
-| `GET /api/sync?since=&after=&limit=`                         | Every card in light form (see below)                                    |
-| `GET /api/items?kind=&status=&since=&limit=&offset=&full=1`  | List cards (light fields unless `full=1`)                               |
-| `GET /api/items/:id`                                         | One card, complete                                                      |
-| `GET /api/items/:id/full`                                    | One card with its linked things, TV status, covers and review answers   |
-| `GET /api/places?since=`                                     | Every card and checklist row linked to a place (Near you, Near me)      |
-| `GET /api/kinds`, `POST /api/kinds`                          | Every kind in order with its card count; add a custom kind              |
-| `PATCH` / `DELETE /api/kinds/:name`, `PUT /api/kinds/order`  | Rename or recolour, delete (only with no cards), reorder custom kinds   |
-| `POST /api/items`                                            | Add a card (`kind`, `title` required); it is queued for linking         |
-| `PATCH /api/items/:id`                                       | Change fields                                                           |
-| `DELETE /api/items/:id`                                      | Move to deleted (`?hard=1` removes it for good)                         |
-| `GET /api/entities?ids=a,b` / `?confidence=review`           | Linked things, answers applied (`&pending=1`: unanswered only)          |
-| `GET /api/entities/:id`                                      | One linked thing with its TV status and cover                           |
-| `PATCH /api/entities/:id`                                    | Fix a link by hand (marked as set by you; the enricher leaves it alone) |
-| `GET /api/live?ids=a,b`                                      | TV status and covers for several linked things                          |
-| `GET /api/reviews`, `PUT` / `DELETE /api/reviews/:key`       | Your answers to link guesses; `DELETE` undoes one                       |
-| `GET /api/prefs`, `PUT /api/prefs/:key`                      | Settings by key: `appearance`, `profile`, `location`, `lists`           |
-| `POST /api/enrich/run`                                       | Run the enricher now instead of waiting for the next 10 minutes         |
-| `GET /api/connections/:itemId`                               | A card's series, sequels, source and adaptations, franchise (or null)   |
-| `GET /api/connections/progress`, `POST /api/connections/run` | How far gathering connections has got; gather one batch now             |
+| Route                                                        | What it does                                                              |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| `GET /api/health`                                            | Is it up                                                                  |
+| `GET /api/sync?since=&after=&limit=`                         | Every card in light form (see below)                                      |
+| `GET /api/items?kind=&status=&since=&limit=&offset=&full=1`  | List cards (light fields unless `full=1`)                                 |
+| `GET /api/items/:id`                                         | One card, complete                                                        |
+| `GET /api/items/:id/full`                                    | One card with its linked things, TV status, covers and review answers     |
+| `GET /api/places?since=`                                     | Every card and checklist row linked to a place (Near you, Near me)        |
+| `GET /api/kinds`, `POST /api/kinds`                          | Every kind in order with its card count; add a custom kind                |
+| `PATCH` / `DELETE /api/kinds/:name`, `PUT /api/kinds/order`  | Rename or recolour, delete (only with no cards), reorder custom kinds     |
+| `POST /api/items`                                            | Add a card (`kind`, `title` required); it is queued for linking           |
+| `PATCH /api/items/:id`                                       | Change fields                                                             |
+| `DELETE /api/items/:id`                                      | Move to deleted (`?hard=1` removes it for good)                           |
+| `GET /api/entities?ids=a,b` / `?confidence=review`           | Linked things, answers applied (`&pending=1`: unanswered only)            |
+| `GET /api/entities/:id`                                      | One linked thing with its TV status and cover                             |
+| `PATCH /api/entities/:id`                                    | Fix a link by hand (marked as set by you; the enricher leaves it alone)   |
+| `GET /api/live?ids=a,b`                                      | Live facts (TV status, release / closing dates) and covers                |
+| `GET /api/watch`                                             | Live watch and link check at a glance: watched, stopped (why), due        |
+| `GET /api/watch/links?item=<id>` / `?state=dead`             | A card's pasted links with their state; or every link in one state        |
+| `GET /api/reviews`, `PUT` / `DELETE /api/reviews/:key`       | Your answers to link guesses; `DELETE` undoes one                         |
+| `GET /api/prefs`, `PUT /api/prefs/:key`                      | Settings by key: `appearance`, `profile`, `location`, `lists`             |
+| `POST /api/enrich/run`                                       | Run the 10-minute jobs now (linking, live watch, link check, connections) |
+| `GET /api/connections/:itemId`                               | A card's series, sequels, source and adaptations, franchise (or null)     |
+| `GET /api/connections/progress`, `POST /api/connections/run` | How far gathering connections has got; gather one batch now               |
 
 Notes:
 

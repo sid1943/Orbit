@@ -23,7 +23,8 @@ export interface EnrichResult {
   coverUrl?: string;
 }
 
-const UA = "Orbit/0.1 (personal tracker; https://github.com/sid1943/orbit)";
+/** Who Orbit is, sent to the free sources that ask callers to say (Wikidata, Open Library). */
+export const UA = "Orbit/0.1 (personal tracker; https://github.com/sid1943/orbit)";
 const NONE: EnrichResult = { confidence: "none", entity: null, alternatives: [] };
 
 /**
